@@ -1,0 +1,9 @@
+language: go
+go:
+  - 1.6
+
+script:
+  - make run-compose-test
+
+services:
+  - docker 
