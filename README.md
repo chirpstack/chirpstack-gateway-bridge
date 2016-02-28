@@ -11,16 +11,16 @@ connections and communication with the ``loraserver`` (https://github.com/brocaa
 
 ## Getting started
 
-1. First install ``semtech-bridge``:
+* First install ``semtech-bridge``:
 
 ``` bash
 go get github.com/brocaar/lora-semtech-bridge/...
 ```
 
-2. Make sure you have a MQTT server running. Mosquitto is a good option:
+* Make sure you have a MQTT server running. Mosquitto is a good option:
    http://mosquitto.org/.
 
-3. Start the ``semtech-bridge`` service. The ``--help`` argument will show
+* Start the ``semtech-bridge`` service. The ``--help`` argument will show
    you all the available config options. When everything is setup correctly
    (your gateway is configured to send data to ``semtech-bridge``), you
    should see ``PullData`` packets coming in. E.g.
@@ -38,7 +38,7 @@ INFO[0006] outgoing gateway packet                       addr=192.168.1.4:51926 
 INFO[0006] backend/mqttpubsub: publishing message        topic=gateway/1dee08d0b691d149/stats
 ```
 
-4. Now setup the ``loraserver`` service! https://github.com/brocaar/loraserver
+* Now setup the ``loraserver`` service! https://github.com/brocaar/loraserver
 
 ## License
 
