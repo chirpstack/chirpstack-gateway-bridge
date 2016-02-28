@@ -1,5 +1,7 @@
 package main
 
+//go:generate ./doc.sh
+
 import (
 	"os"
 	"os/signal"
