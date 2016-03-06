@@ -1,9 +1,18 @@
 language: go
 go:
-  - 1.6
-
+- 1.6
 script:
-  - make run-compose-test
-
+- make run-compose-test
+- make package
 services:
-  - docker 
+- docker
+deploy:
+  skip_cleanup: true
+  provider: releases
+  api_key:
+    secure: hue09xkRBLJpF5gR7nBCn1CySTTwUwe2ZYZA4Q2RjqdQ6Tk8KXgaJp+wk3xl24oWUb4l6dv2dETy+awT/G1DsOz6z5oGzuNFvAuTIqWgk5eIpctwPYlc9t0mgUnBJCx/eDYIoN/ogBxoE2QFE4CCfYcGd5iFpYb2aPw8oP6Pc5LYsm6PYUHi1IE69tyMj9aFWgtMYX8OxjhTx4vFpDvQmipQE3LqYlu9z7DyeIeuxLBgGFnrjOBQsjlUsQcsgmyeazUBN8qSUhYTdhSwYw5OEI45Ddc/Pkj/pz6HbHygUmO6FIa64rLADVK0Cuaw8+jxYSgeFu2sdIk7wE30sWBITzZhvs9k/OLIghwg+eu9mZ0l0i0K1gfdwqMpQA//QnXDzSiu6FkbCz0dNQX95VJNHfmMCSrg8Dd3ebMx+4VceU6IdWEtyJAHwFONJ4cNieufaPawnEym5VBG2uZ/Iv7rYFoS1W53oCD2mGDRWpTMxQkfFMAgD0gIDB+oN0FVaApjWy+/4KVXRYf4+Eqh0BZ6YizTRt+QmD3X+0jh3j/h0wMYUE6lAGqOmTcJUPUpGBzzx3jT9XVBHCeBTVTWT7wZAMtVPGyFj2Izm/B601DIsrIdvCco4QEUTCUjZjKDM6A3OUz512GBSbKYZ0EVGoxhRv2CRSO4MeQM5Y7Lwpu/6mc=
+  file_glob: true
+  file: "builds/*.tar.gz"
+  on:
+    tags: true
+    repo: brocaar/lora-semtech-bridge
