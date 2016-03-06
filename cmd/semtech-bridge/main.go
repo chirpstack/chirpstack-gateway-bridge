@@ -17,6 +17,8 @@ import (
 var version string // set by the compiler
 
 func run(c *cli.Context) {
+	log.SetLevel(log.Level(uint8(c.Int("log-level"))))
+
 	pubsub, err := mqttpubsub.NewBackend(c.String("mqtt-server"), c.String("mqtt-username"), c.String("mqtt-password"))
 	if err != nil {
 		log.Fatalf("could not setup mqtt backend: %s", err)
@@ -71,6 +73,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "semtech-bridge"
 	app.Usage = "Semtech UDP protocol speaking gateway <-> MQTT"
+	app.Copyright = "See http://github.com/brocaar/lora-semtech-bridge for copyright information"
 	app.Version = version
 	app.Action = run
 	app.Flags = []cli.Flag{
@@ -95,6 +98,12 @@ func main() {
 			Name:   "mqtt-password",
 			Usage:  "MQTT password",
 			EnvVar: "MQTT_PASSWORD",
+		},
+		cli.IntFlag{
+			Name:   "log-level",
+			Value:  4,
+			Usage:  "debug=5, info=4, warning=3, error=2, fatal=1, panic=0",
+			EnvVar: "LOG_LEVEL",
 		},
 	}
 	app.Run(os.Args)
