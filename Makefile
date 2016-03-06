@@ -18,14 +18,17 @@ test:
 	@go vet $(PKGS)
 	@go test -cover -v $(PKGS)
 
+package: clean build
+	@echo "Creating package"
+	@mkdir -p builds/$(VERSION)
+	@cp -R bin/ builds/$(VERSION)/bin
+	@cd builds/$(VERSION)/ && tar -pczf ../lora_semtech_bridge_$(VERSION)_linux_amd64.tar.gz .
+	@rm -rf builds/$(VERSION)
+
 # shortcuts for development
 
 serve: build
 	./bin/semtech-bridge
-
-update-vendor:
-	@echo "Updating vendored packages"
-	@govendor update +external
 
 run-compose-test:
 	docker-compose run --rm semtechbridge make test
