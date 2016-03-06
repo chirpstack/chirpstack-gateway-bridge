@@ -8,14 +8,10 @@ connections and communication with the ``loraserver`` (https://github.com/brocaa
 
 ## Getting started
 
-* First install ``semtech-bridge``:
+* Download and unpack ``semtech-bridge``: https://github.com/brocaar/lora-semtech-bridge/releases
 
-``` bash
-go get github.com/brocaar/lora-semtech-bridge/...
-```
-
-* Make sure you have a MQTT server running. Mosquitto is a good option:
-   http://mosquitto.org/.
+* Install a MQTT server (used for communication with ``loraserver``).
+  Mosquitto is a good option: http://mosquitto.org/.
 
 * Start the ``semtech-bridge`` service. The ``--help`` argument will show
    you all the available config options. When everything is setup correctly
@@ -39,4 +35,4 @@ INFO[0006] backend/mqttpubsub: publishing message        topic=gateway/1dee08d0b
 
 ## License
 
-This package is licensed under the MIT license which can be found in ``LICENSE``.
+This package is licensed under the MIT license. See ``LICENSE``.
