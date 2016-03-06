@@ -3,6 +3,4 @@
 
 # binaries
 bin/
-
-# vendored packages
-vendor/
+builds/
