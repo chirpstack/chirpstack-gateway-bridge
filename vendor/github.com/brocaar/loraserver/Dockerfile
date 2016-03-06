@@ -1,7 +1,7 @@
 FROM golang:1.6.0
 
-# project name
-ENV PROJECT_PATH=/go/src/github.com/brocaar/lora-semtech-bridge
+# project
+ENV PROJECT_PATH=/go/src/github.com/brocaar/loraserver
 
 # set PATH
 ENV PATH=$PATH:$PROJECT_PATH/bin
@@ -9,6 +9,7 @@ ENV PATH=$PATH:$PROJECT_PATH/bin
 # install tools
 RUN go get github.com/golang/lint/golint
 RUN go get github.com/kisielk/errcheck
+RUN go get github.com/smartystreets/goconvey
 
 # setup work directory
 RUN mkdir -p $PROJECT_PATH

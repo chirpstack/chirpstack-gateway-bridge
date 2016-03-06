@@ -1,0 +1,43 @@
+loraserver:
+  build: .
+  command: make serve
+  volumes:
+    - ./:/go/src/github.com/brocaar/loraserver
+  links:
+    - postgres
+    - postgres_test
+    - redis
+    - redis_test
+    - mosquitto
+  environment:
+    - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable
+    - DB_AUTOMIGRATE=true
+    - REDIS_URL=redis://redis:6379
+    - GW_MQTT_SERVER=tcp://mosquitto:1883
+    - APP_MQTT_SERVER=tcp://mosquitto:1883
+    - TEST_POSTGRES_DSN=postgres://loraserver:loraserver@postgres_test/loraserver?sslmode=disable
+    - TEST_REDIS_URL=redis://redis_test:6379
+    - TEST_MQTT_SERVER=tcp://mosquitto:1883
+
+postgres:
+  image: postgres:9.5
+  environment:
+    - POSTGRES_PASSWORD=loraserver
+    - POSTGRES_USER=loraserver
+    - POSTGRES_DB=loraserver
+
+postgres_test:
+  image: postgres:9.5
+  environment:
+    - POSTGRES_PASSWORD=loraserver
+    - POSTGRES_USER=loraserver
+    - POSTGRES_DB=loraserver
+
+redis:
+  image: redis:3.0.7
+
+redis_test:
+  image: redis:3.0.7
+
+mosquitto:
+  image: ansi/mosquitto
