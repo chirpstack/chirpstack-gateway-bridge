@@ -5,15 +5,15 @@ import (
 	"encoding/gob"
 	"fmt"
 
-	"git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
 	log "github.com/Sirupsen/logrus"
 	"github.com/brocaar/loraserver"
 	"github.com/brocaar/lorawan"
+	"github.com/eclipse/paho.mqtt.golang"
 )
 
 // Backend implements a MQTT pub-sub backend.
 type Backend struct {
-	conn         *mqtt.Client
+	conn         mqtt.Client
 	txPacketChan chan loraserver.TXPacket
 }
 
@@ -97,7 +97,7 @@ func (b *Backend) publish(topic string, v interface{}) error {
 	return nil
 }
 
-func (b *Backend) txPacketHandler(c *mqtt.Client, msg mqtt.Message) {
+func (b *Backend) txPacketHandler(c mqtt.Client, msg mqtt.Message) {
 	var txPacket loraserver.TXPacket
 	dec := gob.NewDecoder(bytes.NewReader(msg.Payload()))
 	if err := dec.Decode(&txPacket); err != nil {

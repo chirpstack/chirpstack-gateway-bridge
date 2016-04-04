@@ -17,10 +17,10 @@ package mqtt
 import (
 	"errors"
 
-	"git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git/packets"
+	"github.com/eclipse/paho.mqtt.golang/packets"
 )
 
-func keepalive(c *Client) {
+func keepalive(c *client) {
 	DEBUG.Println(PNG, "keepalive starting")
 
 	for {

@@ -5,9 +5,8 @@ import (
 	"encoding/gob"
 	"testing"
 
-	"git.eclipse.org/gitroot/paho/org.eclipse.paho.mqtt.golang.git"
-
 	"github.com/brocaar/loraserver"
+	"github.com/eclipse/paho.mqtt.golang"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -29,7 +28,7 @@ func TestBackend(t *testing.T) {
 
 			Convey("Given the MQTT client is subscribed to RX packets", func() {
 				rxPacketChan := make(chan loraserver.RXPacket)
-				token := c.Subscribe("gateway/+/rx", 0, func(c *mqtt.Client, msg mqtt.Message) {
+				token := c.Subscribe("gateway/+/rx", 0, func(c mqtt.Client, msg mqtt.Message) {
 					var rxPacket loraserver.RXPacket
 					dec := gob.NewDecoder(bytes.NewReader(msg.Payload()))
 					if err := dec.Decode(&rxPacket); err != nil {
