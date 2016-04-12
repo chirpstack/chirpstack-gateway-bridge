@@ -1,9 +1,9 @@
 package mqttpubsub
 
 import (
-	"bytes"
-	"encoding/gob"
+	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/brocaar/loraserver/models"
 	"github.com/eclipse/paho.mqtt.golang"
@@ -30,8 +30,7 @@ func TestBackend(t *testing.T) {
 				rxPacketChan := make(chan models.RXPacket)
 				token := c.Subscribe("gateway/+/rx", 0, func(c mqtt.Client, msg mqtt.Message) {
 					var rxPacket models.RXPacket
-					dec := gob.NewDecoder(bytes.NewReader(msg.Payload()))
-					if err := dec.Decode(&rxPacket); err != nil {
+					if err := json.Unmarshal(msg.Payload(), &rxPacket); err != nil {
 						t.Fatal(err)
 					}
 					rxPacketChan <- rxPacket
@@ -42,7 +41,8 @@ func TestBackend(t *testing.T) {
 				Convey("When publishing a RXPacket", func() {
 					rxPacket := models.RXPacket{
 						RXInfo: models.RXInfo{
-							MAC: [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+							MAC:  [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+							Time: time.Now().UTC(),
 						},
 					}
 
@@ -66,10 +66,9 @@ func TestBackend(t *testing.T) {
 							MAC: [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 						},
 					}
-					var buf bytes.Buffer
-					enc := gob.NewEncoder(&buf)
-					So(enc.Encode(txPacket), ShouldBeNil)
-					token := c.Publish("gateway/0102030405060708/tx", 0, false, buf.Bytes())
+					b, err := json.Marshal(txPacket)
+					So(err, ShouldBeNil)
+					token := c.Publish("gateway/0102030405060708/tx", 0, false, b)
 					token.Wait()
 					So(token.Error(), ShouldBeNil)
 

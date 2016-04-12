@@ -1,8 +1,7 @@
 package mqttpubsub
 
 import (
-	"bytes"
-	"encoding/gob"
+	"encoding/json"
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
@@ -83,24 +82,21 @@ func (b *Backend) PublishGatewayStats(mac lorawan.EUI64, stats models.GatewaySta
 }
 
 func (b *Backend) publish(topic string, v interface{}) error {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	if err := enc.Encode(v); err != nil {
+	bytes, err := json.Marshal(v)
+	if err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{
-		"topic": topic,
-	}).Info("backend/mqttpubsub: publishing message")
-	if token := b.conn.Publish(topic, 0, false, buf.Bytes()); token.Wait() && token.Error() != nil {
+	log.WithField("topic", topic).Info("backend/mqttpubsub: publishing message")
+	if token := b.conn.Publish(topic, 0, false, bytes); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 	return nil
 }
 
 func (b *Backend) txPacketHandler(c mqtt.Client, msg mqtt.Message) {
+	log.WithField("topic", msg.Topic()).Info("backend/mqttpubsub: message received")
 	var txPacket models.TXPacket
-	dec := gob.NewDecoder(bytes.NewReader(msg.Payload()))
-	if err := dec.Decode(&txPacket); err != nil {
+	if err := json.Unmarshal(msg.Payload(), &txPacket); err != nil {
 		log.Errorf("backend/mqttpubsub: could not decode TXPacket: %s", err)
 		return
 	}
