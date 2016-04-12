@@ -1,13 +1,11 @@
-package loraserver
+package models
 
 import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/brocaar/lorawan"
-	"github.com/jmoiron/sqlx"
 )
 
 // UsedDevNonceCount is the number of used dev-nonces to track.
@@ -68,64 +66,4 @@ func (n *Node) ValidateDevNonce(nonce [2]byte) bool {
 	}
 
 	return true
-}
-
-// CreateNode creates the given Node.
-func CreateNode(db *sqlx.DB, n Node) error {
-	_, err := db.Exec("insert into node (dev_eui, app_eui, app_key) values ($1, $2, $3)",
-		n.DevEUI[:],
-		n.AppEUI[:],
-		n.AppKey[:],
-	)
-	if err == nil {
-		log.WithField("dev_eui", n.DevEUI).Info("node created")
-	}
-	return err
-}
-
-// UpdateNode updates the given Node.
-func UpdateNode(db *sqlx.DB, n Node) error {
-	res, err := db.Exec("update node set app_eui = $1, app_key = $2, used_dev_nonces = $3 where dev_eui = $4",
-		n.AppEUI[:],
-		n.AppKey[:],
-		n.UsedDevNonces,
-		n.DevEUI[:],
-	)
-	if err != nil {
-		return err
-	}
-	ra, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if ra == 0 {
-		return errors.New("DevEUI did not match any rows")
-	}
-	log.WithField("dev_eui", n.DevEUI).Info("node updated")
-	return nil
-}
-
-// DeleteNode deletes the Node matching the given DevEUI.
-func DeleteNode(db *sqlx.DB, devEUI lorawan.EUI64) error {
-	res, err := db.Exec("delete from node where dev_eui = $1",
-		devEUI[:],
-	)
-	if err != nil {
-		return err
-	}
-	ra, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if ra == 0 {
-		return errors.New("DevEUI did not match any rows")
-	}
-	log.WithField("dev_eui", devEUI).Info("node deleted")
-	return nil
-}
-
-// GetNode returns the Node for the given DevEUI.
-func GetNode(db *sqlx.DB, devEUI lorawan.EUI64) (Node, error) {
-	var node Node
-	return node, db.Get(&node, "select * from node where dev_eui = $1", devEUI[:])
 }

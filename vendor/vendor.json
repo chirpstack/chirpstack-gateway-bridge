@@ -8,15 +8,24 @@
 			"revisionTime": "2016-02-24T16:10:30-05:00"
 		},
 		{
-			"path": "github.com/brocaar/loraserver",
-			"revision": "5e0e8a2f8b71c94de50bba48b31e22d6884c09d7",
-			"revisionTime": "2016-03-06T18:07:13+01:00"
+			"checksumSHA1": "gJvHmcPgjGimv4cWOVPWQ0m+/DY=",
+			"path": "github.com/brocaar/loraserver/models",
+			"revision": "77af23686140a51ea0638264f23c93485ee7f1ad",
+			"revisionTime": "2016-04-10T15:42:50Z"
 		},
 		{
+			"checksumSHA1": "GXGqY4EXME6ovpo8+Kf3fKm0Wpg=",
 			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/brocaar/lorawan",
 			"path": "github.com/brocaar/lorawan",
-			"revision": "c438d5f8f0ba320ae31207ba4bb0eeb6b2926bc2",
-			"revisionTime": "2016-03-06T10:25:03+01:00"
+			"revision": "7859bfd9691358ffc4e228c2ff4319e5cedab958",
+			"revisionTime": "2016-04-10T19:02:12Z"
+		},
+		{
+			"checksumSHA1": "oEl6qsQxkyAmp4jq2DcHA4AwTnM=",
+			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/brocaar/lorawan/band",
+			"path": "github.com/brocaar/lorawan/band",
+			"revision": "7859bfd9691358ffc4e228c2ff4319e5cedab958",
+			"revisionTime": "2016-04-10T19:02:12Z"
 		},
 		{
 			"path": "github.com/codegangsta/cli",
@@ -24,57 +33,23 @@
 			"revisionTime": "2016-02-27T08:56:50-08:00"
 		},
 		{
-			"origin": "github.com/brocaar/loraserver/vendor/github.com/garyburd/redigo/internal",
-			"path": "github.com/garyburd/redigo/internal",
-			"revision": "5e0e8a2f8b71c94de50bba48b31e22d6884c09d7",
-			"revisionTime": "2016-03-06T18:07:13+01:00"
-		},
-		{
-			"origin": "github.com/brocaar/loraserver/vendor/github.com/garyburd/redigo/redis",
-			"path": "github.com/garyburd/redigo/redis",
-			"revision": "5e0e8a2f8b71c94de50bba48b31e22d6884c09d7",
-			"revisionTime": "2016-03-06T18:07:13+01:00"
-		},
-		{
+			"checksumSHA1": "YEZ/qI/rjyPhyyjuGI0NysuKIfA=",
 			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/jacobsa/crypto/cmac",
 			"path": "github.com/jacobsa/crypto/cmac",
 			"revision": "bf13d379f5e7e0bbfc85ad339211f5c0dde70f95",
-			"revisionTime": "2016-02-18T11:02:31+11:00"
+			"revisionTime": "2016-02-18T00:02:31Z"
 		},
 		{
+			"checksumSHA1": "NBvtX91AEKxFLmj8mwwhXEKl6d0=",
 			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/jacobsa/crypto/common",
 			"path": "github.com/jacobsa/crypto/common",
 			"revision": "bf13d379f5e7e0bbfc85ad339211f5c0dde70f95",
-			"revisionTime": "2016-02-18T11:02:31+11:00"
-		},
-		{
-			"origin": "github.com/brocaar/loraserver/vendor/github.com/jmoiron/sqlx",
-			"path": "github.com/jmoiron/sqlx",
-			"revision": "5e0e8a2f8b71c94de50bba48b31e22d6884c09d7",
-			"revisionTime": "2016-03-06T18:07:13+01:00"
-		},
-		{
-			"origin": "github.com/brocaar/loraserver/vendor/github.com/jmoiron/sqlx/reflectx",
-			"path": "github.com/jmoiron/sqlx/reflectx",
-			"revision": "5e0e8a2f8b71c94de50bba48b31e22d6884c09d7",
-			"revisionTime": "2016-03-06T18:07:13+01:00"
+			"revisionTime": "2016-02-18T00:02:31Z"
 		},
 		{
 			"path": "github.com/jtolds/gls",
 			"revision": "8ddce2a84170772b95dd5d576c48d517b22cac63",
 			"revisionTime": "2016-01-05T15:08:40-07:00"
-		},
-		{
-			"origin": "github.com/brocaar/loraserver/vendor/github.com/lib/pq",
-			"path": "github.com/lib/pq",
-			"revision": "5e0e8a2f8b71c94de50bba48b31e22d6884c09d7",
-			"revisionTime": "2016-03-06T18:07:13+01:00"
-		},
-		{
-			"origin": "github.com/brocaar/loraserver/vendor/github.com/lib/pq/oid",
-			"path": "github.com/lib/pq/oid",
-			"revision": "5e0e8a2f8b71c94de50bba48b31e22d6884c09d7",
-			"revisionTime": "2016-03-06T18:07:13+01:00"
 		},
 		{
 			"path": "github.com/smartystreets/assertions",
@@ -111,5 +86,6 @@
 			"revision": "08f168e593b5aab61849054b77981de812666697",
 			"revisionTime": "2016-02-26T23:10:08-08:00"
 		}
-	]
+	],
+	"rootPath": "github.com/brocaar/lora-semtech-bridge"
 }
