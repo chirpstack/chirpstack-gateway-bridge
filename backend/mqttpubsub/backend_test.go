@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 	"testing"
 
-	"github.com/brocaar/loraserver"
+	"github.com/brocaar/loraserver/models"
 	"github.com/eclipse/paho.mqtt.golang"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -27,9 +27,9 @@ func TestBackend(t *testing.T) {
 			defer backend.Close()
 
 			Convey("Given the MQTT client is subscribed to RX packets", func() {
-				rxPacketChan := make(chan loraserver.RXPacket)
+				rxPacketChan := make(chan models.RXPacket)
 				token := c.Subscribe("gateway/+/rx", 0, func(c mqtt.Client, msg mqtt.Message) {
-					var rxPacket loraserver.RXPacket
+					var rxPacket models.RXPacket
 					dec := gob.NewDecoder(bytes.NewReader(msg.Payload()))
 					if err := dec.Decode(&rxPacket); err != nil {
 						t.Fatal(err)
@@ -40,8 +40,8 @@ func TestBackend(t *testing.T) {
 				So(token.Error(), ShouldBeNil)
 
 				Convey("When publishing a RXPacket", func() {
-					rxPacket := loraserver.RXPacket{
-						RXInfo: loraserver.RXInfo{
+					rxPacket := models.RXPacket{
+						RXInfo: models.RXInfo{
 							MAC: [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 						},
 					}
@@ -61,8 +61,8 @@ func TestBackend(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When publishing a TXPacket from the MQTT client", func() {
-					txPacket := loraserver.TXPacket{
-						TXInfo: loraserver.TXInfo{
+					txPacket := models.TXPacket{
+						TXInfo: models.TXInfo{
 							MAC: [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 						},
 					}

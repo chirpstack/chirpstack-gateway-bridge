@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/brocaar/loraserver"
+	"github.com/brocaar/loraserver/models"
 	"github.com/brocaar/lorawan"
 	"github.com/eclipse/paho.mqtt.golang"
 )
@@ -14,13 +14,13 @@ import (
 // Backend implements a MQTT pub-sub backend.
 type Backend struct {
 	conn         mqtt.Client
-	txPacketChan chan loraserver.TXPacket
+	txPacketChan chan models.TXPacket
 }
 
 // NewBackend creates a new Backend.
 func NewBackend(server, username, password string) (*Backend, error) {
 	b := Backend{
-		txPacketChan: make(chan loraserver.TXPacket),
+		txPacketChan: make(chan models.TXPacket),
 	}
 
 	opts := mqtt.NewClientOptions()
@@ -44,7 +44,7 @@ func (b *Backend) Close() {
 }
 
 // TXPacketChan returns the TXPacket channel.
-func (b *Backend) TXPacketChan() chan loraserver.TXPacket {
+func (b *Backend) TXPacketChan() chan models.TXPacket {
 	return b.txPacketChan
 }
 
@@ -71,13 +71,13 @@ func (b *Backend) UnSubscribeGatewayTX(mac lorawan.EUI64) error {
 }
 
 // PublishGatewayRX publishes a RX packet to the MQTT broker.
-func (b *Backend) PublishGatewayRX(mac lorawan.EUI64, rxPacket loraserver.RXPacket) error {
+func (b *Backend) PublishGatewayRX(mac lorawan.EUI64, rxPacket models.RXPacket) error {
 	topic := fmt.Sprintf("gateway/%s/rx", mac.String())
 	return b.publish(topic, rxPacket)
 }
 
 // PublishGatewayStats publishes a GatewayStatsPacket to the MQTT broker.
-func (b *Backend) PublishGatewayStats(mac lorawan.EUI64, stats loraserver.GatewayStatsPacket) error {
+func (b *Backend) PublishGatewayStats(mac lorawan.EUI64, stats models.GatewayStatsPacket) error {
 	topic := fmt.Sprintf("gateway/%s/stats", mac.String())
 	return b.publish(topic, stats)
 }
@@ -98,7 +98,7 @@ func (b *Backend) publish(topic string, v interface{}) error {
 }
 
 func (b *Backend) txPacketHandler(c mqtt.Client, msg mqtt.Message) {
-	var txPacket loraserver.TXPacket
+	var txPacket models.TXPacket
 	dec := gob.NewDecoder(bytes.NewReader(msg.Payload()))
 	if err := dec.Decode(&txPacket); err != nil {
 		log.Errorf("backend/mqttpubsub: could not decode TXPacket: %s", err)

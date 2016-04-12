@@ -5,17 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
+	"strconv"
 	"sync"
 	"time"
 
-	"github.com/brocaar/loraserver"
+	"github.com/brocaar/loraserver/models"
 	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/band"
 
 	log "github.com/Sirupsen/logrus"
 )
 
 var errGatewayDoesNotExist = errors.New("gateway does not exist")
 var gatewayCleanupDuration = -1 * time.Minute
+var loRaDataRateRegex = regexp.MustCompile(`SF(\d+)BW(\d+)`)
 
 type udpPacket struct {
 	addr *net.UDPAddr
@@ -76,8 +80,8 @@ func (c *gateways) cleanup() error {
 // Backend implements a Semtech gateway backend.
 type Backend struct {
 	conn        *net.UDPConn
-	rxChan      chan loraserver.RXPacket
-	statsChan   chan loraserver.GatewayStatsPacket
+	rxChan      chan models.RXPacket
+	statsChan   chan models.GatewayStatsPacket
 	udpSendChan chan udpPacket
 	closed      bool
 	gateways    gateways
@@ -98,8 +102,8 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 
 	b := &Backend{
 		conn:        conn,
-		rxChan:      make(chan loraserver.RXPacket),
-		statsChan:   make(chan loraserver.GatewayStatsPacket),
+		rxChan:      make(chan models.RXPacket),
+		statsChan:   make(chan models.GatewayStatsPacket),
 		udpSendChan: make(chan udpPacket),
 		gateways: gateways{
 			gateways: make(map[lorawan.EUI64]gateway),
@@ -150,17 +154,17 @@ func (b *Backend) Close() error {
 }
 
 // RXPacketChan returns the channel containing the received RX packets.
-func (b *Backend) RXPacketChan() chan loraserver.RXPacket {
+func (b *Backend) RXPacketChan() chan models.RXPacket {
 	return b.rxChan
 }
 
 // StatsChan returns the channel containg the received gateway stats.
-func (b *Backend) StatsChan() chan loraserver.GatewayStatsPacket {
+func (b *Backend) StatsChan() chan models.GatewayStatsPacket {
 	return b.statsChan
 }
 
 // Send sends the given packet to the gateway.
-func (b *Backend) Send(txPacket loraserver.TXPacket) error {
+func (b *Backend) Send(txPacket models.TXPacket) error {
 	gw, err := b.gateways.get(txPacket.TXInfo.MAC)
 	if err != nil {
 		return err
@@ -341,9 +345,9 @@ func (b *Backend) handleRXPacket(addr *net.UDPAddr, mac lorawan.EUI64, rxpk RXPK
 }
 
 // newGatewayStatsPacket from Stat transforms a Semtech Stat packet into a
-// loraserver.GatewayStatsPacket.
-func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) loraserver.GatewayStatsPacket {
-	return loraserver.GatewayStatsPacket{
+// models.GatewayStatsPacket.
+func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) models.GatewayStatsPacket {
+	return models.GatewayStatsPacket{
 		Time:                time.Time(stat.Time),
 		MAC:                 mac,
 		Latitude:            stat.Lati,
@@ -354,44 +358,45 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) loraserver.GatewayStats
 	}
 }
 
-// newRXPacketFromRXPK transforms a Semtech packet into a loraserver.RXPacket.
-func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (loraserver.RXPacket, error) {
+// newRXPacketFromRXPK transforms a Semtech packet into a models.RXPacket.
+func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (models.RXPacket, error) {
 	phy := lorawan.NewPHYPayload(true) // uplink payload
 	bytes, err := base64.StdEncoding.DecodeString(rxpk.Data)
 	if err != nil {
-		return loraserver.RXPacket{}, fmt.Errorf("could not base64 decode data: %s", err)
+		return models.RXPacket{}, fmt.Errorf("could not base64 decode data: %s", err)
 	}
 	if err := phy.UnmarshalBinary(bytes); err != nil {
-		return loraserver.RXPacket{}, fmt.Errorf("could not unmarshal PHYPayload: %s", err)
+		return models.RXPacket{}, fmt.Errorf("could not unmarshal PHYPayload: %s", err)
 	}
 
-	rxPacket := loraserver.RXPacket{
+	dataRate, err := newDataRateFromDatR(rxpk.DatR)
+	if err != nil {
+		return models.RXPacket{}, fmt.Errorf("could not get DataRate from DatR: %s", err)
+	}
+
+	rxPacket := models.RXPacket{
 		PHYPayload: phy,
-		RXInfo: loraserver.RXInfo{
-			MAC:        mac,
-			Time:       time.Time(rxpk.Time),
-			Timestamp:  rxpk.Tmst,
-			Frequency:  rxpk.Freq,
-			Channel:    uint(rxpk.Chan),
-			RFChain:    uint(rxpk.RFCh),
-			CRCStatus:  int(rxpk.Stat),
-			Modulation: rxpk.Modu,
-			DataRate: loraserver.DataRate{
-				LoRa: rxpk.DatR.LoRa,
-				FSK:  uint(rxpk.DatR.FSK),
-			},
-			CodeRate: rxpk.CodR,
-			RSSI:     int(rxpk.RSSI),
-			LoRaSNR:  rxpk.LSNR,
-			Size:     uint(rxpk.Size),
+		RXInfo: models.RXInfo{
+			MAC:       mac,
+			Time:      time.Time(rxpk.Time),
+			Timestamp: rxpk.Tmst,
+			Frequency: int(rxpk.Freq * 1000000),
+			Channel:   int(rxpk.Chan),
+			RFChain:   int(rxpk.RFCh),
+			CRCStatus: int(rxpk.Stat),
+			DataRate:  dataRate,
+			CodeRate:  rxpk.CodR,
+			RSSI:      int(rxpk.RSSI),
+			LoRaSNR:   rxpk.LSNR,
+			Size:      int(rxpk.Size),
 		},
 	}
 	return rxPacket, nil
 }
 
-// newTXPKFromTXPacket transforms a loraserver.TXPacket into a Semtech
+// newTXPKFromTXPacket transforms a models.TXPacket into a Semtech
 // compatible packet.
-func newTXPKFromTXPacket(txPacket loraserver.TXPacket) (TXPK, error) {
+func newTXPKFromTXPacket(txPacket models.TXPacket) (TXPK, error) {
 	b, err := txPacket.PHYPayload.MarshalBinary()
 	if err != nil {
 		return TXPK{}, err
@@ -400,24 +405,66 @@ func newTXPKFromTXPacket(txPacket loraserver.TXPacket) (TXPK, error) {
 	txpk := TXPK{
 		Imme: txPacket.TXInfo.Immediately,
 		Tmst: txPacket.TXInfo.Timestamp,
-		Freq: txPacket.TXInfo.Frequency,
-		RFCh: uint8(txPacket.TXInfo.RFChain),
+		Freq: float64(txPacket.TXInfo.Frequency) / 1000000,
 		Powe: uint8(txPacket.TXInfo.Power),
-		Modu: txPacket.TXInfo.DataRate.Modulation(),
-		DatR: DatR{
-			LoRa: txPacket.TXInfo.DataRate.LoRa,
-			FSK:  uint32(txPacket.TXInfo.DataRate.FSK),
-		},
+		Modu: string(txPacket.TXInfo.DataRate.Modulation),
+		DatR: newDatRfromDataRate(txPacket.TXInfo.DataRate),
 		CodR: txPacket.TXInfo.CodeRate,
-		FDev: uint16(txPacket.TXInfo.FrequencyDeviation),
 		Size: uint16(len(b)),
-		NCRC: txPacket.TXInfo.DisableCRC,
 		Data: base64.RawStdEncoding.EncodeToString(b),
 	}
 
-	if txPacket.TXInfo.DataRate.Modulation() == "LORA" {
+	// TODO: do testing with FSK modulation
+	if txPacket.TXInfo.DataRate.Modulation == band.LoRaModulation {
 		txpk.IPol = true
 	}
 
 	return txpk, nil
+}
+
+func newDataRateFromDatR(d DatR) (band.DataRate, error) {
+	var dr band.DataRate
+
+	if d.LoRa != "" {
+		// parse e.g. SF12BW250 into separate variables
+		match := loRaDataRateRegex.FindStringSubmatch(d.LoRa)
+		if len(match) != 3 {
+			return dr, errors.New("could not parse LoRa data rate")
+		}
+
+		// cast variables to ints
+		sf, err := strconv.Atoi(match[1])
+		if err != nil {
+			return dr, fmt.Errorf("could not convert spread factor to int: %s", err)
+		}
+		bw, err := strconv.Atoi(match[2])
+		if err != nil {
+			return dr, fmt.Errorf("could not convert bandwith to int: %s", err)
+		}
+
+		dr.Modulation = band.LoRaModulation
+		dr.SpreadFactor = sf
+		dr.Bandwith = bw
+		return dr, nil
+	}
+
+	if d.FSK != 0 {
+		dr.Modulation = band.FSKModulation
+		dr.DataRate = int(d.FSK)
+		return dr, nil
+	}
+
+	return dr, errors.New("could not convert DatR to DataRate, DatR is empty / modulation unknown")
+}
+
+func newDatRfromDataRate(d band.DataRate) DatR {
+	if d.Modulation == band.LoRaModulation {
+		return DatR{
+			LoRa: fmt.Sprintf("SF%dBW%d", d.SpreadFactor, d.Bandwith),
+		}
+	}
+
+	return DatR{
+		FSK: uint32(d.DataRate),
+	}
 }

@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/loraserver"
+	"github.com/brocaar/loraserver/models"
 	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/band"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -143,15 +144,17 @@ func TestBackend(t *testing.T) {
 				}
 				So(phy.SetMIC(nwkSKey), ShouldBeNil)
 
-				txPacket := loraserver.TXPacket{
-					TXInfo: loraserver.TXInfo{
+				txPacket := models.TXPacket{
+					TXInfo: models.TXInfo{
 						MAC:         [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 						Immediately: true,
 						Timestamp:   12345,
-						Frequency:   868.1,
+						Frequency:   868100000,
 						Power:       14,
-						DataRate: loraserver.DataRate{
-							LoRa: "SF12BW125",
+						DataRate: band.DataRate{
+							Modulation:   band.LoRaModulation,
+							SpreadFactor: 12,
+							Bandwith:     250,
 						},
 						CodeRate: "4/5",
 					},
@@ -207,7 +210,7 @@ func TestBackend(t *testing.T) {
 									Powe: 14,
 									Modu: "LORA",
 									DatR: DatR{
-										LoRa: "SF12BW125",
+										LoRa: "SF12BW250",
 									},
 									CodR: "4/5",
 									Size: uint16(len(b)),
@@ -242,7 +245,7 @@ func TestNewGatewayStatPacket(t *testing.T) {
 		Convey("When calling newGatewayStatsPacket", func() {
 			gw := newGatewayStatsPacket(mac, stat)
 			Convey("Then all fields are set correctly", func() {
-				So(gw, ShouldResemble, loraserver.GatewayStatsPacket{
+				So(gw, ShouldResemble, models.GatewayStatsPacket{
 					Time:                now,
 					MAC:                 mac,
 					Latitude:            1.234,
@@ -290,20 +293,23 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 
 				So(rxPacket.PHYPayload, ShouldResemble, phy)
 
-				So(rxPacket.RXInfo, ShouldResemble, loraserver.RXInfo{
-					MAC:        mac,
-					Time:       now,
-					Timestamp:  708016819,
-					Frequency:  868.5,
-					Channel:    2,
-					RFChain:    1,
-					CRCStatus:  1,
-					Modulation: "LORA",
-					DataRate:   loraserver.DataRate{LoRa: "SF7BW125"},
-					CodeRate:   "4/5",
-					RSSI:       -51,
-					LoRaSNR:    7,
-					Size:       16,
+				So(rxPacket.RXInfo, ShouldResemble, models.RXInfo{
+					MAC:       mac,
+					Time:      now,
+					Timestamp: 708016819,
+					Frequency: 868500000,
+					Channel:   2,
+					RFChain:   1,
+					CRCStatus: 1,
+					DataRate: band.DataRate{
+						Modulation:   band.LoRaModulation,
+						SpreadFactor: 7,
+						Bandwith:     125,
+					},
+					CodeRate: "4/5",
+					RSSI:     -51,
+					LoRaSNR:  7,
+					Size:     16,
 				})
 			})
 		})
