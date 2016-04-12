@@ -21,7 +21,7 @@ test:
 package: clean build
 	@echo "Creating package"
 	@mkdir -p builds/$(VERSION)
-	@cp -R bin/ builds/$(VERSION)/bin
+	@cp bin/* builds/$(VERSION)
 	@cd builds/$(VERSION)/ && tar -pczf ../lora_semtech_bridge_$(VERSION)_linux_amd64.tar.gz .
 	@rm -rf builds/$(VERSION)
 
