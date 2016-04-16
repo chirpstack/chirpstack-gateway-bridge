@@ -7,6 +7,7 @@ version <= 0.4.x!
 
 * Small RXPacket and TXPacket changes.
 * Changed to JSON as marshaling format (was Gob).
+* Re-subscribe on TX topics after a MQTT re-connect
 
 ## 1.0.1
 
