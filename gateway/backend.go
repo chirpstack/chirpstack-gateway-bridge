@@ -360,12 +360,8 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) models.GatewayStatsPack
 
 // newRXPacketFromRXPK transforms a Semtech packet into a models.RXPacket.
 func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (models.RXPacket, error) {
-	phy := lorawan.NewPHYPayload(true) // uplink payload
-	bytes, err := base64.StdEncoding.DecodeString(rxpk.Data)
-	if err != nil {
-		return models.RXPacket{}, fmt.Errorf("could not base64 decode data: %s", err)
-	}
-	if err := phy.UnmarshalBinary(bytes); err != nil {
+	var phy lorawan.PHYPayload
+	if err := phy.UnmarshalText([]byte(rxpk.Data)); err != nil {
 		return models.RXPacket{}, fmt.Errorf("could not unmarshal PHYPayload: %s", err)
 	}
 
@@ -444,7 +440,7 @@ func newDataRateFromDatR(d DatR) (band.DataRate, error) {
 
 		dr.Modulation = band.LoRaModulation
 		dr.SpreadFactor = sf
-		dr.Bandwith = bw
+		dr.Bandwidth = bw
 		return dr, nil
 	}
 
@@ -460,7 +456,7 @@ func newDataRateFromDatR(d DatR) (band.DataRate, error) {
 func newDatRfromDataRate(d band.DataRate) DatR {
 	if d.Modulation == band.LoRaModulation {
 		return DatR{
-			LoRa: fmt.Sprintf("SF%dBW%d", d.SpreadFactor, d.Bandwith),
+			LoRa: fmt.Sprintf("SF%dBW%d", d.SpreadFactor, d.Bandwidth),
 		}
 	}
 

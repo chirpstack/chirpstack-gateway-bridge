@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/brocaar/loraserver/models"
+	"github.com/brocaar/lorawan"
 	"github.com/eclipse/paho.mqtt.golang"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -44,6 +45,13 @@ func TestBackend(t *testing.T) {
 							MAC:  [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 							Time: time.Now().UTC(),
 						},
+						PHYPayload: lorawan.PHYPayload{
+							MHDR: lorawan.MHDR{
+								MType: lorawan.UnconfirmedDataUp,
+								Major: lorawan.LoRaWANR1,
+							},
+							MACPayload: &lorawan.MACPayload{},
+						},
 					}
 
 					err := backend.PublishGatewayRX([8]byte{1, 2, 3, 4, 5, 6, 7, 8}, rxPacket)
@@ -64,6 +72,13 @@ func TestBackend(t *testing.T) {
 					txPacket := models.TXPacket{
 						TXInfo: models.TXInfo{
 							MAC: [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+						},
+						PHYPayload: lorawan.PHYPayload{
+							MHDR: lorawan.MHDR{
+								MType: lorawan.UnconfirmedDataUp,
+								Major: lorawan.LoRaWANR1,
+							},
+							MACPayload: &lorawan.MACPayload{},
 						},
 					}
 					b, err := json.Marshal(txPacket)

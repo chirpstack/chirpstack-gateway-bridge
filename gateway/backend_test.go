@@ -135,12 +135,13 @@ func TestBackend(t *testing.T) {
 
 			Convey("Given a TXPacket", func() {
 				var nwkSKey lorawan.AES128Key
-				macPL := lorawan.NewMACPayload(false)
-				phy := lorawan.NewPHYPayload(false)
-				phy.MACPayload = macPL
-				phy.MHDR = lorawan.MHDR{
-					MType: lorawan.UnconfirmedDataDown,
-					Major: lorawan.LoRaWANR1,
+
+				phy := lorawan.PHYPayload{
+					MHDR: lorawan.MHDR{
+						MType: lorawan.UnconfirmedDataDown,
+						Major: lorawan.LoRaWANR1,
+					},
+					MACPayload: &lorawan.MACPayload{},
 				}
 				So(phy.SetMIC(nwkSKey), ShouldBeNil)
 
@@ -154,7 +155,7 @@ func TestBackend(t *testing.T) {
 						DataRate: band.DataRate{
 							Modulation:   band.LoRaModulation,
 							SpreadFactor: 12,
-							Bandwith:     250,
+							Bandwidth:    250,
 						},
 						CodeRate: "4/5",
 					},
@@ -198,7 +199,7 @@ func TestBackend(t *testing.T) {
 						var pullResp PullRespPacket
 						So(pullResp.UnmarshalBinary(buf[:i]), ShouldBeNil)
 
-						b, err := phy.MarshalBinary()
+						str, err := phy.MarshalText()
 						So(err, ShouldBeNil)
 
 						So(pullResp, ShouldResemble, PullRespPacket{
@@ -214,7 +215,7 @@ func TestBackend(t *testing.T) {
 									},
 									CodR: "4/5",
 									Size: uint16(len(b)),
-									Data: base64.StdEncoding.EncodeToString(b),
+									Data: string(str),
 									IPol: true,
 								},
 							},
@@ -288,7 +289,7 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 				b, err := base64.StdEncoding.DecodeString(rxpk.Data)
 				So(err, ShouldBeNil)
 
-				phy := lorawan.NewPHYPayload(true)
+				var phy lorawan.PHYPayload
 				So(phy.UnmarshalBinary(b), ShouldBeNil)
 
 				So(rxPacket.PHYPayload, ShouldResemble, phy)
@@ -304,7 +305,7 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 					DataRate: band.DataRate{
 						Modulation:   band.LoRaModulation,
 						SpreadFactor: 7,
-						Bandwith:     125,
+						Bandwidth:    125,
 					},
 					CodeRate: "4/5",
 					RSSI:     -51,
