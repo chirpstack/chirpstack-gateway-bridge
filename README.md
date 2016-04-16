@@ -48,6 +48,28 @@ INFO[0006] backend/mqttpubsub: publishing message        topic=gateway/1dee08d0b
 
 * Now it is time to setup the [LoRa Server](https://github.com/brocaar/loraserver)!
 
+## Debugging
+
+To view all incoming and outgoing MQTT messages, you can use the ``mosquitto_sub``
+tool.
+
+```bash
+$ mosquitto_sub -t "#" -v
+gateway/1dee08d0b691d149/stats {"mac":"1dee08d0b691d149","time":"2016-04-16T10:08:11Z","latitude":0,"longitude":0,"altitude":0,"rxPacketsReceived":0,"rxPacketsReceivedOK":0}
+gateway/1dee08d0b691d149/rx {"rxInfo":{"mac":"1dee08d0b691d149","time":"2016-04-16T10:08:30.005418Z","timestamp":1623489499,"frequency":868300000,"channel":1,"rfChain":1,"crcStatus":1,"codeRate":"4/5","rssi":-48,"loRaSNR":10,"size":23,"dataRate":{"modulation":"LORA","spreadFactor":7,"bandwidth":125}},"phyPayload":"AAEBAQEBAQEBAgICAgICAgJzTIBGXXg="}
+gateway/1dee08d0b691d149/stats {"mac":"1dee08d0b691d149","time":"2016-04-16T10:08:41Z","latitude":0,"longitude":0,"altitude":0,"rxPacketsReceived":1,"rxPacketsReceivedOK":1}
+```
+
+## Data model
+
+The data model is defined in the [LoRa Server](https://github.com/brocaar/loraserver)
+project. JSON is used as marshaling format. See:
+
+* [RXPacket](https://godoc.org/github.com/brocaar/loraserver/models/#RXPacket) (packet received by the gateway)
+* [TXPacket](https://godoc.org/github.com/brocaar/loraserver/models/#TXPacket) (packet to be sent by the gateway)
+* [GatewayStatsPacket](https://godoc.org/github.com/brocaar/loraserver/models/#GatewayStatsPacket) (gateway stats)
+
+
 ## License
 
 This package is licensed under the MIT license. See ``LICENSE``.

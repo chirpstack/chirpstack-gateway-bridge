@@ -72,7 +72,7 @@ func run(c *cli.Context) {
 func main() {
 	app := cli.NewApp()
 	app.Name = "semtech-bridge"
-	app.Usage = "Semtech UDP protocol speaking gateway <-> MQTT"
+	app.Usage = "communicate with a LoRa gateway (Semtech UDP protocol) over MQTT"
 	app.Copyright = "See http://github.com/brocaar/lora-semtech-bridge for copyright information"
 	app.Version = version
 	app.Action = run
