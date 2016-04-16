@@ -14,18 +14,18 @@
 			"revisionTime": "2016-04-10T15:42:50Z"
 		},
 		{
-			"checksumSHA1": "GXGqY4EXME6ovpo8+Kf3fKm0Wpg=",
+			"checksumSHA1": "j8kFqS4GnkiizFG94cHR8zLMAZA=",
 			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/brocaar/lorawan",
 			"path": "github.com/brocaar/lorawan",
-			"revision": "7859bfd9691358ffc4e228c2ff4319e5cedab958",
-			"revisionTime": "2016-04-10T19:02:12Z"
+			"revision": "61f52e3008626c275b62a72090a7ef13a6294764",
+			"revisionTime": "2016-04-16T09:33:49Z"
 		},
 		{
-			"checksumSHA1": "oEl6qsQxkyAmp4jq2DcHA4AwTnM=",
+			"checksumSHA1": "JhsEl+poxTkTUc4HyjvI7KTnIiw=",
 			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/brocaar/lorawan/band",
 			"path": "github.com/brocaar/lorawan/band",
-			"revision": "7859bfd9691358ffc4e228c2ff4319e5cedab958",
-			"revisionTime": "2016-04-10T19:02:12Z"
+			"revision": "61f52e3008626c275b62a72090a7ef13a6294764",
+			"revisionTime": "2016-04-16T09:33:49Z"
 		},
 		{
 			"path": "github.com/codegangsta/cli",
