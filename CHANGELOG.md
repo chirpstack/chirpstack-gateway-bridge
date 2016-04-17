@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+* Rename DataRate to BitRate (FSK modulation)
+
 ## 1.1.0
 
 Note that the changes below are incompatible with LoRa Server

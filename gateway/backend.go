@@ -446,7 +446,7 @@ func newDataRateFromDatR(d DatR) (band.DataRate, error) {
 
 	if d.FSK != 0 {
 		dr.Modulation = band.FSKModulation
-		dr.DataRate = int(d.FSK)
+		dr.BitRate = int(d.FSK)
 		return dr, nil
 	}
 
@@ -461,6 +461,6 @@ func newDatRfromDataRate(d band.DataRate) DatR {
 	}
 
 	return DatR{
-		FSK: uint32(d.DataRate),
+		FSK: uint32(d.BitRate),
 	}
 }
