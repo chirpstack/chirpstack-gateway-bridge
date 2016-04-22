@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+* Multi-platform binaries are now provided.
+
 ## 1.1.1
 
 * Rename DataRate to BitRate (FSK modulation)
