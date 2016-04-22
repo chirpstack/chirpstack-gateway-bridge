@@ -1,7 +1,7 @@
 FROM golang:1.6.1
 
 ENV PROJECT_PATH=/go/src/github.com/brocaar/lora-semtech-bridge
-ENV PATH=$PATH:$PROJECT_PATH/bin
+ENV PATH=$PATH:$PROJECT_PATH/build
 
 # install tools
 RUN go get github.com/golang/lint/golint

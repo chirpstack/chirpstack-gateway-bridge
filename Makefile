@@ -1,14 +1,17 @@
 PKGS := $(shell go list ./... | grep -v /vendor/)
 VERSION := $(shell git describe --always)
+GOOS ?= linux
+GOARCH ?= amd64
 
 build:
-	@echo "Compiling source"
-	@mkdir -p bin
-	@GOBIN="$(CURDIR)/bin" go install -ldflags "-X main.version=$(VERSION)" $(PKGS)
+	@echo "Compiling source for $(GOOS) $(GOARCH)"
+	@mkdir -p build
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags "-X main.version=$(VERSION)" -o build/semtech-bridge$(BINEXT) cmd/semtech-bridge/main.go
 
 clean:
 	@echo "Cleaning up workspace"
-	@rm -rf bin
+	@rm -rf build
+	@rm -rf dist/$(VERSION)
 
 test:
 	@echo "Running tests"
@@ -19,16 +22,16 @@ test:
 	@go test -cover -v $(PKGS)
 
 package: clean build
-	@echo "Creating package"
-	@mkdir -p builds/$(VERSION)
-	@cp bin/* builds/$(VERSION)
-	@cd builds/$(VERSION)/ && tar -pczf ../lora_semtech_bridge_$(VERSION)_linux_amd64.tar.gz .
-	@rm -rf builds/$(VERSION)
+	@echo "Creating package for $(GOOS) $(GOARCH)"
+	@mkdir -p dist/$(VERSION)
+	@cp build/* dist/$(VERSION)
+	@cd dist/$(VERSION)/ && tar -pczf ../lora_semtech_bridge_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz .
+	@rm -rf dist/$(VERSION)
 
 # shortcuts for development
 
 serve: build
-	./bin/semtech-bridge
+	./build/semtech-bridge
 
 run-compose-test:
 	docker-compose run --rm semtechbridge make test
