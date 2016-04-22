@@ -1,3 +1,4 @@
+.PHONY: build clean test package serve run-compose-test
 PKGS := $(shell go list ./... | grep -v /vendor/)
 VERSION := $(shell git describe --always)
 GOOS ?= linux
