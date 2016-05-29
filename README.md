@@ -34,16 +34,19 @@ Depending upon your LoRa Gateway type, you might need to install the
    should see ``PullData`` packets coming in. E.g.
 
 ``` bash
-$ ./bin/semtech-bridge
-INFO[0000] backend/mqttpubsub: connecting to mqtt server  server=tcp://127.0.0.1:1883
-INFO[0000] starting gateway udp listener                 addr=0.0.0.0:1700
-INFO[0006] incoming gateway packet                       addr=192.168.1.4:54993 type=PullData
+$ ./semtech-bridge
+INFO[0000] backend/mqttpubsub: connecting to mqtt broker  server=tcp://127.0.0.1:1883
+INFO[0000] gateway: starting gateway udp listener        addr=0.0.0.0:1700
+INFO[0000] backend/mqttpubsub: connected to mqtt broker
+INFO[0006] gateway: received udp packet from gateway     addr=192.168.1.8:45082 type=PullData
 INFO[0006] backend/mqttpubsub: subscribing to topic      topic=gateway/1dee08d0b691d149/tx
-INFO[0006] outgoing gateway packet                       addr=192.168.1.4:54993 type=PullACK
-INFO[0006] incoming gateway packet                       addr=192.168.1.4:51926 type=PushData
-INFO[0006] stat packet received                          addr=192.168.1.4:51926 mac=1dee08d0b691d149
-INFO[0006] outgoing gateway packet                       addr=192.168.1.4:51926 type=PushACK
-INFO[0006] backend/mqttpubsub: publishing message        topic=gateway/1dee08d0b691d149/stats
+INFO[0006] gateway: sending udp packet to gateway        addr=192.168.1.8:45082 type=PullACK
+INFO[0016] gateway: received udp packet from gateway     addr=192.168.1.8:45082 type=PullData
+INFO[0016] gateway: sending udp packet to gateway        addr=192.168.1.8:45082 type=PullACK
+INFO[0021] gateway: received udp packet from gateway     addr=192.168.1.8:45738 type=PushData
+INFO[0021] gateway: stat packet received                 addr=192.168.1.8:45738 mac=1dee08d0b691d149
+INFO[0021] gateway: sending udp packet to gateway        addr=192.168.1.8:45738 type=PushACK
+INFO[0021] backend/mqttpubsub: publishing packet         topic=gateway/1dee08d0b691d149/stats
 ```
 
 * Now it is time to setup the [LoRa Server](https://github.com/brocaar/loraserver)!
