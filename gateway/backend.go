@@ -94,7 +94,7 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 	if err != nil {
 		return nil, err
 	}
-	log.WithField("addr", addr).Info("starting gateway udp listener")
+	log.WithField("addr", addr).Info("gateway: starting gateway udp listener")
 	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 	go func() {
 		for {
 			if err := b.gateways.cleanup(); err != nil {
-				log.Errorf("backend/mqttpubsub: gateways cleanup failed: %s", err)
+				log.Errorf("gateway: gateways cleanup failed: %s", err)
 			}
 			time.Sleep(time.Minute)
 		}
@@ -144,11 +144,13 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 
 // Close closes the backend.
 func (b *Backend) Close() error {
+	log.Info("gateway: closing gateway backend")
 	b.closed = true
 	close(b.udpSendChan)
 	if err := b.conn.Close(); err != nil {
 		return err
 	}
+	log.Info("gateway: handling last packets")
 	b.wg.Wait()
 	return nil
 }
@@ -180,7 +182,7 @@ func (b *Backend) Send(txPacket models.TXPacket) error {
 	}
 	bytes, err := pullResp.MarshalBinary()
 	if err != nil {
-		return err
+		return fmt.Errorf("gateway: json marshall PullRespPacket error: %s", err)
 	}
 	b.udpSendChan <- udpPacket{
 		data: bytes,
@@ -194,7 +196,7 @@ func (b *Backend) readPackets() error {
 	for {
 		i, addr, err := b.conn.ReadFromUDP(buf)
 		if err != nil {
-			return err
+			return fmt.Errorf("gateway: read from udp error: %s", err)
 		}
 		data := make([]byte, i)
 		copy(data, buf[:i])
@@ -203,7 +205,7 @@ func (b *Backend) readPackets() error {
 				log.WithFields(log.Fields{
 					"data_base64": base64.StdEncoding.EncodeToString(data),
 					"addr":        addr,
-				}).Errorf("could not handle packet: %s", err)
+				}).Errorf("gateway: could not handle packet: %s", err)
 			}
 		}(data)
 	}
@@ -216,13 +218,13 @@ func (b *Backend) sendPackets() error {
 			log.WithFields(log.Fields{
 				"addr":        p.addr,
 				"data_base64": base64.StdEncoding.EncodeToString(p.data),
-			}).Error("unknown packet type")
+			}).Error("gateway: unknown packet type")
 			continue
 		}
 		log.WithFields(log.Fields{
 			"addr": p.addr,
 			"type": pt,
-		}).Info("outgoing gateway packet")
+		}).Info("gateway: sending udp packet to gateway")
 
 		if _, err := b.conn.WriteToUDP(p.data, p.addr); err != nil {
 			return err
@@ -239,7 +241,7 @@ func (b *Backend) handlePacket(addr *net.UDPAddr, data []byte) error {
 	log.WithFields(log.Fields{
 		"addr": addr,
 		"type": pt,
-	}).Info("incoming gateway packet")
+	}).Info("gateway: received udp packet from gateway")
 
 	switch pt {
 	case PushData:
@@ -247,7 +249,7 @@ func (b *Backend) handlePacket(addr *net.UDPAddr, data []byte) error {
 	case PullData:
 		return b.handlePullData(addr, data)
 	default:
-		return fmt.Errorf("unknown packet type: %s", pt)
+		return fmt.Errorf("gateway: unknown packet type: %s", pt)
 	}
 }
 
@@ -317,7 +319,7 @@ func (b *Backend) handleStat(addr *net.UDPAddr, mac lorawan.EUI64, stat Stat) {
 	log.WithFields(log.Fields{
 		"addr": addr,
 		"mac":  mac,
-	}).Info("stat packet received")
+	}).Info("gateway: stat packet received")
 	b.statsChan <- gwStats
 }
 
@@ -327,7 +329,7 @@ func (b *Backend) handleRXPacket(addr *net.UDPAddr, mac lorawan.EUI64, rxpk RXPK
 		"mac":  mac,
 		"data": rxpk.Data,
 	}
-	log.WithFields(logFields).Info("rxpk packet received")
+	log.WithFields(logFields).Info("gateway: rxpk packet received")
 
 	// decode packet
 	rxPacket, err := newRXPacketFromRXPK(mac, rxpk)
@@ -337,8 +339,8 @@ func (b *Backend) handleRXPacket(addr *net.UDPAddr, mac lorawan.EUI64, rxpk RXPK
 
 	// check CRC
 	if rxPacket.RXInfo.CRCStatus != 1 {
-		log.WithFields(logFields).Warningf("invalid packet CRC: %d", rxPacket.RXInfo.CRCStatus)
-		return errors.New("invalid CRC")
+		log.WithFields(logFields).Warningf("gateway: invalid packet CRC: %d", rxPacket.RXInfo.CRCStatus)
+		return errors.New("gateway: invalid CRC")
 	}
 	b.rxChan <- rxPacket
 	return nil
@@ -362,12 +364,12 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) models.GatewayStatsPack
 func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (models.RXPacket, error) {
 	var phy lorawan.PHYPayload
 	if err := phy.UnmarshalText([]byte(rxpk.Data)); err != nil {
-		return models.RXPacket{}, fmt.Errorf("could not unmarshal PHYPayload: %s", err)
+		return models.RXPacket{}, fmt.Errorf("gateway: could not unmarshal PHYPayload: %s", err)
 	}
 
 	dataRate, err := newDataRateFromDatR(rxpk.DatR)
 	if err != nil {
-		return models.RXPacket{}, fmt.Errorf("could not get DataRate from DatR: %s", err)
+		return models.RXPacket{}, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)
 	}
 
 	rxPacket := models.RXPacket{
@@ -425,17 +427,17 @@ func newDataRateFromDatR(d DatR) (band.DataRate, error) {
 		// parse e.g. SF12BW250 into separate variables
 		match := loRaDataRateRegex.FindStringSubmatch(d.LoRa)
 		if len(match) != 3 {
-			return dr, errors.New("could not parse LoRa data rate")
+			return dr, errors.New("gateway: could not parse LoRa data rate")
 		}
 
 		// cast variables to ints
 		sf, err := strconv.Atoi(match[1])
 		if err != nil {
-			return dr, fmt.Errorf("could not convert spread factor to int: %s", err)
+			return dr, fmt.Errorf("gateway: could not convert spread factor to int: %s", err)
 		}
 		bw, err := strconv.Atoi(match[2])
 		if err != nil {
-			return dr, fmt.Errorf("could not convert bandwith to int: %s", err)
+			return dr, fmt.Errorf("gateway: could not convert bandwith to int: %s", err)
 		}
 
 		dr.Modulation = band.LoRaModulation
@@ -450,7 +452,7 @@ func newDataRateFromDatR(d DatR) (band.DataRate, error) {
 		return dr, nil
 	}
 
-	return dr, errors.New("could not convert DatR to DataRate, DatR is empty / modulation unknown")
+	return dr, errors.New("gateway: could not convert DatR to DataRate, DatR is empty / modulation unknown")
 }
 
 func newDatRfromDataRate(d band.DataRate) DatR {

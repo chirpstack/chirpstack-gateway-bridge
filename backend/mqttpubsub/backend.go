@@ -34,7 +34,7 @@ func NewBackend(server, username, password string) (*Backend, error) {
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 
-	log.WithField("server", server).Info("backend/mqttpubsub: connecting to MQTT server")
+	log.WithField("server", server).Info("backend/mqttpubsub: connecting to mqtt broker")
 	b.conn = mqtt.NewClient(opts)
 	if token := b.conn.Connect(); token.Wait() && token.Error() != nil {
 		return nil, token.Error()
@@ -100,7 +100,7 @@ func (b *Backend) publish(topic string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	log.WithField("topic", topic).Info("backend/mqttpubsub: publishing message")
+	log.WithField("topic", topic).Info("backend/mqttpubsub: publishing packet")
 	if token := b.conn.Publish(topic, 0, false, bytes); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
@@ -108,10 +108,10 @@ func (b *Backend) publish(topic string, v interface{}) error {
 }
 
 func (b *Backend) txPacketHandler(c mqtt.Client, msg mqtt.Message) {
-	log.WithField("topic", msg.Topic()).Info("backend/mqttpubsub: message received")
+	log.WithField("topic", msg.Topic()).Info("backend/mqttpubsub: packet received")
 	var txPacket models.TXPacket
 	if err := json.Unmarshal(msg.Payload(), &txPacket); err != nil {
-		log.Errorf("backend/mqttpubsub: could not decode TXPacket: %s", err)
+		log.Errorf("backend/mqttpubsub: decode tx packet error: %s", err)
 		return
 	}
 	b.txPacketChan <- txPacket
@@ -121,10 +121,10 @@ func (b *Backend) onConnected(c mqtt.Client) {
 	defer b.mutex.RUnlock()
 	b.mutex.RLock()
 
-	log.Info("backend/mqttpubsub: connected to mqtt server")
+	log.Info("backend/mqttpubsub: connected to mqtt broker")
 	if len(b.gateways) > 0 {
 		for {
-			log.WithField("topic_count", len(b.gateways)).Info("Backend/mqttpubsub: re-registering to gateway topics")
+			log.WithField("topic_count", len(b.gateways)).Info("backend/mqttpubsub: re-registering to gateway topics")
 			topics := make(map[string]byte)
 			for k := range b.gateways {
 				topics[fmt.Sprintf("gateway/%s/tx", k)] = 0

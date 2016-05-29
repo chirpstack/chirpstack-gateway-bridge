@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+
+* Minor log improvements.
+
 ## 1.1.2
 
 * Multi-platform binaries are now provided.
