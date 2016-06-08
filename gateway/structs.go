@@ -287,7 +287,7 @@ func (d *DatR) UnmarshalJSON(data []byte) error {
 // RXPK contain a RF packet and associated metadata.
 type RXPK struct {
 	Time CompactTime `json:"time"` // UTC time of pkt RX, us precision, ISO 8601 'compact' format (e.g. 2013-03-31T16:21:17.528002Z)
-	Tmst uint32      `json:"tmst"` // Internal timestamp of "RX finished" event (32b unsigned)
+	Tmst uint64      `json:"tmst"` // Internal timestamp of "RX finished" event (32b unsigned)
 	Freq float64     `json:"freq"` // RX central frequency in MHz (unsigned float, Hz precision)
 	Chan uint8       `json:"chan"` // Concentrator "IF" channel used for RX (unsigned integer)
 	RFCh uint8       `json:"rfch"` // Concentrator "RF chain" used for RX (unsigned integer)
@@ -317,7 +317,7 @@ type Stat struct {
 // TXPK contains a RF packet to be emitted and associated metadata.
 type TXPK struct {
 	Imme bool         `json:"imme"`           // Send packet immediately (will ignore tmst & time)
-	Tmst uint32       `json:"tmst,omitempty"` // Send packet on a certain timestamp value (will ignore time)
+	Tmst uint64       `json:"tmst,omitempty"` // Send packet on a certain timestamp value (will ignore time)
 	Time *CompactTime `json:"time,omitempty"` // Send packet at a certain time (GPS synchronization required)
 	Freq float64      `json:"freq"`           // TX central frequency in MHz (unsigned float, Hz precision)
 	RFCh uint8        `json:"rfch"`           // Concentrator "RF chain" used for TX (unsigned integer)
