@@ -216,6 +216,7 @@ func (p *PullRespPacket) UnmarshalBinary(data []byte) error {
 // gateway.
 type TXACKPacket struct {
 	RandomToken uint16
+	GatewayMAC  lorawan.EUI64
 	Payload     *TXACKPayload
 }
 
@@ -230,18 +231,19 @@ func (p TXACKPacket) MarshalBinary() ([]byte, error) {
 		}
 	}
 
-	out := make([]byte, 4, 4+len(pb))
+	out := make([]byte, 4, len(pb)+12)
 	out[0] = ProtocolVersion2
 	binary.LittleEndian.PutUint16(out[1:3], p.RandomToken)
 	out[3] = byte(TXACK)
+	out = append(out, p.GatewayMAC[:]...)
 	out = append(out, pb...)
 	return out, nil
 }
 
 // UnmarshalBinary decodes the object from binary form.
 func (p *TXACKPacket) UnmarshalBinary(data []byte) error {
-	if len(data) < 4 {
-		return errors.New("gateway: at least 4 bytes of data are expected")
+	if len(data) < 12 {
+		return errors.New("gateway: at least 12 bytes of data are expected")
 	}
 	if data[3] != byte(TXACK) {
 		return errors.New("gateway: identifier mismatch (TXACK expected)")
@@ -250,9 +252,12 @@ func (p *TXACKPacket) UnmarshalBinary(data []byte) error {
 		return ErrInvalidProtocolVersion
 	}
 	p.RandomToken = binary.LittleEndian.Uint16(data[1:3])
-	if len(data) > 4 {
+	for i := 0; i < 8; i++ {
+		p.GatewayMAC[i] = data[4+i]
+	}
+	if len(data) > 12 {
 		p.Payload = &TXACKPayload{}
-		return json.Unmarshal(data[4:], p.Payload)
+		return json.Unmarshal(data[12:], p.Payload)
 	}
 	return nil
 }

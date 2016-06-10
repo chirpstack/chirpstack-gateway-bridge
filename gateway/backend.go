@@ -248,6 +248,8 @@ func (b *Backend) handlePacket(addr *net.UDPAddr, data []byte) error {
 		return b.handlePushData(addr, data)
 	case PullData:
 		return b.handlePullData(addr, data)
+	case TXACK:
+		return b.handleTXACK(addr, data)
 	default:
 		return fmt.Errorf("gateway: unknown packet type: %s", pt)
 	}
@@ -343,6 +345,33 @@ func (b *Backend) handleRXPacket(addr *net.UDPAddr, mac lorawan.EUI64, rxpk RXPK
 		return errors.New("gateway: invalid CRC")
 	}
 	b.rxChan <- rxPacket
+	return nil
+}
+
+func (b *Backend) handleTXACK(addr *net.UDPAddr, data []byte) error {
+	var p TXACKPacket
+	if err := p.UnmarshalBinary(data); err != nil {
+		return err
+	}
+	var errBool bool
+
+	logFields := log.Fields{
+		"mac":          p.GatewayMAC,
+		"random_token": p.RandomToken,
+	}
+	if p.Payload != nil {
+		if p.Payload.TXPKACK.Error != "NONE" {
+			errBool = true
+		}
+		logFields["error"] = p.Payload.TXPKACK.Error
+	}
+
+	if errBool {
+		log.WithFields(logFields).Error("gateway: tx ack received")
+	} else {
+		log.WithFields(logFields).Info("gateway: tx ack received")
+	}
+
 	return nil
 }
 

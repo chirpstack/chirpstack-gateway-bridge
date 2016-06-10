@@ -281,28 +281,30 @@ func TestPullRespPacket(t *testing.T) {
 func TestTXACKPacket(t *testing.T) {
 	Convey("Given an empty TXACKPacket", t, func() {
 		var p TXACKPacket
-		Convey("Then MarshalBinary returns []byte{2, 0, 0, 5}", func() {
+		Convey("Then MarshalBinary returns []byte{2, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0}", func() {
 			b, err := p.MarshalBinary()
 			So(err, ShouldBeNil)
-			So(b, ShouldResemble, []byte{2, 0, 0, 5})
+			So(b, ShouldResemble, []byte{2, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0})
 		})
 
-		Convey("Given RandomToken=123", func() {
+		Convey("Given RandomToken=123 and GatewayMAC=[]byte{8, 7, 6, 5, 4, 3, 2, 1}", func() {
 			p.RandomToken = 123
-			Convey("Then MarshalBinary returns []byte{2, 123, 0, 5}", func() {
+			p.GatewayMAC = [8]byte{8, 7, 6, 5, 4, 3, 2, 1}
+			Convey("Then MarshalBinary returns []byte{2, 123, 0, 5, 8, 7, 6, 5, 4, 3, 2, 1}", func() {
 				b, err := p.MarshalBinary()
 				So(err, ShouldBeNil)
-				So(b[0:4], ShouldResemble, []byte{2, 123, 0, 5})
+				So(b, ShouldResemble, []byte{2, 123, 0, 5, 8, 7, 6, 5, 4, 3, 2, 1})
 			})
 		})
 
-		Convey("Given the slice []byte{2, 123, 0, 5}", func() {
-			b := []byte{2, 123, 0, 5}
+		Convey("Given the slice []byte{2, 123, 0, 5, 8, 7, 6, 5, 4, 3, 2, 1}", func() {
+			b := []byte{2, 123, 0, 5, 8, 7, 6, 5, 4, 3, 2, 1}
 
-			Convey("Then UnmarshalBinary return RandomToken=123", func() {
+			Convey("Then UnmarshalBinary return RandomToken=123 and GatewayMAC=[8]byte{8, 7, 6, 5, 4, 3, 2, 1}", func() {
 				err := p.UnmarshalBinary(b)
 				So(err, ShouldBeNil)
 				So(p.RandomToken, ShouldEqual, 123)
+				So(p.GatewayMAC[:], ShouldResemble, []byte{8, 7, 6, 5, 4, 3, 2, 1})
 				So(p.Payload, ShouldBeNil)
 			})
 		})
@@ -315,15 +317,15 @@ func TestTXACKPacket(t *testing.T) {
 				},
 			}
 
-			Convey("Then MarshalBinary returns []byte{2, 123, 0, 5, 123, 34, 116, 120, 112, 107, 95, 97, 99, 107, 34, 58, 123, 34, 101, 114, 114, 111, 114, 34, 58, 34, 67, 79, 76, 76, 73, 83, 73, 79, 78, 95, 66, 69, 65, 67, 79, 78, 34, 125, 125}", func() {
+			Convey("Then MarshalBinary returns []byte{2, 123, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 123, 34, 116, 120, 112, 107, 95, 97, 99, 107, 34, 58, 123, 34, 101, 114, 114, 111, 114, 34, 58, 34, 67, 79, 76, 76, 73, 83, 73, 79, 78, 95, 66, 69, 65, 67, 79, 78, 34, 125, 125}", func() {
 				b, err := p.MarshalBinary()
 				So(err, ShouldBeNil)
-				So(b, ShouldResemble, []byte{2, 123, 0, 5, 123, 34, 116, 120, 112, 107, 95, 97, 99, 107, 34, 58, 123, 34, 101, 114, 114, 111, 114, 34, 58, 34, 67, 79, 76, 76, 73, 83, 73, 79, 78, 95, 66, 69, 65, 67, 79, 78, 34, 125, 125})
+				So(b, ShouldResemble, []byte{2, 123, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 123, 34, 116, 120, 112, 107, 95, 97, 99, 107, 34, 58, 123, 34, 101, 114, 114, 111, 114, 34, 58, 34, 67, 79, 76, 76, 73, 83, 73, 79, 78, 95, 66, 69, 65, 67, 79, 78, 34, 125, 125})
 			})
 		})
 
-		Convey("Given the slice []byte{2, 123, 0, 5, 123, 34, 116, 120, 112, 107, 95, 97, 99, 107, 34, 58, 123, 34, 101, 114, 114, 111, 114, 34, 58, 34, 67, 79, 76, 76, 73, 83, 73, 79, 78, 95, 66, 69, 65, 67, 79, 78, 34, 125, 125}", func() {
-			b := []byte{2, 123, 0, 5, 123, 34, 116, 120, 112, 107, 95, 97, 99, 107, 34, 58, 123, 34, 101, 114, 114, 111, 114, 34, 58, 34, 67, 79, 76, 76, 73, 83, 73, 79, 78, 95, 66, 69, 65, 67, 79, 78, 34, 125, 125}
+		Convey("Given the slice []byte{2, 123, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 123, 34, 116, 120, 112, 107, 95, 97, 99, 107, 34, 58, 123, 34, 101, 114, 114, 111, 114, 34, 58, 34, 67, 79, 76, 76, 73, 83, 73, 79, 78, 95, 66, 69, 65, 67, 79, 78, 34, 125, 125}", func() {
+			b := []byte{2, 123, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 123, 34, 116, 120, 112, 107, 95, 97, 99, 107, 34, 58, 123, 34, 101, 114, 114, 111, 114, 34, 58, 34, 67, 79, 76, 76, 73, 83, 73, 79, 78, 95, 66, 69, 65, 67, 79, 78, 34, 125, 125}
 			Convey("Then UnmarshalBinary returns RandomToken=123 and a payload with Error=COLLISION_BEACON", func() {
 				err := p.UnmarshalBinary(b)
 				So(err, ShouldBeNil)
