@@ -15,6 +15,16 @@ into JSON over MQTT. This project is part of [LoRa Server](https://github.com/br
 See the [http://lora-semtech-bridge.readthedocs.io/](http://lora-semtech-bridge.readthedocs.io/)
 for documentation about setting up LoRa Semtech Bridge.
 
+## Compatibility
+
+The table below shows the compatibility between LoRa Semtech Bridge and the
+available Semtech UDP protocol versions:
+
+| LoRa Semtech Bridge | Semtech UDP protocol version | Note                                                                |
+|---------------------|------------------------------|---------------------------------------------------------------------|
+| 1.x.x               | 1                            |                                                                     |
+| 2.x.x               | 2                            | This protocol is used since version 3.0.0 of the `packet_forwarder` |
+
 ## Downloads
 
 Pre-compiled binaries are available for:

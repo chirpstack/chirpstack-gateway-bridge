@@ -13,6 +13,16 @@ repositories for various Linux distributions).
 
 ## Install LoRa Semtech Brige
 
+#### Compatibility
+
+The table below shows the compatibility between LoRa Semtech Bridge and the
+available Semtech UDP protocol versions:
+
+| LoRa Semtech Bridge | Semtech UDP protocol version | Note                                                                |
+|---------------------|------------------------------|---------------------------------------------------------------------|
+| 1.x.x               | 1                            |                                                                     |
+| 2.x.x               | 2                            | This protocol is used since version 3.0.0 of the `packet_forwarder` |
+
 #### Download
 
 Download and unpack a pre-compiled binary from the
