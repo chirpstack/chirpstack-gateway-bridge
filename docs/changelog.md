@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.0
+
+* Update to Semtech UDP protocol v2. This is the protocol version used
+  since `packet_forwarder` 3.0.0 (which implements just-in-time scheduling).
+
 ## 1.1.3
 
 * Minor log related improvements.
