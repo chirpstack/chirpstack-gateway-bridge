@@ -38,9 +38,7 @@ The following MAC commands (and their optional payloads) are implemented:
     * NewChannelAns
     * RXTimingSetupReq
     * RXTimingSetupAns
-    * Support for proprietary commands (0x80 - 0xFF) will be implemented in the
-      future (mapping between CID and payload (size) is already done in a map
-      called macPayloadRegistry)
+    * Proprietary commands (0x80 - 0xFF) can be registered with RegisterProprietaryMACCommand
 
 Support for calculating and setting the MIC is done by calling SetMIC():
 
@@ -77,11 +75,9 @@ https://www.lora-alliance.org/For-Developers/LoRaWANDevelopers
 
 ## ISM band configuration
 
-The LoRaWAN specification defines various band specific defaults and
-configuration. These can be found in the ``band`` sub-package. Note that you
-need to compile your project with the corresponding build tag of the ISM band.
-E.g. for the EU 863-870 ISM band you would need to compile your project
-with the tag ``eu_863_870``. Note that part is still work in progress.
+The LoRaWAN specification defines various region specific defaults and
+configuration. These can be found in the ``band`` sub-package. Note that
+this is still work in progress and that not all bands are defined yet.
 
 ## Documentation
 
@@ -90,5 +86,5 @@ section with usage examples.
 
 ## License
 
-This package is licensed under the MIT license which can be found in ``LICENSE``.
+This package is distributed under the MIT license which can be found in ``LICENSE``.
 LoRaWAN is a trademark of the LoRa Alliance Inc. (https://www.lora-alliance.org/).

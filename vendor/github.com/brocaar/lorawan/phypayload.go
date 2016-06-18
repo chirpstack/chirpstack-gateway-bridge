@@ -63,15 +63,15 @@ func (k *AES128Key) UnmarshalText(text []byte) error {
 }
 
 // Scan implements sql.Scanner.
-func (a *AES128Key) Scan(src interface{}) error {
+func (k *AES128Key) Scan(src interface{}) error {
 	b, ok := src.([]byte)
 	if !ok {
 		return errors.New("lorawan: []byte type expected")
 	}
-	if len(b) != len(a) {
-		return fmt.Errorf("lorawan []byte must have length %d", len(a))
+	if len(b) != len(k) {
+		return fmt.Errorf("lorawan []byte must have length %d", len(k))
 	}
-	copy(a[:], b)
+	copy(k[:], b)
 	return nil
 }
 
@@ -410,15 +410,24 @@ func (p *PHYPayload) DecryptFRMPayload(key AES128Key) error {
 
 	// the FRMPayload contains MAC commands, which we need to unmarshal
 	if macPL.FPort != nil && *macPL.FPort == 0 {
-		dp, ok := macPL.FRMPayload[0].(*DataPayload)
-		if !ok {
-			return errors.New("lorawan: a DataPayload was expected")
-		}
-
-		return macPL.unmarshalPayload(p.isUplink(), dp.Bytes)
+		return macPL.decodeFRMPayloadToMACCommands(p.isUplink())
 	}
 
 	return nil
+}
+
+// DecodeFRMPayloadToMACCommands decodes the (decrypted) FRMPayload bytes into
+// MAC commands. Note that after calling DecryptFRMPayload, this method is
+// called automatically when FPort=0.
+// Use this method when unmarshaling a decrypted FRMPayload from a slice
+// of bytes and this when DecryptFRMPayload is not called.
+func (p *PHYPayload) DecodeFRMPayloadToMACCommands() error {
+	macPL, ok := p.MACPayload.(*MACPayload)
+	if !ok {
+		return errors.New("lorawan: MACPayload must be of type *MACPayload")
+	}
+
+	return macPL.decodeFRMPayloadToMACCommands(p.isUplink())
 }
 
 // MarshalBinary marshals the object in binary form.
@@ -449,7 +458,6 @@ func (p *PHYPayload) UnmarshalBinary(data []byte) error {
 	if len(data) < 5 {
 		return errors.New("lorawan: at least 5 bytes needed to decode PHYPayload")
 	}
-	isUplink := p.isUplink()
 
 	// MHDR
 	if err := p.MHDR.UnmarshalBinary(data[0:1]); err != nil {
@@ -465,6 +473,8 @@ func (p *PHYPayload) UnmarshalBinary(data []byte) error {
 	default:
 		p.MACPayload = &MACPayload{}
 	}
+
+	isUplink := p.isUplink()
 	if err := p.MACPayload.UnmarshalBinary(isUplink, data[1:len(data)-4]); err != nil {
 		return err
 	}

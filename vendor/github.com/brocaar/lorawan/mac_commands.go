@@ -4,29 +4,34 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"sync"
 )
 
-// cid defines the MAC command identifier.
-type cid byte
+// macPayloadMutex is used when registering proprietary MAC command payloads to
+// the macPayloadRegistry.
+var macPayloadMutex sync.RWMutex
+
+// CID defines the MAC command identifier.
+type CID byte
 
 // MAC commands as specified by the LoRaWAN R1.0 specs. Note that each *Req / *Ans
 // has the same value. Based on the fact if a message is uplink or downlink
 // you should use on or the other.
 const (
-	LinkCheckReq     cid = 0x02
-	LinkCheckAns     cid = 0x02
-	LinkADRReq       cid = 0x03
-	LinkADRAns       cid = 0x03
-	DutyCycleReq     cid = 0x04
-	DutyCycleAns     cid = 0x04
-	RXParamSetupReq  cid = 0x05
-	RXParamSetupAns  cid = 0x05
-	DevStatusReq     cid = 0x06
-	DevStatusAns     cid = 0x06
-	NewChannelReq    cid = 0x07
-	NewChannelAns    cid = 0x07
-	RXTimingSetupReq cid = 0x08
-	RXTimingSetupAns cid = 0x08
+	LinkCheckReq     CID = 0x02
+	LinkCheckAns     CID = 0x02
+	LinkADRReq       CID = 0x03
+	LinkADRAns       CID = 0x03
+	DutyCycleReq     CID = 0x04
+	DutyCycleAns     CID = 0x04
+	RXParamSetupReq  CID = 0x05
+	RXParamSetupAns  CID = 0x05
+	DevStatusReq     CID = 0x06
+	DevStatusAns     CID = 0x06
+	NewChannelReq    CID = 0x07
+	NewChannelAns    CID = 0x07
+	RXTimingSetupReq CID = 0x08
+	RXTimingSetupAns CID = 0x08
 	// 0x80 to 0xFF reserved for proprietary network command extensions
 )
 
@@ -38,16 +43,18 @@ type macPayloadInfo struct {
 
 // macPayloadRegistry contains the info for uplink and downlink MAC payloads
 // in the format map[uplink]map[CID].
-var macPayloadRegistry = map[bool]map[cid]macPayloadInfo{
-	false: map[cid]macPayloadInfo{
+// Note that MAC command that do not have a payload are not included in this
+// list.
+var macPayloadRegistry = map[bool]map[CID]macPayloadInfo{
+	false: map[CID]macPayloadInfo{
 		LinkCheckAns:     {2, func() MACCommandPayload { return &LinkCheckAnsPayload{} }},
 		LinkADRReq:       {4, func() MACCommandPayload { return &LinkADRReqPayload{} }},
 		DutyCycleReq:     {1, func() MACCommandPayload { return &DutyCycleReqPayload{} }},
 		RXParamSetupReq:  {4, func() MACCommandPayload { return &RX2SetupReqPayload{} }},
-		NewChannelReq:    {4, func() MACCommandPayload { return &NewChannelReqPayload{} }},
+		NewChannelReq:    {5, func() MACCommandPayload { return &NewChannelReqPayload{} }},
 		RXTimingSetupReq: {1, func() MACCommandPayload { return &RXTimingSetupReqPayload{} }},
 	},
-	true: map[cid]macPayloadInfo{
+	true: map[CID]macPayloadInfo{
 		LinkADRAns:      {1, func() MACCommandPayload { return &LinkADRAnsPayload{} }},
 		RXParamSetupAns: {1, func() MACCommandPayload { return &RX2SetupAnsPayload{} }},
 		DevStatusAns:    {2, func() MACCommandPayload { return &DevStatusAnsPayload{} }},
@@ -56,13 +63,39 @@ var macPayloadRegistry = map[bool]map[cid]macPayloadInfo{
 }
 
 // getMACPayloadAndSize returns a new MACCommandPayload instance and it's size.
-func getMACPayloadAndSize(uplink bool, c cid) (MACCommandPayload, int, error) {
+func getMACPayloadAndSize(uplink bool, c CID) (MACCommandPayload, int, error) {
+	macPayloadMutex.RLock()
+	defer macPayloadMutex.RUnlock()
+
 	v, ok := macPayloadRegistry[uplink][c]
 	if !ok {
 		return nil, 0, fmt.Errorf("lorawan: payload unknown for uplink=%v and CID=%v", uplink, c)
 	}
 
 	return v.payload(), v.size, nil
+}
+
+// RegisterProprietaryMACCommand registers a proprietary MAC command. Note
+// that there is no need to call this when the size of the payload is > 0 bytes.
+func RegisterProprietaryMACCommand(uplink bool, cid CID, payloadSize int) error {
+	if !(cid >= 128 && cid <= 255) {
+		return fmt.Errorf("lorawan: invalid CID %x", cid)
+	}
+
+	if payloadSize == 0 {
+		// no need to register the payload size
+		return nil
+	}
+
+	macPayloadMutex.Lock()
+	defer macPayloadMutex.Unlock()
+
+	macPayloadRegistry[uplink][cid] = macPayloadInfo{
+		size:    payloadSize,
+		payload: func() MACCommandPayload { return &ProprietaryMACCommandPayload{} },
+	}
+
+	return nil
 }
 
 // MACCommandPayload is the interface that every MACCommand payload
@@ -74,17 +107,21 @@ type MACCommandPayload interface {
 
 // MACCommand represents a MAC command with optional payload.
 type MACCommand struct {
-	CID     cid
+	CID     CID
 	Payload MACCommandPayload
 }
 
 // MarshalBinary marshals the object in binary form.
 func (m MACCommand) MarshalBinary() ([]byte, error) {
+	if !(m.CID >= 2 && m.CID <= 8) && !(m.CID >= 128) {
+		return nil, fmt.Errorf("lorawan: invalid CID %x", m.CID)
+	}
+
 	b := []byte{byte(m.CID)}
 	if m.Payload != nil {
 		p, err := m.Payload.MarshalBinary()
 		if err != nil {
-			return []byte{}, err
+			return nil, err
 		}
 		b = append(b, p...)
 	}
@@ -96,7 +133,12 @@ func (m *MACCommand) UnmarshalBinary(uplink bool, data []byte) error {
 	if len(data) == 0 {
 		return errors.New("lorawan: at least 1 byte of data is expected")
 	}
-	m.CID = cid(data[0])
+
+	m.CID = CID(data[0])
+	if !(m.CID >= 2 && m.CID <= 8) && !(m.CID >= 128) {
+		return fmt.Errorf("lorawan: invalid CID %x", m.CID)
+	}
+
 	if len(data) > 1 {
 		p, _, err := getMACPayloadAndSize(uplink, m.CID)
 		if err != nil {
@@ -107,6 +149,22 @@ func (m *MACCommand) UnmarshalBinary(uplink bool, data []byte) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// ProprietaryMACCommandPayload represents a proprietary payload.
+type ProprietaryMACCommandPayload struct {
+	Bytes []byte
+}
+
+// MarshalBinary marshals the object into a slice of bytes.
+func (p ProprietaryMACCommandPayload) MarshalBinary() ([]byte, error) {
+	return p.Bytes, nil
+}
+
+// UnmarshalBinary decodes the object from a slice of bytes.
+func (p *ProprietaryMACCommandPayload) UnmarshalBinary(data []byte) error {
+	p.Bytes = data
 	return nil
 }
 
@@ -304,39 +362,39 @@ func (p *DutyCycleReqPayload) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-// DLsettings represents the DLsettings fields (downlink settings).
-type DLsettings struct {
+// DLSettings represents the DLSettings fields (downlink settings).
+type DLSettings struct {
 	RX2DataRate uint8
-	RX1DRoffset uint8
+	RX1DROffset uint8
 }
 
 // MarshalBinary marshals the object in binary form.
-func (s DLsettings) MarshalBinary() ([]byte, error) {
+func (s DLSettings) MarshalBinary() ([]byte, error) {
 	b := make([]byte, 0, 1)
 	if s.RX2DataRate > 15 {
 		return b, errors.New("lorawan: max value of RX2DataRate is 15")
 	}
-	if s.RX1DRoffset > 7 {
-		return b, errors.New("lorawan: max value of RX1DRoffset is 7")
+	if s.RX1DROffset > 7 {
+		return b, errors.New("lorawan: max value of RX1DROffset is 7")
 	}
-	b = append(b, s.RX2DataRate^(s.RX1DRoffset<<4))
+	b = append(b, s.RX2DataRate^(s.RX1DROffset<<4))
 	return b, nil
 }
 
 // UnmarshalBinary decodes the object from binary form.
-func (s *DLsettings) UnmarshalBinary(data []byte) error {
+func (s *DLSettings) UnmarshalBinary(data []byte) error {
 	if len(data) != 1 {
 		return errors.New("lorawan: 1 byte of data is expected")
 	}
 	s.RX2DataRate = data[0] & ((1 << 3) ^ (1 << 2) ^ (1 << 1) ^ (1 << 0))
-	s.RX1DRoffset = (data[0] & ((1 << 6) ^ (1 << 5) ^ (1 << 4))) >> 4
+	s.RX1DROffset = (data[0] & ((1 << 6) ^ (1 << 5) ^ (1 << 4))) >> 4
 	return nil
 }
 
 // RX2SetupReqPayload represents the RX2SetupReq payload.
 type RX2SetupReqPayload struct {
 	Frequency  uint32
-	DLsettings DLsettings
+	DLSettings DLSettings
 }
 
 // MarshalBinary marshals the object in binary form.
@@ -345,11 +403,12 @@ func (p RX2SetupReqPayload) MarshalBinary() ([]byte, error) {
 	if p.Frequency >= 16777216 { // 2^24
 		return b, errors.New("lorawan: max value of Frequency is 2^24-1")
 	}
-	if bytes, err := p.DLsettings.MarshalBinary(); err != nil {
+	bytes, err := p.DLSettings.MarshalBinary()
+	if err != nil {
 		return b, err
-	} else {
-		b[0] = bytes[0]
 	}
+	b[0] = bytes[0]
+
 	binary.LittleEndian.PutUint32(b[1:5], p.Frequency)
 	// we don't return the last octet which is fine since we're only interested
 	// in the 24 LSB of Frequency
@@ -361,7 +420,7 @@ func (p *RX2SetupReqPayload) UnmarshalBinary(data []byte) error {
 	if len(data) != 4 {
 		return errors.New("lorawan: 4 bytes of data are expected")
 	}
-	if err := p.DLsettings.UnmarshalBinary(data[0:1]); err != nil {
+	if err := p.DLSettings.UnmarshalBinary(data[0:1]); err != nil {
 		return err
 	}
 	// append one block of empty bits at the end of the slice since the
@@ -377,7 +436,7 @@ func (p *RX2SetupReqPayload) UnmarshalBinary(data []byte) error {
 type RX2SetupAnsPayload struct {
 	ChannelACK     bool
 	RX2DataRateACK bool
-	RX1DRoffsetACK bool
+	RX1DROffsetACK bool
 }
 
 // MarshalBinary marshals the object in binary form.
@@ -389,7 +448,7 @@ func (p RX2SetupAnsPayload) MarshalBinary() ([]byte, error) {
 	if p.RX2DataRateACK {
 		b = b ^ (1 << 1)
 	}
-	if p.RX1DRoffsetACK {
+	if p.RX1DROffsetACK {
 		b = b ^ (1 << 2)
 	}
 	return []byte{b}, nil
@@ -402,7 +461,7 @@ func (p *RX2SetupAnsPayload) UnmarshalBinary(data []byte) error {
 	}
 	p.ChannelACK = data[0]&(1<<0) > 0
 	p.RX2DataRateACK = data[0]&(1<<1) > 0
-	p.RX1DRoffsetACK = data[0]&(1<<2) > 0
+	p.RX1DROffsetACK = data[0]&(1<<2) > 0
 	return nil
 }
 
@@ -478,7 +537,7 @@ func (p NewChannelReqPayload) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary decodes the object from binary form.
 func (p *NewChannelReqPayload) UnmarshalBinary(data []byte) error {
 	if len(data) != 5 {
-		return errors.New("lorawan: 4 bytes of data are expected")
+		return errors.New("lorawan: 5 bytes of data are expected")
 	}
 	p.ChIndex = data[0]
 	p.MinDR = data[4] & ((1 << 3) ^ (1 << 2) ^ (1 << 1) ^ (1 << 0))
@@ -521,7 +580,7 @@ func (p *NewChannelAnsPayload) UnmarshalBinary(data []byte) error {
 
 // RXTimingSetupReqPayload represents the RXTimingSetupReq payload.
 type RXTimingSetupReqPayload struct {
-	Delay uint8
+	Delay uint8 // 0=1s, 1=1s, 2=2s, ... 15=15s
 }
 
 // MarshalBinary marshals the object in binary form.

@@ -56,15 +56,15 @@ func (e *EUI64) UnmarshalBinary(data []byte) error {
 }
 
 // Scan implements sql.Scanner.
-func (a *EUI64) Scan(src interface{}) error {
+func (e *EUI64) Scan(src interface{}) error {
 	b, ok := src.([]byte)
 	if !ok {
 		return errors.New("lorawan: []byte type expected")
 	}
-	if len(b) != len(a) {
-		return fmt.Errorf("lorawan []byte must have length %d", len(a))
+	if len(b) != len(e) {
+		return fmt.Errorf("lorawan []byte must have length %d", len(e))
 	}
-	copy(a[:], b)
+	copy(e[:], b)
 	return nil
 }
 
@@ -182,13 +182,17 @@ type JoinAcceptPayload struct {
 	AppNonce   [3]byte
 	NetID      [3]byte
 	DevAddr    DevAddr
-	DLSettings DLsettings
-	RXDelay    uint8
+	DLSettings DLSettings
+	RXDelay    uint8 // 0=1s, 1=1s, 2=2s, ... 15=15s
 	CFList     *CFList
 }
 
 // MarshalBinary marshals the object in binary form.
 func (p JoinAcceptPayload) MarshalBinary() ([]byte, error) {
+	if p.RXDelay > 15 {
+		return nil, errors.New("lorawan: the max value of RXDelay is 15")
+	}
+
 	out := make([]byte, 0, 12)
 
 	// little endian

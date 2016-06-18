@@ -3,88 +3,106 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "htjvdG/znrHmFYRQBqA2vHrJsF4=",
 			"path": "github.com/Sirupsen/logrus",
-			"revision": "219c8cb75c258c552e999735be6df753ffc7afdc",
-			"revisionTime": "2016-02-24T16:10:30-05:00"
+			"revision": "f3cfb454f4c209e6668c95216c4744b8fddb2356",
+			"revisionTime": "2016-06-01T11:32:10Z"
 		},
 		{
-			"checksumSHA1": "gJvHmcPgjGimv4cWOVPWQ0m+/DY=",
+			"checksumSHA1": "GWMZl9IMZdul/8Y0vgo0dHJbn/A=",
 			"path": "github.com/brocaar/loraserver/models",
-			"revision": "77af23686140a51ea0638264f23c93485ee7f1ad",
-			"revisionTime": "2016-04-10T15:42:50Z"
+			"revision": "ccdd00c0ae003efa5c7486e80a34c336ca5990f2",
+			"revisionTime": "2016-06-18T10:13:15Z"
 		},
 		{
-			"checksumSHA1": "j8kFqS4GnkiizFG94cHR8zLMAZA=",
-			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/brocaar/lorawan",
+			"checksumSHA1": "ya7tMk+wexXh1cmbdp0Sw0lbM1k=",
 			"path": "github.com/brocaar/lorawan",
-			"revision": "61f52e3008626c275b62a72090a7ef13a6294764",
-			"revisionTime": "2016-04-16T09:33:49Z"
+			"revision": "be799be7b529ec03666a5c553c1f4b1ef3f6728e",
+			"revisionTime": "2016-06-18T09:49:21Z"
 		},
 		{
-			"checksumSHA1": "Aj6/AlM74fTWzev+Li6Si9KynJU=",
-			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/brocaar/lorawan/band",
+			"checksumSHA1": "Br8FZLBfv+Vzk9HtH41bG4LOCd0=",
 			"path": "github.com/brocaar/lorawan/band",
-			"revision": "701d895780c438307bba7f70991be16b6b4955a3",
-			"revisionTime": "2016-04-17T10:01:52Z"
+			"revision": "be799be7b529ec03666a5c553c1f4b1ef3f6728e",
+			"revisionTime": "2016-06-18T09:49:21Z"
 		},
 		{
+			"checksumSHA1": "QQwkMIFJ0bMwgO3F0bf+bPPVb8Y=",
 			"path": "github.com/codegangsta/cli",
-			"revision": "a2943485b110df8842045ae0600047f88a3a56a1",
-			"revisionTime": "2016-02-27T08:56:50-08:00"
+			"revision": "b438abf775124d32be72016935a9553dbffe8473",
+			"revisionTime": "2016-06-16T19:48:14Z"
+		},
+		{
+			"checksumSHA1": "opuXLaxKgRhnpxjq0a0Fkj39PC0=",
+			"path": "github.com/eclipse/paho.mqtt.golang",
+			"revision": "45f9b18f4864c81d49c3ed01e5faec9eeb05de31",
+			"revisionTime": "2016-06-09T10:02:40Z"
+		},
+		{
+			"checksumSHA1": "4S2JvfaLl2hOzrRJ0akG3zVPSSk=",
+			"path": "github.com/eclipse/paho.mqtt.golang/packets",
+			"revision": "45f9b18f4864c81d49c3ed01e5faec9eeb05de31",
+			"revisionTime": "2016-06-09T10:02:40Z"
 		},
 		{
 			"checksumSHA1": "YEZ/qI/rjyPhyyjuGI0NysuKIfA=",
-			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/jacobsa/crypto/cmac",
 			"path": "github.com/jacobsa/crypto/cmac",
-			"revision": "bf13d379f5e7e0bbfc85ad339211f5c0dde70f95",
-			"revisionTime": "2016-02-18T00:02:31Z"
+			"revision": "42daa9d04c68a12aca47231abd9fb7f8aac27ef7",
+			"revisionTime": "2016-04-10T22:58:39Z"
 		},
 		{
 			"checksumSHA1": "NBvtX91AEKxFLmj8mwwhXEKl6d0=",
-			"origin": "github.com/brocaar/lora-semtech-bridge/vendor/github.com/jacobsa/crypto/common",
 			"path": "github.com/jacobsa/crypto/common",
-			"revision": "bf13d379f5e7e0bbfc85ad339211f5c0dde70f95",
-			"revisionTime": "2016-02-18T00:02:31Z"
+			"revision": "42daa9d04c68a12aca47231abd9fb7f8aac27ef7",
+			"revisionTime": "2016-04-10T22:58:39Z"
 		},
 		{
+			"checksumSHA1": "tewA7jXVGCw1zb5mA0BDecWi4iQ=",
 			"path": "github.com/jtolds/gls",
 			"revision": "8ddce2a84170772b95dd5d576c48d517b22cac63",
-			"revisionTime": "2016-01-05T15:08:40-07:00"
+			"revisionTime": "2016-01-05T22:08:40Z"
 		},
 		{
+			"checksumSHA1": "6AYg4fjEvFuAVN3wHakGApjhZAM=",
 			"path": "github.com/smartystreets/assertions",
-			"revision": "e9a2f6771d97c709b2f7609fdf89ebde8b64c926",
-			"revisionTime": "2016-02-25T10:05:45-07:00"
+			"revision": "40711f7748186bbf9c99977cd89f21ce1a229447",
+			"revisionTime": "2016-04-22T19:53:51Z"
 		},
 		{
+			"checksumSHA1": "Vzb+dEH/LTYbvr8RXHmt6xJHz04=",
 			"path": "github.com/smartystreets/assertions/internal/go-render/render",
-			"revision": "e9a2f6771d97c709b2f7609fdf89ebde8b64c926",
-			"revisionTime": "2016-02-25T10:05:45-07:00"
+			"revision": "40711f7748186bbf9c99977cd89f21ce1a229447",
+			"revisionTime": "2016-04-22T19:53:51Z"
 		},
 		{
+			"checksumSHA1": "SLC6TfV4icQA9l8YJQu8acJYbuo=",
 			"path": "github.com/smartystreets/assertions/internal/oglematchers",
-			"revision": "e9a2f6771d97c709b2f7609fdf89ebde8b64c926",
-			"revisionTime": "2016-02-25T10:05:45-07:00"
+			"revision": "40711f7748186bbf9c99977cd89f21ce1a229447",
+			"revisionTime": "2016-04-22T19:53:51Z"
 		},
 		{
+			"checksumSHA1": "/mwAihy9AmznMzmbPQ5nWJXBiRU=",
 			"path": "github.com/smartystreets/goconvey/convey",
-			"revision": "99f2b1e01343c8bc2d9d12f1194d2d68ce18b063",
-			"revisionTime": "2016-02-27T08:26:14-07:00"
+			"revision": "c53abc99456fa3402dd33c15ee51c3e545e04a3f",
+			"revisionTime": "2016-05-23T15:31:47Z"
 		},
 		{
+			"checksumSHA1": "9LakndErFi5uCXtY1KWl0iRnT4c=",
 			"path": "github.com/smartystreets/goconvey/convey/gotest",
-			"revision": "99f2b1e01343c8bc2d9d12f1194d2d68ce18b063",
-			"revisionTime": "2016-02-27T08:26:14-07:00"
+			"revision": "c53abc99456fa3402dd33c15ee51c3e545e04a3f",
+			"revisionTime": "2016-05-23T15:31:47Z"
 		},
 		{
+			"checksumSHA1": "FWDhk37bhAwZ2363D/L2xePwR64=",
 			"path": "github.com/smartystreets/goconvey/convey/reporting",
-			"revision": "99f2b1e01343c8bc2d9d12f1194d2d68ce18b063",
-			"revisionTime": "2016-02-27T08:26:14-07:00"
+			"revision": "c53abc99456fa3402dd33c15ee51c3e545e04a3f",
+			"revisionTime": "2016-05-23T15:31:47Z"
 		},
 		{
+			"checksumSHA1": "likOl7O0BJntqagR050kkOBuY4o=",
 			"path": "golang.org/x/net/websocket",
-			"revision": "08f168e593b5aab61849054b77981de812666697",
-			"revisionTime": "2016-02-26T23:10:08-08:00"
+			"revision": "1961d9def2b2d7a28d7958926d2457d05a178ecd",
+			"revisionTime": "2016-06-15T20:37:29Z"
 		}
 	],
 	"rootPath": "github.com/brocaar/lora-semtech-bridge"
