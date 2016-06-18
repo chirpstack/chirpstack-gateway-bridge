@@ -16,7 +16,7 @@ import (
 
 var version string // set by the compiler
 
-func run(c *cli.Context) {
+func run(c *cli.Context) error {
 	log.SetLevel(log.Level(uint8(c.Int("log-level"))))
 
 	pubsub, err := mqttpubsub.NewBackend(c.String("mqtt-server"), c.String("mqtt-username"), c.String("mqtt-password"))
@@ -67,6 +67,7 @@ func run(c *cli.Context) {
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	log.WithField("signal", <-sigChan).Info("signal received")
 	log.Warning("shutting down server")
+	return nil
 }
 
 func main() {
