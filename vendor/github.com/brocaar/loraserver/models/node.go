@@ -49,6 +49,10 @@ type Node struct {
 	AppEUI        lorawan.EUI64     `db:"app_eui" json:"appEUI"`
 	AppKey        lorawan.AES128Key `db:"app_key" json:"appKey"`
 	UsedDevNonces DevNonceList      `db:"used_dev_nonces" json:"usedDevNonces"`
+
+	RXDelay       uint8  `db:"rx_delay" json:"rxDelay"`
+	RX1DROffset   uint8  `db:"rx1_dr_offset" json:"rx1DROffset"`
+	ChannelListID *int64 `db:"channel_list_id" json:"channelListID"`
 }
 
 // ValidateDevNonce returns if the given dev-nonce is valid.

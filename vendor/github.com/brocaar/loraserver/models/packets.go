@@ -64,13 +64,39 @@ type RXPayload struct {
 	DevEUI       lorawan.EUI64 `json:"devEUI"`
 	FPort        uint8         `json:"fPort"`
 	GatewayCount int           `json:"gatewayCount"`
+	RSSI         int           `json:"rssi"`
 	Data         []byte        `json:"data"`
 }
 
 // TXPayload contains the payload to be sent to the node.
 type TXPayload struct {
+	Reference string        `json:"reference"` // external reference that needs to be defined by the application, used for error notifications
 	Confirmed bool          `json:"confirmed"` // indicates if the packet needs to be confirmed with an ACK
 	DevEUI    lorawan.EUI64 `json:"devEUI"`    // the DevEUI of the node to send the payload to
 	FPort     uint8         `json:"fPort"`     // the FPort
 	Data      []byte        `json:"data"`      // the data to send (unencrypted, in JSON this must be the base64 representation of the data)
+}
+
+// MACPayload contains data from a MAC command.
+type MACPayload struct {
+	Reference  string        `json:"reference,omitempty"` // external reference that needs to be defined by the network-controller
+	FRMPayload bool          `json:"frmPayload"`          // indicating if the mac command was or must be sent as a FRMPayload (and thus encrypted)
+	DevEUI     lorawan.EUI64 `json:"devEUI"`
+	MACCommand []byte        `json:"macCommand"`
+}
+
+// RXInfoPayload defines the payload containing the RX information sent to
+// the network-controller on each received packet.
+type RXInfoPayload struct {
+	DevEUI lorawan.EUI64 `json:"devEUI"`
+	ADR    bool          `json:"adr"`
+	FCnt   uint32        `json:"fCnt"`
+	RXInfo []RXInfo      `json:"rxInfo"`
+}
+
+// ErrorPayload defines the payload sent on an error event.
+type ErrorPayload struct {
+	Reference string        `json:"reference"` // refers to the given reference
+	DevEUI    lorawan.EUI64 `json:"devEUI"`
+	Message   string        `json:"message"`
 }
