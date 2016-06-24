@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.4
+
+* Update `lorawan` vendor to fix a mac command related marshaling issue.
+
 ## 1.1.3
 
 * Minor log improvements.
