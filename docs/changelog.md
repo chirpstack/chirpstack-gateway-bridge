@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1
+
+* Update `lorawan` vendor to fix a mac command related marshaling issue.
+
 ## 2.0.0
 
 * Update to Semtech UDP protocol v2. This is the protocol version used
