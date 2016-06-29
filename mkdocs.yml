@@ -1,9 +1,17 @@
 site_name: LoRa Semtech Bridge documentation
+repo_url: https://github.com/brocaar/lora-semtech-bridge
+theme: theme: material
+
 pages:
   - index.md
   - getting-started.md
   - topics.md
   - changelog.md
-theme: readthedocs
-repo_url: https://github.com/brocaar/lora-semtech-bridge/
 
+extra:
+  github:
+    download_release: true
+
+markdown_extensions:
+  - admonition
+  - codehilite(css_class=code)
