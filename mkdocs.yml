@@ -1,6 +1,6 @@
 site_name: LoRa Semtech Bridge documentation
 repo_url: https://github.com/brocaar/lora-semtech-bridge
-theme: theme: material
+theme: material
 
 pages:
   - index.md
