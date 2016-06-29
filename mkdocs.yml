@@ -5,7 +5,9 @@ theme: material
 pages:
   - index.md
   - getting-started.md
+  - packet-forwarder.md
   - topics.md
+  - frequently-asked-questions.md
   - changelog.md
 
 extra:

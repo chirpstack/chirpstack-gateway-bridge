@@ -1,54 +1,39 @@
-## LoRa Semtech Bridge documentation
-
 LoRa Semtech Bridge is a service which abstracts the 
-[Semtech protocol](https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT)
-into JSON over MQTT. This project is part of [LoRa Server](https://github.com/brocaar/loraserver).
-
-## Features
-
-### Connection handling
-
-LoRa Semtech Bridge will handle all the gateway pings / acks.
-
-### JSON
-
-All (uplink) packets are published as JSON messages. Downlink packets
-can be published to MQTT and will be transformed back to the Semtech
-protocol by the LoRa Semtech Bridge.
-
-### HA setup
-
-Multiple LoRa Semtech Bridge instances can run at the same time. Since
-it will subscribe to gateway topics for which it has open connections,
-downlink packets are directed to the correct LoRa Semtech
-Bridge instance.
-**Important:** one gateway connection should always be load-balanced the
-same LoRa Semtech Bridge instance!
+[Semtech UDP protocol](https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT)
+used by the [packet_forwarder](https://github.com/Lora-net/packet_forwarder/)
+which is running on most LoRa gateways. It enables you to use MQTT for
+receiving data from and sending data to your gateways (JSON encoded).
+This project is part of [LoRa Server](https://github.com/brocaar/loraserver).
 
 ## Compatibility
 
 The table below shows the compatibility between LoRa Semtech Bridge and the
 available Semtech UDP protocol versions:
 
-| LoRa Semtech Bridge | Semtech UDP protocol version | Note                                                                |
-|---------------------|------------------------------|---------------------------------------------------------------------|
-| 1.x.x               | 1                            |                                                                     |
-| 2.x.x               | 2                            | This protocol is used since version 3.0.0 of the `packet_forwarder` |
+| LoRa Semtech Bridge | Semtech UDP protocol version | packet_forwarder version  |
+|---------------------|------------------------------|---------------------------|
+| 1.x.x               | 1                            | < 3.0.0                   |
+| 2.x.x               | 2                            | >= 3.0.0                  |
+
+LoRa Semtech Bridge v1.x.x will be update with bugfixes for the near future as
+not all gateways are using packet_forwarder v3.0.0+ yet.
 
 ## Downloads
 
-Pre-compiled binaries are available for:
+Pre-compiled binaries are available from the [releases](https://github.com/brocaar/lora-semtech-bridge/releases) page:
 
 * Linux (including ARM / Raspberry Pi)
 * OS X
 * Windows
 
-See [https://github.com/brocaar/lora-semtech-bridge/releases](https://github.com/brocaar/lora-semtech-bridge/releases)
-for downloads. Source-code can be found at
-[https://github.com/brocaar/lora-semtech-bridge](https://github.com/brocaar/lora-semtech-bridge).
+Source-code can be found at [https://github.com/brocaar/lora-semtech-bridge](https://github.com/brocaar/lora-semtech-bridge).
+
+## Issues / feature-requests
+
+Issues or feature-requests can be opened at [https://github.com/brocaar/lora-semtech-bridge/issues](https://github.com/brocaar/lora-semtech-bridge/issues).
 
 ## License
 
-LoRa Semtech Bridge is distributed under the MIT license. See also
+LoRa Semtech Bridge is distributed under the MIT license. See 
 [LICENSE](https://github.com/brocaar/lora-semtech-bridge/blob/master/LICENSE).
 
