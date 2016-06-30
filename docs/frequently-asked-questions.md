@@ -1,3 +1,5 @@
+# Frequently asked questions
+
 ## Packet-loss (packet_forwarder)
 
 There are many issues that can cause packet-loss (data is not received or
@@ -30,7 +32,7 @@ To be investigated
 
 To be investigated
 
-## semtech-bridge errors
+## lora-gateway-bridge errors
 
 ### `gateway: could not handle packet: gateway: invalid protocol version`
 

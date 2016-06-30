@@ -1,6 +1,6 @@
 FROM golang:1.6.2
 
-ENV PROJECT_PATH=/go/src/github.com/brocaar/lora-semtech-bridge
+ENV PROJECT_PATH=/go/src/github.com/brocaar/lora-gateway-bridge
 ENV PATH=$PATH:$PROJECT_PATH/build
 
 # install tools
@@ -17,4 +17,4 @@ COPY . $PROJECT_PATH
 # build
 RUN make build
 
-CMD ["semtech-bridge"]
+CMD ["lora-gateway-bridge"]

@@ -1,5 +1,5 @@
-site_name: LoRa Semtech Bridge documentation
-repo_url: https://github.com/brocaar/lora-semtech-bridge
+site_name: LoRa Gateway Bridge documentation
+repo_url: https://github.com/brocaar/lora-gateway-bridge
 theme: material
 
 pages:

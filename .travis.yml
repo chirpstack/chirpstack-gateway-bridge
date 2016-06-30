@@ -31,22 +31,22 @@ deploy:
     skip_cleanup: true
     access_key_id: AKIAIOU53PLXIUE7YBBQ
     secret_access_key:
-      secure: icpQ0132LlnZD6b2m8o/Bhe9JJnuSJh9hDv1OCmS+h4xO1DSfn1hNuk05a6oyDSwPF04HCbmncTLDcGLnbokK+dL2mrlT6M3BCbC29orLcP7rrUKnq5VLCrVI2jdyBAtLmzNIzPYci8dVuJfj9Voom4/BXosxM+2ry2xa0uvl5dYtzQS7yoocxpl7j3LfzP3hM6GEx64ePIikdOC9U6f1wtdMJ/GjDOUOEl4KqRXYcbOKvufXg+HW3BKLskZsFFn2xoUNvG6rMQZGmirJpiKN+GinEW06HmLEKqynsAMEJEoUw4L40kPhLmT2rm3kUbAQU99ZEitBPmAmh9jA85f6bO1kOVYF9J5S7EVIDUCbqCpaIDoG4w5iVNodb/7VHM5j+6SVjnHHNTpZ3LIF6GD4W6775DzZECU6vZELHymy4ro0haMYRcU3xp+rD/OT1LE031lZK8VcakpyJKb8d2/JO8r22SLBqOI7qV96rhtHSzPxdG4Dug3jXr8Cio/mfHVJOZu9WU37xWhPhjRLPta6AIQAbG+AySptCu/3mqq3uKUFsP9YZQYkCgr4kR7H3hMlvYOVSwmhcQReHuFLN5DotoHFA2f2CgVh1uVaSGoNKDDMK8Zf8ArOslGhRzZrSGRYuxKqbWdae9EIhWyPR4cdnzT11C5/Kdfdj9CqQPgvb0=
+      secure: h5ku+etn/Y+CDyXoVIoImMgc5sP1cOjQ0rDSt60sdEUsboHHo7sFfPRybTppcTJwZe33bMl5/nrW0GGHpMpbotWB2ifxe/irRPsRpuXzy2lc0rq1DaT9mHK1SJ3VYEYjIJVH+G5GQFzt5cPxgPagkpPMZyLth+liCg0ry7tz/P1MxGg5Ltn9yIOKjyNBeEIKYGDzsyUlTDlTrN6xKmic9aHa5yulXdyS0r8XVZ6YqT/CLEWS2fF16XnQ3OqNXjh8beBHj7oRxj9Z/SWAS82PBO8WBBQ9wrT7JDuP7oSPKpjZPnbHcOxSCHiakzaVqGAJCTQJ7ndjIYLItQoKJxs1t2XM8NUd10o87d3XE5yDcGvFBkAI53oAIFa/2nmJSyNwBnutp8xg+JcuexxZKZsPwKk8mh0vIpmM0JcWTHIjW+ATskjUkMiX3ap/nn2uvGTBXIC4X9wSNKySkx0yKiM4nW+6U5fseAz4X9zkUby/STEGtIfGIaiFba3AH0d+Ld+qwzdS3RTLIWwIAdvWodekW2YPpeITsaBFpAyKxw5eTQ6GkgOOOV8se4sEY2EDarWlC/xAyPdIpJtveos8SR+uG8z9E030keglZLl49GjBbEgWrMwxAji9p/S3dY0SrBIHtKmEaP2lI7F8uL0dMG49yiY6LUcInhuOPkZ+oXnHn+c=
     bucket: docs.loraserver.io
     local-dir: site
-    upload-dir: lora-semtech-bridge
+    upload-dir: lora-gateway-bridge
     acl: public_read
     region: eu-west-1
     on:
-      repo: brocaar/lora-semtech-bridge
+      repo: brocaar/lora-gateway-bridge
       branch: master
 
   - provider: releases
     skip_cleanup: true
     api_key:
-      secure: hue09xkRBLJpF5gR7nBCn1CySTTwUwe2ZYZA4Q2RjqdQ6Tk8KXgaJp+wk3xl24oWUb4l6dv2dETy+awT/G1DsOz6z5oGzuNFvAuTIqWgk5eIpctwPYlc9t0mgUnBJCx/eDYIoN/ogBxoE2QFE4CCfYcGd5iFpYb2aPw8oP6Pc5LYsm6PYUHi1IE69tyMj9aFWgtMYX8OxjhTx4vFpDvQmipQE3LqYlu9z7DyeIeuxLBgGFnrjOBQsjlUsQcsgmyeazUBN8qSUhYTdhSwYw5OEI45Ddc/Pkj/pz6HbHygUmO6FIa64rLADVK0Cuaw8+jxYSgeFu2sdIk7wE30sWBITzZhvs9k/OLIghwg+eu9mZ0l0i0K1gfdwqMpQA//QnXDzSiu6FkbCz0dNQX95VJNHfmMCSrg8Dd3ebMx+4VceU6IdWEtyJAHwFONJ4cNieufaPawnEym5VBG2uZ/Iv7rYFoS1W53oCD2mGDRWpTMxQkfFMAgD0gIDB+oN0FVaApjWy+/4KVXRYf4+Eqh0BZ6YizTRt+QmD3X+0jh3j/h0wMYUE6lAGqOmTcJUPUpGBzzx3jT9XVBHCeBTVTWT7wZAMtVPGyFj2Izm/B601DIsrIdvCco4QEUTCUjZjKDM6A3OUz512GBSbKYZ0EVGoxhRv2CRSO4MeQM5Y7Lwpu/6mc=
+      secure: i9kTpzo0LVyMdMyN66SxXGBYovd98+B4DW9t/xFxx0cOzCwDKx/2p2WYF7cbT6FhVQVPZHJuIqatEFPVHgkRbiqsLIN26RL7xdCGV0gqjYoXVjJEdr6s9z1BhxUDGHY5oKhTZP7mHM+5jdHyZiwBbVFhJkeEbuZfwaOu7fho3IgGgnMASMh0LODk5niBnAJah1tMyUa5+7lW3fBAjwP2DNPICzIFm35JFjI5ViyirWcSapuTTE70BOH02PNd/wjx/4VnW5+wgCPeZXqjUQ5u94KHNLj5AxwotbzLNM1fDngJeDCmFMUPCjR+LCRnEO+4qhdMAhBdiTn0tXFoVQXlywrmfBdQtA3Kr8GSWHF1x2Oqr6/sIti0+fjyqdHRG2LdL7shEktBrG3muNUrVflpHXBzPOm9HvzQ7Hws6JudY52kermCeCRcbypcWz9PSK+XtAIbQxY0hO3cBRysNKjQ3K6IwPaUUqJzLrdowZ/LRhDur1JBXwc6cxS+4Yv885jUhIIfvFuM/lE1btK1zAtqVT1YVfXSpnMWk/FvBohHbQRy4i80Vd3an41hdM5Di/rPI8rkRaCqGRep3/FitKCVixvI1lKzgfRDFGLIBTBor0tL6tfD4T3ZuC/hRpTzI+UHx8XyO1RGZQIHNj3jIOJl+EBVYz+93KS3Z80v3uMj5ck=
     file_glob: true
     file: "dist/*.tar.gz"
     on:
       tags: true
-      repo: brocaar/lora-semtech-bridge
+      repo: brocaar/lora-gateway-bridge

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2
+
+* Rename from `lora-semtech-bridge` to `lora-gateway-bridge`
+
 ## 2.0.1
 
 * Update `lorawan` vendor to fix a mac command related marshaling issue.

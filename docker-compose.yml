@@ -1,10 +1,10 @@
-semtechbridge:
+gatewaybridge:
   build: .
   command: make serve
   ports:
     - "1700/udp:1700/udp"
   volumes:
-    - ./:/go/src/github.com/brocaar/lora-semtech-bridge
+    - ./:/go/src/github.com/brocaar/lora-gateway-bridge
   links:
     - mosquitto
   environment:
