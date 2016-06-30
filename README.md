@@ -1,9 +1,8 @@
-# LoRa Semtech Bridge
+# LoRa Gateway Bridge
 
-[![Build Status](https://travis-ci.org/brocaar/lora-semtech-bridge.svg?branch=master)](https://travis-ci.org/brocaar/lora-semtech-bridge)
-[![GoDoc](https://godoc.org/github.com/brocaar/lora-semtech-bridge/cmd/semtech-bridge?status.svg)](https://godoc.org/github.com/brocaar/lora-semtech-bridge/cmd/semtech-bridge)
+[![Build Status](https://travis-ci.org/brocaar/lora-gateway-bridge.svg?branch=master)](https://travis-ci.org/brocaar/lora-gateway-bridge)
 
-*LoRa Semtech Bridge* is a service to enable LoRa gateway communication over MQTT.
+*LoRa Gateway Bridge* is a service to enable LoRa gateway communication over MQTT.
 All incoming UDP traffic (Semtech UDP protocol) is published to a MQTT broker and
 all messages received from the MQTT broker are sent to the gateway using UDP.
 
@@ -24,17 +23,17 @@ Depending upon your LoRa Gateway type, you might need to install the
 
 ## Getting started
 
-* Download and unpack a pre-compiled binary from the [releases](https://github.com/brocaar/lora-semtech-bridge/releases)
+* Download and unpack a pre-compiled binary from the [releases](https://github.com/brocaar/lora-gateway-bridge/releases)
   page. Alternatively, build the code from source (when you have a Go development environment
   ``make build`` should be sufficient).
 
-* Start the ``semtech-bridge`` service. The ``--help`` argument will show
+* Start the ``lora-gateway-bridge`` service. The ``--help`` argument will show
    you all the available config options. When everything is setup correctly
-   (your gateway is configured to send data to ``semtech-bridge``), you
+   (your gateway is configured to send data to ``lora-gateway-bridge``), you
    should see ``PullData`` packets coming in. E.g.
 
 ``` bash
-$ ./bin/semtech-bridge
+$ ./bin/lora-gateway-bridge
 INFO[0000] backend/mqttpubsub: connecting to mqtt server  server=tcp://127.0.0.1:1883
 INFO[0000] starting gateway udp listener                 addr=0.0.0.0:1700
 INFO[0006] incoming gateway packet                       addr=192.168.1.4:54993 type=PullData

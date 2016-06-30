@@ -8,8 +8,8 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/brocaar/lora-semtech-bridge/backend/mqttpubsub"
-	"github.com/brocaar/lora-semtech-bridge/gateway"
+	"github.com/brocaar/lora-gateway-bridge/backend/mqttpubsub"
+	"github.com/brocaar/lora-gateway-bridge/gateway"
 	"github.com/brocaar/lorawan"
 	"github.com/codegangsta/cli"
 )
@@ -72,9 +72,9 @@ func run(c *cli.Context) error {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "semtech-bridge"
-	app.Usage = "communicate with a LoRa gateway (Semtech UDP protocol) over MQTT"
-	app.Copyright = "See http://github.com/brocaar/lora-semtech-bridge for copyright information"
+	app.Name = "lora-gateway-bridge"
+	app.Usage = "abstracts the packet_forwarder protocol into JSON over MQTT"
+	app.Copyright = "See http://github.com/brocaar/lora-gateway-bridge for copyright information"
 	app.Version = version
 	app.Action = run
 	app.Flags = []cli.Flag{
