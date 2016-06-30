@@ -39,6 +39,23 @@ When compiling the packet_forwarder for a BeagleBone Black, you need to set the
 `SPI_DEV_PATH` to `/dev/spidev1.0`. This can be changed in
 `lora_gateway/libloragw/src/loragw_spi.native.c`.
 
+
+#### Kerlink
+
+When compiling the packet_forwarder for a Kerlink, you need to set the
+`SPI_DEV_PATH` to `/dev/spidev32766.0`. This can be changed in
+`lora_gateway/libloragw/src/loragw_spi.native.c`.
+In addtion, `lora_gateway/libloragw/tst/test_loragw_gps.c` needs to be
+modified to point to the correct GPS device: 
+`i = lgw_gps_enable("/dev/nmea", NULL, 0, &gps_tty_dev);`
+
+Cross compiler needs to be installed and configured in: `lora_gateway\Makefile` and in
+`packet_forwarder\Makefile`:
+```
+ARCH ?=arm
+CROSS_COMPILE ?=/opt/toolchains/arm-2011.03-wirma2/bin/arm-none-linux-gnueabi-
+```
+
 ### Building
 
 ``` bash
