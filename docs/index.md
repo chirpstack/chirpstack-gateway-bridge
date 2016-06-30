@@ -4,7 +4,7 @@ LoRa Gateway Bridge is a service which abstracts the
 [packet_forwarder UDP protocol](https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT)
 running on most LoRa gateways into JSON over MQTT. It enables you to use MQTT for
 receiving data from and sending data to your gateways.
-This project is part of [LoRa Server](https://github.com/brocaar/loraserver).
+This project is part of [LoRa Server](http://docs.loraserver.io/loraserver/).
 
 ## Compatibility
 
