@@ -29,7 +29,7 @@ before_deploy:
 deploy:
   - provider: s3
     skip_cleanup: true
-    access_key_id: AKIAIOU53PLXIUE7YBBQ
+    access_key_id: AKIAJYY7LKL2NK4UABXQ
     secret_access_key:
       secure: h5ku+etn/Y+CDyXoVIoImMgc5sP1cOjQ0rDSt60sdEUsboHHo7sFfPRybTppcTJwZe33bMl5/nrW0GGHpMpbotWB2ifxe/irRPsRpuXzy2lc0rq1DaT9mHK1SJ3VYEYjIJVH+G5GQFzt5cPxgPagkpPMZyLth+liCg0ry7tz/P1MxGg5Ltn9yIOKjyNBeEIKYGDzsyUlTDlTrN6xKmic9aHa5yulXdyS0r8XVZ6YqT/CLEWS2fF16XnQ3OqNXjh8beBHj7oRxj9Z/SWAS82PBO8WBBQ9wrT7JDuP7oSPKpjZPnbHcOxSCHiakzaVqGAJCTQJ7ndjIYLItQoKJxs1t2XM8NUd10o87d3XE5yDcGvFBkAI53oAIFa/2nmJSyNwBnutp8xg+JcuexxZKZsPwKk8mh0vIpmM0JcWTHIjW+ATskjUkMiX3ap/nn2uvGTBXIC4X9wSNKySkx0yKiM4nW+6U5fseAz4X9zkUby/STEGtIfGIaiFba3AH0d+Ld+qwzdS3RTLIWwIAdvWodekW2YPpeITsaBFpAyKxw5eTQ6GkgOOOV8se4sEY2EDarWlC/xAyPdIpJtveos8SR+uG8z9E030keglZLl49GjBbEgWrMwxAji9p/S3dY0SrBIHtKmEaP2lI7F8uL0dMG49yiY6LUcInhuOPkZ+oXnHn+c=
     bucket: docs.loraserver.io
