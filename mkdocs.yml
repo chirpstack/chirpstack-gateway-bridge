@@ -5,10 +5,13 @@ theme_dir: docs/material
 pages:
   - index.md
   - getting-started.md
-  - packet-forwarder.md
   - topics.md
   - frequently-asked-questions.md
   - changelog.md
+  - Gateways:
+    - Airfy GateBoard AYTGB-137-8: gateways/airfy-gateboard-aytgb-137-8.md
+    - IMST iC880A: gateways/imst-ic880a.md
+    - Kerlink IoT Station: gateways/kerlink-iot-station.md
 
 extra:
   version: '2.0.2'

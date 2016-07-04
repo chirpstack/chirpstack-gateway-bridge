@@ -37,8 +37,17 @@ project provides [repositories for various Linux distributions](http://mosquitto
 
 ### LoRa Gateway with packet_forwarder
 
-See [packet_forwarder](packet-forwarder.md) for instructions about how to
-setup the packet_forwarder on your gateway.
+The [packet_forwarder](https://github.com/Lora-net/packet_forwarder/) is an
+application which runs on your gateway. It's responsibility is to:
+
+* forward received uplink packets (over UDP)
+* forward statistics (over UDP)
+* enqueue and transmit downlink packets (received over UDP)
+
+See the **Gateways** section in the menu for instructions about how to setup the
+packet_forwarder on your gateway. Is your gateway not in the list? Please 
+consider contributing to this documentation by documenting the steps needed
+to set your gateway up and create a pull-request!
 
 ## Installing the LoRa Gateway Brige
 

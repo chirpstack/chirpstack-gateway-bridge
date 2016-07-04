@@ -6,8 +6,8 @@ There are many issues that can cause packet-loss (data is not received or
 transmitted by the gateway). Here are some hints:
 
 * Compile the packet_forwarder with debugging enabled, it might give you a clue
-  about what is going wrong. See [packet_forwarder](packet-forwarder.md)
-  installation instructions.
+  about what is going wrong. Before compiling the packet_forwarder, you can
+  set the debug flags in `lora_gateway/libloragw/library.cfg`.
 
 * Make sure the packet_forwarder is configured with the right configuration.
   Each region has different frequencies as documented by the LoRaWAN specs. See
