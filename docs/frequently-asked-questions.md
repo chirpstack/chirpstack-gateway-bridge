@@ -26,7 +26,14 @@ configuration.
 
 ### `src/jitqueue.c:343:jit_enqueue(): ERROR: Packet (type=0) REJECTED, collision with packet already programmed at 423844236 (423843356)`
 
-To be investigated
+This error occurs when there is a collision between two packets being
+scheduled by the packet_forwarder. Please note that a collision does not only
+happen when two packets are scheduled at the same time, but also when they are
+scheduled at around the same time. The packet_forwarder takes a pre-delay,
+post-delay and a tx-margin-delay (which depending on the type of packets being
+scheduled for transmission, can be > 100ms). This documented behaviour and can
+be found in the [readme.md](https://github.com/Lora-net/packet_forwarder/blob/master/lora_pkt_fwd/readme.md)
+of the packet_forwarder documentation (5.3. TX scheduling).
 
 ### `WARNING: [gps] GPS out of sync, keeping previous time reference`
 
