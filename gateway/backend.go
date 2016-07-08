@@ -386,6 +386,9 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) models.GatewayStatsPack
 		Altitude:            float64(stat.Alti),
 		RXPacketsReceived:   int(stat.RXNb),
 		RXPacketsReceivedOK: int(stat.RXOK),
+		Platform:            stat.Pfrm,
+		ContactEmail:        stat.Mail,
+		Description:         stat.Desc,
 	}
 }
 
