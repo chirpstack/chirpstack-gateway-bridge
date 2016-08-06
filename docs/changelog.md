@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0
+
+* Support protocol v1 & v2 simultaneously.
+
 ## 2.0.2
 
 * Rename from `lora-semtech-bridge` to `lora-gateway-bridge`

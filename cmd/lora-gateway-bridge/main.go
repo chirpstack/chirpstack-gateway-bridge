@@ -19,6 +19,11 @@ var version string // set by the compiler
 func run(c *cli.Context) error {
 	log.SetLevel(log.Level(uint8(c.Int("log-level"))))
 
+	log.WithFields(log.Fields{
+		"version": version,
+		"docs":    "https://docs.loraserver.io/lora-gateway-bridge/",
+	}).Info("starting LoRa Gateway Bridge")
+
 	pubsub, err := mqttpubsub.NewBackend(c.String("mqtt-server"), c.String("mqtt-username"), c.String("mqtt-password"))
 	if err != nil {
 		log.Fatalf("could not setup mqtt backend: %s", err)

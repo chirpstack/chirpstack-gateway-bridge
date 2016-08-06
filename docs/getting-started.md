@@ -51,10 +51,6 @@ to set your gateway up and create a pull-request!
 
 ## Installing the LoRa Gateway Brige
 
-!!! warning "Compatibility"
-    Please check the [Compatibility](index.md#compatibility) to make sure you
-    download the correct LoRa Gateway Bridge version.
-
 ### Download
 
 Download and unpack a pre-compiled binary from the
@@ -105,18 +101,21 @@ After changing the LoRa gateway configuration (and restarting the
 packet_forwarder!), you should see received packets in the logs. Example:
 
 ```
-INFO[0000] backend/mqttpubsub: connecting to mqtt broker  server=tcp://127.0.0.1:1883
+INFO[0000] starting LoRa Gateway Bridge                  docs=https://docs.loraserver.io/lora-gateway-bridge/ version=2.1.0
+INFO[0000] backend: connecting to mqtt broker            server=tcp://127.0.0.1:1883
 INFO[0000] gateway: starting gateway udp listener        addr=0.0.0.0:1700
-INFO[0000] backend/mqttpubsub: connected to mqtt broker
-INFO[0006] gateway: received udp packet from gateway     addr=192.168.1.8:45082 type=PullData
-INFO[0006] backend/mqttpubsub: subscribing to topic      topic=gateway/1dee08d0b691d149/tx
-INFO[0006] gateway: sending udp packet to gateway        addr=192.168.1.8:45082 type=PullACK
-INFO[0016] gateway: received udp packet from gateway     addr=192.168.1.8:45082 type=PullData
-INFO[0016] gateway: sending udp packet to gateway        addr=192.168.1.8:45082 type=PullACK
-INFO[0021] gateway: received udp packet from gateway     addr=192.168.1.8:45738 type=PushData
-INFO[0021] gateway: stat packet received                 addr=192.168.1.8:45738 mac=1dee08d0b691d149
-INFO[0021] gateway: sending udp packet to gateway        addr=192.168.1.8:45738 type=PushACK
-INFO[0021] backend/mqttpubsub: publishing packet         topic=gateway/1dee08d0b691d149/stats
+INFO[0000] backend: connected to mqtt broker
+INFO[0001] gateway: received udp packet from gateway     addr=192.168.1.10:51013 protocol_version=2 type=PullData
+INFO[0001] backend: subscribing to topic                 topic=gateway/1dee08d0b691d149/tx
+INFO[0001] gateway: sending udp packet to gateway        addr=192.168.1.10:51013 protocol_version=2 type=PullACK
+INFO[0007] gateway: received udp packet from gateway     addr=192.168.1.10:42125 protocol_version=2 type=PushData
+INFO[0007] gateway: stat packet received                 addr=192.168.1.10:42125 mac=1dee08d0b691d149
+INFO[0007] backend: publishing packet                    topic=gateway/1dee08d0b691d149/stats
+INFO[0007] gateway: sending udp packet to gateway        addr=192.168.1.10:42125 protocol_version=2 type=PushACK
+INFO[0011] gateway: received udp packet from gateway     addr=192.168.1.10:51013 protocol_version=2 type=PullData
+INFO[0011] gateway: sending udp packet to gateway        addr=192.168.1.10:51013 protocol_version=2 type=PullACK
+INFO[0021] gateway: received udp packet from gateway     addr=192.168.1.10:51013 protocol_version=2 type=PullData
+INFO[0021] gateway: sending udp packet to gateway        addr=192.168.1.10:51013 protocol_version=2 type=PullACK
 ```
 
 For an explanation of the different types of data you can receive from and

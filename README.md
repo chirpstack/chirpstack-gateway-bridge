@@ -22,11 +22,8 @@ packet_forwarder UDP protocol versions:
 | LoRa Gateway Bridge | packet_forwarder protocol version | Note                                                                |
 |---------------------|-----------------------------------|---------------------------------------------------------------------|
 | 1.x.x               | 1                                 |                                                                     |
-| 2.x.x               | 2                                 | This protocol is used since version 3.0.0 of the `packet_forwarder` |
-
-
-LoRa Gateway Bridge v1.x.x will be update with bugfixes for the near future as
-not all gateways are using packet_forwarder v3.0.0+ yet.
+| 2.0.x               | 2                                 | This protocol is used since version 3.0.0 of the `packet_forwarder` |
+| >= 2.1.x            | 1 & 2 simultaneously              | Both protocol versions are supported and auto-detected              |
 
 ## Downloads
 
