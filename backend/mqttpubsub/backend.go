@@ -34,7 +34,7 @@ func NewBackend(server, username, password string) (*Backend, error) {
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 
-	log.WithField("server", server).Info("backend/mqttpubsub: connecting to mqtt broker")
+	log.WithField("server", server).Info("backend: connecting to mqtt broker")
 	b.conn = mqtt.NewClient(opts)
 	if token := b.conn.Connect(); token.Wait() && token.Error() != nil {
 		return nil, token.Error()
@@ -60,7 +60,7 @@ func (b *Backend) SubscribeGatewayTX(mac lorawan.EUI64) error {
 	b.mutex.Lock()
 
 	topic := fmt.Sprintf("gateway/%s/tx", mac.String())
-	log.WithField("topic", topic).Info("backend/mqttpubsub: subscribing to topic")
+	log.WithField("topic", topic).Info("backend: subscribing to topic")
 	if token := b.conn.Subscribe(topic, 0, b.txPacketHandler); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
@@ -75,7 +75,7 @@ func (b *Backend) UnSubscribeGatewayTX(mac lorawan.EUI64) error {
 	b.mutex.Lock()
 
 	topic := fmt.Sprintf("gateway/%s/tx", mac.String())
-	log.WithField("topic", topic).Info("backend/mqttpubsub: unsubscribing from topic")
+	log.WithField("topic", topic).Info("backend: unsubscribing from topic")
 	if token := b.conn.Unsubscribe(topic); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
@@ -100,7 +100,7 @@ func (b *Backend) publish(topic string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	log.WithField("topic", topic).Info("backend/mqttpubsub: publishing packet")
+	log.WithField("topic", topic).Info("backend: publishing packet")
 	if token := b.conn.Publish(topic, 0, false, bytes); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
@@ -108,10 +108,10 @@ func (b *Backend) publish(topic string, v interface{}) error {
 }
 
 func (b *Backend) txPacketHandler(c mqtt.Client, msg mqtt.Message) {
-	log.WithField("topic", msg.Topic()).Info("backend/mqttpubsub: packet received")
+	log.WithField("topic", msg.Topic()).Info("backend: packet received")
 	var txPacket models.TXPacket
 	if err := json.Unmarshal(msg.Payload(), &txPacket); err != nil {
-		log.Errorf("backend/mqttpubsub: decode tx packet error: %s", err)
+		log.Errorf("backend: decode tx packet error: %s", err)
 		return
 	}
 	b.txPacketChan <- txPacket
@@ -121,16 +121,16 @@ func (b *Backend) onConnected(c mqtt.Client) {
 	defer b.mutex.RUnlock()
 	b.mutex.RLock()
 
-	log.Info("backend/mqttpubsub: connected to mqtt broker")
+	log.Info("backend: connected to mqtt broker")
 	if len(b.gateways) > 0 {
 		for {
-			log.WithField("topic_count", len(b.gateways)).Info("backend/mqttpubsub: re-registering to gateway topics")
+			log.WithField("topic_count", len(b.gateways)).Info("backend: re-registering to gateway topics")
 			topics := make(map[string]byte)
 			for k := range b.gateways {
 				topics[fmt.Sprintf("gateway/%s/tx", k)] = 0
 			}
 			if token := b.conn.SubscribeMultiple(topics, b.txPacketHandler); token.Wait() && token.Error() != nil {
-				log.WithField("topic_count", len(topics)).Errorf("backend/mqttpubsub: subscribe multiple failed: %s", token.Error())
+				log.WithField("topic_count", len(topics)).Errorf("backend: subscribe multiple failed: %s", token.Error())
 				time.Sleep(time.Second)
 				continue
 			}
@@ -140,5 +140,5 @@ func (b *Backend) onConnected(c mqtt.Client) {
 }
 
 func (b *Backend) onConnectionLost(c mqtt.Client, reason error) {
-	log.Errorf("backend/mqttpubsub: mqtt connection error: %s", reason)
+	log.Errorf("backend: mqtt connection error: %s", reason)
 }
