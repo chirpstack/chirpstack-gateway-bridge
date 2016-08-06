@@ -30,8 +30,9 @@ func TestBackend(t *testing.T) {
 
 			Convey("When sending a PULL_DATA packet", func() {
 				p := PullDataPacket{
-					RandomToken: 12345,
-					GatewayMAC:  [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+					ProtocolVersion: ProtocolVersion2,
+					RandomToken:     12345,
+					GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 				}
 				b, err := p.MarshalBinary()
 				So(err, ShouldBeNil)
@@ -45,13 +46,15 @@ func TestBackend(t *testing.T) {
 					var ack PullACKPacket
 					So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
 					So(ack.RandomToken, ShouldEqual, p.RandomToken)
+					So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
 				})
 			})
 
 			Convey("When sending a PUSH_DATA packet with stats", func() {
 				p := PushDataPacket{
-					RandomToken: 1234,
-					GatewayMAC:  [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+					ProtocolVersion: ProtocolVersion2,
+					RandomToken:     1234,
+					GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 					Payload: PushDataPayload{
 						Stat: &Stat{
 							Time: ExpandedTime(time.Time{}.UTC()),
@@ -78,6 +81,7 @@ func TestBackend(t *testing.T) {
 					var ack PushACKPacket
 					So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
 					So(ack.RandomToken, ShouldEqual, p.RandomToken)
+					So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
 
 					Convey("Then the gateway stats are returned by the stats channel", func() {
 						stats := <-backend.StatsChan()
@@ -88,8 +92,9 @@ func TestBackend(t *testing.T) {
 
 			Convey("When sending a PUSH_DATA packet with RXPK", func() {
 				p := PushDataPacket{
-					RandomToken: 1234,
-					GatewayMAC:  [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+					ProtocolVersion: ProtocolVersion2,
+					RandomToken:     1234,
+					GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 					Payload: PushDataPayload{
 						RXPK: []RXPK{
 							{
@@ -122,6 +127,7 @@ func TestBackend(t *testing.T) {
 					var ack PushACKPacket
 					So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
 					So(ack.RandomToken, ShouldEqual, p.RandomToken)
+					So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
 				})
 
 				Convey("Then the packet is returned by the RX packet channel", func() {
@@ -172,8 +178,9 @@ func TestBackend(t *testing.T) {
 				Convey("When sending the TXPacket when the gateway is known to the backend", func() {
 					// sending a ping should register the gateway to the backend
 					p := PullDataPacket{
-						RandomToken: 12345,
-						GatewayMAC:  [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+						ProtocolVersion: ProtocolVersion2,
+						RandomToken:     12345,
+						GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 					}
 					b, err := p.MarshalBinary()
 					So(err, ShouldBeNil)
@@ -185,6 +192,7 @@ func TestBackend(t *testing.T) {
 					var ack PullACKPacket
 					So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
 					So(ack.RandomToken, ShouldEqual, p.RandomToken)
+					So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
 
 					err = backend.Send(txPacket)
 
@@ -203,6 +211,7 @@ func TestBackend(t *testing.T) {
 						So(err, ShouldBeNil)
 
 						So(pullResp, ShouldResemble, PullRespPacket{
+							ProtocolVersion: p.ProtocolVersion,
 							Payload: PullRespPayload{
 								TXPK: TXPK{
 									Imme: true,

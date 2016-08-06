@@ -27,8 +27,9 @@ type udpPacket struct {
 }
 
 type gateway struct {
-	addr     *net.UDPAddr
-	lastSeen time.Time
+	addr            *net.UDPAddr
+	lastSeen        time.Time
+	protocolVersion uint8
 }
 
 type gateways struct {
@@ -176,6 +177,7 @@ func (b *Backend) Send(txPacket models.TXPacket) error {
 		return err
 	}
 	pullResp := PullRespPacket{
+		ProtocolVersion: gw.protocolVersion,
 		Payload: PullRespPayload{
 			TXPK: txpk,
 		},
@@ -222,8 +224,9 @@ func (b *Backend) sendPackets() error {
 			continue
 		}
 		log.WithFields(log.Fields{
-			"addr": p.addr,
-			"type": pt,
+			"addr":             p.addr,
+			"type":             pt,
+			"protocol_version": p.data[0],
 		}).Info("gateway: sending udp packet to gateway")
 
 		if _, err := b.conn.WriteToUDP(p.data, p.addr); err != nil {
@@ -239,8 +242,9 @@ func (b *Backend) handlePacket(addr *net.UDPAddr, data []byte) error {
 		return err
 	}
 	log.WithFields(log.Fields{
-		"addr": addr,
-		"type": pt,
+		"addr":             addr,
+		"type":             pt,
+		"protocol_version": data[0],
 	}).Info("gateway: received udp packet from gateway")
 
 	switch pt {
@@ -261,7 +265,8 @@ func (b *Backend) handlePullData(addr *net.UDPAddr, data []byte) error {
 		return err
 	}
 	ack := PullACKPacket{
-		RandomToken: p.RandomToken,
+		ProtocolVersion: p.ProtocolVersion,
+		RandomToken:     p.RandomToken,
 	}
 	bytes, err := ack.MarshalBinary()
 	if err != nil {
@@ -269,8 +274,9 @@ func (b *Backend) handlePullData(addr *net.UDPAddr, data []byte) error {
 	}
 
 	err = b.gateways.set(p.GatewayMAC, gateway{
-		addr:     addr,
-		lastSeen: time.Now().UTC(),
+		addr:            addr,
+		lastSeen:        time.Now().UTC(),
+		protocolVersion: p.ProtocolVersion,
 	})
 	if err != nil {
 		return err
@@ -291,7 +297,8 @@ func (b *Backend) handlePushData(addr *net.UDPAddr, data []byte) error {
 
 	// ack the packet
 	ack := PushACKPacket{
-		RandomToken: p.RandomToken,
+		ProtocolVersion: p.ProtocolVersion,
+		RandomToken:     p.RandomToken,
 	}
 	bytes, err := ack.MarshalBinary()
 	if err != nil {
