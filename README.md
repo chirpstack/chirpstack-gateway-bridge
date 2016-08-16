@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/brocaar/lora-gateway-bridge.svg?branch=master)](https://travis-ci.org/brocaar/lora-gateway-bridge)
 [![GoDoc](https://godoc.org/github.com/brocaar/lora-gateway-bridge/cmd/gateway-bridge?status.svg)](https://godoc.org/github.com/brocaar/lora-gateway-bridge/cmd/lora-gateway-bridge)
+[![Gitter chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/loraserver/lora-gateway-bridge)
 
 LoRa Gateway Bridge is a service which abstracts the 
 [packet_forwarder UDP protocol](https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT)
