@@ -4,6 +4,7 @@ theme_dir: docs/material
 
 pages:
   - index.md
+  - deployment.md
   - getting-started.md
   - topics.md
   - frequently-asked-questions.md

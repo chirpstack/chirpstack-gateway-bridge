@@ -1,41 +1,15 @@
 # Getting started
 
-## Strategies
+This getting started document describes the steps needed to setup LoRa Gateway
+bridge and all its requirements on Ubuntu 16.04 LTS. When using an other Linux
+distribution, you might need to adapt these steps slightly!
 
-There are multiple ways that you can deploy the LoRa Gateway Bridge:
+!!! warning
+    This getting started guide does not cover setting up firewall rules! After
+    setting up LoRa Server and its requirements, don't forget to configure
+    your firewall rules.
 
-### Single instance
-
-The most basic strategy is to connect all your gateways to a single instance
-of the LoRa Gateway Bridge.
-
-### Multiple instances
-
-To make the LoRa Gateway Bridge HA, you can run a cluster of instances
-(connecting to the same MQTT broker).
-**Important:** make sure that each gateway connection is always routed to the
-same instance!
-
-### On each gateway
-
-Depending on the capabilities of your gateway, you can deploy the LoRa Gateway
-Bridge on each of your gateways. This enables you to encrypt all traffic from
-your gateway by connecting to the MQTT broker over SSL/TLS.
-
-
-## Requirements
-
-Before you install the LoRa Gateway Bridge, make sure you've installed the
-following requirements:
-
-### MQTT broker
-
-LoRa Gateway Brige makes use of MQTT for communication with the gateways and
-applications. [Mosquitto](http://mosquitto.org/) is a popular open-source MQTT
-server. Make sure you install a **recent** version of Mosquitto (the Mosquitto
-project provides [repositories for various Linux distributions](http://mosquitto.org/download/)).
-
-### LoRa Gateway with packet_forwarder
+## LoRa Gateway with packet_forwarder
 
 The [packet_forwarder](https://github.com/Lora-net/packet_forwarder/) is an
 application which runs on your gateway. It's responsibility is to:
@@ -49,73 +23,134 @@ packet_forwarder on your gateway. Is your gateway not in the list? Please
 consider contributing to this documentation by documenting the steps needed
 to set your gateway up and create a pull-request!
 
-## Installing the LoRa Gateway Brige
+## MQTT broker
 
-### Download
+LoRa Gateway Brige makes use of MQTT for communication with the gateways and
+applications. [Mosquitto](http://mosquitto.org/) is a popular open-source MQTT
+server. Make sure you install a **recent** version of Mosquitto (the Mosquitto
+project provides [repositories for various Linux distributions](http://mosquitto.org/download/)).
+Ubuntu 16.04 LTS already includes a recent version which can be installed with:
 
-Download and unpack a pre-compiled binary from the
-[releases](https://github.com/brocaar/lora-gateway-bridge/releases) page.
-Alternatively, build the code from source (not covered).
+```bash
+sudo apt-get install mosquitto
+```
+
+
+## Install LoRa Gateway Brige
+
+Create a system user for `gatewaybridge`:
+
+```bash
+sudo useradd -M -r -s /bin/false gatewaybridge
+```
+
+Download and unpack a pre-compiled binary from the [releases](https://github.com/brocaar/lora-gateway-bridge/releases)
+page:
+
+```bash
+# replace VERSION with the latest version or the version you want to install
+
+# download
+wget https://github.com/brocaar/lora-gateway-bridge/releases/download/VERSION/lora_gateway_bridge_VERSION_linux_amd64.tar.gz
+
+# unpack
+tar zxf lora_gateway_bridge_VERSION_linux_amd64.tar.gz
+
+# move the binary to /usr/local/bin
+sudo mv lora-gateway-bridge /usr/local/bin
+```
+
+In order to start LoRa Gateway Bridge as a service, create the file
+`/etc/systemd/system/lora-gateway-bridge.service` with as content:
+
+```
+[Unit]
+Description=lora-gateway-bridge
+After=network.target
+
+[Service]
+User=gatewaybridge
+Group=gatewaybridge
+ExecStart=/usr/local/bin/lora-gateway-bridge
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+The default LoRa Gateway Bridge settings will work, but in case you would like
+to use different settings, create a directory named
+`/etc/systemd/system/lora-gateway-bridge.service.d`:
+
+```bash
+sudo mkdir /etc/systemd/system/lora-gateway-bridge.service.d
+```
+
+Inside this directory, put a file named `lora-gateway-bridge.conf`:
+
+```
+[Service]
+Environment="SETTING_A=value_a"
+Environment="SETTING_B=value_b"
+```
+
+(note that the above content is an example and the values must be replaced by
+actual config keys)
+
+## Starting LoRa Gateway Bridge
+
+In order to (re)start and stop LoRa Gateway Bridge:
+
+```bash
+# start
+sudo systemctl start lora-gateway-bridge
+
+# restart
+sudo systemctl restart lora-gateway-bridge
+
+# stop
+sudo systemctl stop lora-gateway-bridge
+```
+
+Verify that LoRa Gateway Bridge is up-and-running by looking at it's log output:
+
+```bash
+journalctl -u lora-gateway-bridge -f -n 50
+```
 
 ### Configuration
 
-All configuration is done by either environment variables or command-line
-arguments. Arguments and environment variables can be mixed. 
-
-To get a list (and explanation) of all the available arguments, execute:
-
-``` bash
-$ ./lora-gateway-bridge --help
-```
-
-### Starting LoRa Gateway Bridge
-
-Assuming you have a MQTT broker running on the same host without authentication,
-starting LoRa Gateway Bridge is as simple as:
-
-``` bash
-$ ./lora-gateway-bridge \
-    --udp-bind 0.0.0.0:1700             \  # this is the port you must use in the packet_forwarder
-    --mqtt-server tcp://127.0.0.1:1883
-```
-
-### LoRa gateway configuration
-
-Now you have the LoRa Gateway Bridge running, it is time to configure the
-packet_forwarder on your gateway. Edit the file ``local_config.json``:
-
-``` json
-{
-    "gateway_conf": {
-        "gateway_ID": "...",      /* you must pick a unique 64b number for each gateway (represented by an hex string) */
-        "server_address": "...",  /* the IP address on which the LoRa Gateway Bridge is running */
-        "serv_port_up": 1700,     /* 1700 is the default LoRa Gateway Bridge port for up and down */
-        "serv_port_down": 1700
-    }
-}
-```
+For all the configuration options, run `lora-gateway-bridge --help` for an
+overview of all available options. Note that configuration variables can be
+passed as cli arguments and / or environment variables
+(which we did in the above example).
 
 ### Verify data is coming in
 
-After changing the LoRa gateway configuration (and restarting the
-packet_forwarder!), you should see received packets in the logs. Example:
+After setting up LoRa Gateway Bridge and configuring your gateway so that it
+forwards data to your Lora Gateway Bridge instance, you should see data coming
+in:
+
+```bash
+journalctl -u lora-gateway-bridge -f -n 50
+```
+
+Example:
 
 ```
-INFO[0000] starting LoRa Gateway Bridge                  docs=https://docs.loraserver.io/lora-gateway-bridge/ version=2.1.0
-INFO[0000] backend: connecting to mqtt broker            server=tcp://127.0.0.1:1883
-INFO[0000] gateway: starting gateway udp listener        addr=0.0.0.0:1700
-INFO[0000] backend: connected to mqtt broker
-INFO[0001] gateway: received udp packet from gateway     addr=192.168.1.10:51013 protocol_version=2 type=PullData
-INFO[0001] backend: subscribing to topic                 topic=gateway/1dee08d0b691d149/tx
-INFO[0001] gateway: sending udp packet to gateway        addr=192.168.1.10:51013 protocol_version=2 type=PullACK
-INFO[0007] gateway: received udp packet from gateway     addr=192.168.1.10:42125 protocol_version=2 type=PushData
-INFO[0007] gateway: stat packet received                 addr=192.168.1.10:42125 mac=1dee08d0b691d149
-INFO[0007] backend: publishing packet                    topic=gateway/1dee08d0b691d149/stats
-INFO[0007] gateway: sending udp packet to gateway        addr=192.168.1.10:42125 protocol_version=2 type=PushACK
-INFO[0011] gateway: received udp packet from gateway     addr=192.168.1.10:51013 protocol_version=2 type=PullData
-INFO[0011] gateway: sending udp packet to gateway        addr=192.168.1.10:51013 protocol_version=2 type=PullACK
-INFO[0021] gateway: received udp packet from gateway     addr=192.168.1.10:51013 protocol_version=2 type=PullData
-INFO[0021] gateway: sending udp packet to gateway        addr=192.168.1.10:51013 protocol_version=2 type=PullACK
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:18+02:00" level=info msg="starting LoRa Gateway Bridge" docs="https://docs.loraserver.io/lora-gateway-bridge/" version=2.1.0
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:18+02:00" level=info msg="backend: connecting to mqtt broker" server="tcp://localhost:1883/"
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:18+02:00" level=info msg="gateway: starting gateway udp listener" addr=0.0.0.0:1700
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:18+02:00" level=info msg="backend: connected to mqtt broker"
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:23+02:00" level=info msg="gateway: received udp packet from gateway" addr=86.83.25.107:35368 protocol_version=2 type=PushData
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:23+02:00" level=info msg="gateway: stat packet received" addr=86.83.25.107:35368 mac=1dee08d0b691d149
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:23+02:00" level=info msg="backend: publishing packet" topic="gateway/1dee08d0b691d149/stats"
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:23+02:00" level=info msg="gateway: sending udp packet to gateway" addr=86.83.25.107:35368 protocol_version=2 type=PushACK
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:24+02:00" level=info msg="gateway: received udp packet from gateway" addr=86.83.25.107:45562 protocol_version=2 type=PullData
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:24+02:00" level=info msg="backend: subscribing to topic" topic="gateway/1dee08d0b691d149/tx"
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:24+02:00" level=info msg="gateway: sending udp packet to gateway" addr=86.83.25.107:45562 protocol_version=2 type=PullACK
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:34+02:00" level=info msg="gateway: received udp packet from gateway" addr=86.83.25.107:45562 protocol_version=2 type=PullData
+lora-gateway-bridge[9714]: time="2016-08-19T09:05:34+02:00" level=info msg="gateway: sending udp packet to gateway" addr=86.83.25.107:45562 protocol_version=2 type=PullACK
 ```
 
 For an explanation of the different types of data you can receive from and
@@ -124,4 +159,8 @@ send to the LoRa Gateway Bridge see [topics](topics.md).
 ## Setup LoRa Server
 
 Now you have your LoRa Gateway bridge instance up and running, it is time to
-setup [LoRa Server](https://github.com/brocaar/loraserver).
+setup [LoRa Server](https://docs.loraserver.io/loraserver/).
+
+!!! info
+	You can also use Ansible to setup a complete LoRa Server environment. See
+	[https://github.com/brocaar/loraserver-setup](https://github.com/brocaar/loraserver-setup).
