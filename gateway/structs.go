@@ -402,6 +402,9 @@ type Stat struct {
 	RXFW uint32       `json:"rxfw"` // Number of radio packets forwarded (unsigned integer)
 	ACKR float64      `json:"ackr"` // Percentage of upstream datagrams that were acknowledged
 	DWNb uint32       `json:"dwnb"` // Number of downlink datagrams received (unsigned integer)
+	Pfrm string       `json:"pfrm"` // Platform definition, max 24 chars
+	Mail string       `json:"mail"` // Email of gateway operator, max 40 chars
+	Desc string       `json:"desc"` // Public description of this device, max 64 chars
 }
 
 // TXPK contains a RF packet to be emitted and associated metadata.
