@@ -443,6 +443,10 @@ func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 		Data: base64.StdEncoding.EncodeToString(txPacket.PHYPayload),
 	}
 
+	if txPacket.TXInfo.DataRate.Modulation == band.FSKModulation {
+		txpk.FDev = uint16(txPacket.TXInfo.DataRate.BitRate / 2)
+	}
+
 	// TODO: do testing with FSK modulation
 	if txPacket.TXInfo.DataRate.Modulation == band.LoRaModulation {
 		txpk.IPol = true
