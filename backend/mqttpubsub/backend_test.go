@@ -5,8 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/loraserver/models"
-	"github.com/brocaar/lorawan"
+	"github.com/brocaar/loraserver/api/gw"
 	"github.com/eclipse/paho.mqtt.golang"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -28,9 +27,9 @@ func TestBackend(t *testing.T) {
 			defer backend.Close()
 
 			Convey("Given the MQTT client is subscribed to RX packets", func() {
-				rxPacketChan := make(chan models.RXPacket)
+				rxPacketChan := make(chan gw.RXPacketBytes)
 				token := c.Subscribe("gateway/+/rx", 0, func(c mqtt.Client, msg mqtt.Message) {
-					var rxPacket models.RXPacket
+					var rxPacket gw.RXPacketBytes
 					if err := json.Unmarshal(msg.Payload(), &rxPacket); err != nil {
 						t.Fatal(err)
 					}
@@ -40,18 +39,12 @@ func TestBackend(t *testing.T) {
 				So(token.Error(), ShouldBeNil)
 
 				Convey("When publishing a RXPacket", func() {
-					rxPacket := models.RXPacket{
-						RXInfo: models.RXInfo{
+					rxPacket := gw.RXPacketBytes{
+						RXInfo: gw.RXInfo{
 							MAC:  [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 							Time: time.Now().UTC(),
 						},
-						PHYPayload: lorawan.PHYPayload{
-							MHDR: lorawan.MHDR{
-								MType: lorawan.UnconfirmedDataUp,
-								Major: lorawan.LoRaWANR1,
-							},
-							MACPayload: &lorawan.MACPayload{},
-						},
+						PHYPayload: []byte{1, 2, 3, 4},
 					}
 
 					err := backend.PublishGatewayRX([8]byte{1, 2, 3, 4, 5, 6, 7, 8}, rxPacket)
@@ -69,17 +62,11 @@ func TestBackend(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When publishing a TXPacket from the MQTT client", func() {
-					txPacket := models.TXPacket{
-						TXInfo: models.TXInfo{
+					txPacket := gw.TXPacketBytes{
+						TXInfo: gw.TXInfo{
 							MAC: [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 						},
-						PHYPayload: lorawan.PHYPayload{
-							MHDR: lorawan.MHDR{
-								MType: lorawan.UnconfirmedDataUp,
-								Major: lorawan.LoRaWANR1,
-							},
-							MACPayload: &lorawan.MACPayload{},
-						},
+						PHYPayload: []byte{1, 2, 3, 4},
 					}
 					b, err := json.Marshal(txPacket)
 					So(err, ShouldBeNil)

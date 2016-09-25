@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/brocaar/loraserver/models"
+	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 
@@ -81,8 +81,8 @@ func (c *gateways) cleanup() error {
 // Backend implements a Semtech gateway backend.
 type Backend struct {
 	conn        *net.UDPConn
-	rxChan      chan models.RXPacket
-	statsChan   chan models.GatewayStatsPacket
+	rxChan      chan gw.RXPacketBytes
+	statsChan   chan gw.GatewayStatsPacket
 	udpSendChan chan udpPacket
 	closed      bool
 	gateways    gateways
@@ -103,8 +103,8 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 
 	b := &Backend{
 		conn:        conn,
-		rxChan:      make(chan models.RXPacket),
-		statsChan:   make(chan models.GatewayStatsPacket),
+		rxChan:      make(chan gw.RXPacketBytes),
+		statsChan:   make(chan gw.GatewayStatsPacket),
 		udpSendChan: make(chan udpPacket),
 		gateways: gateways{
 			gateways: make(map[lorawan.EUI64]gateway),
@@ -157,17 +157,17 @@ func (b *Backend) Close() error {
 }
 
 // RXPacketChan returns the channel containing the received RX packets.
-func (b *Backend) RXPacketChan() chan models.RXPacket {
+func (b *Backend) RXPacketChan() chan gw.RXPacketBytes {
 	return b.rxChan
 }
 
 // StatsChan returns the channel containg the received gateway stats.
-func (b *Backend) StatsChan() chan models.GatewayStatsPacket {
+func (b *Backend) StatsChan() chan gw.GatewayStatsPacket {
 	return b.statsChan
 }
 
 // Send sends the given packet to the gateway.
-func (b *Backend) Send(txPacket models.TXPacket) error {
+func (b *Backend) Send(txPacket gw.TXPacketBytes) error {
 	gw, err := b.gateways.get(txPacket.TXInfo.MAC)
 	if err != nil {
 		return err
@@ -383,9 +383,9 @@ func (b *Backend) handleTXACK(addr *net.UDPAddr, data []byte) error {
 }
 
 // newGatewayStatsPacket from Stat transforms a Semtech Stat packet into a
-// models.GatewayStatsPacket.
-func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) models.GatewayStatsPacket {
-	return models.GatewayStatsPacket{
+// gw.GatewayStatsPacket.
+func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) gw.GatewayStatsPacket {
+	return gw.GatewayStatsPacket{
 		Time:                time.Time(stat.Time),
 		MAC:                 mac,
 		Latitude:            stat.Lati,
@@ -396,21 +396,21 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) models.GatewayStatsPack
 	}
 }
 
-// newRXPacketFromRXPK transforms a Semtech packet into a models.RXPacket.
-func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (models.RXPacket, error) {
-	var phy lorawan.PHYPayload
-	if err := phy.UnmarshalText([]byte(rxpk.Data)); err != nil {
-		return models.RXPacket{}, fmt.Errorf("gateway: could not unmarshal PHYPayload: %s", err)
-	}
-
+// newRXPacketFromRXPK transforms a Semtech packet into a gw.RXPacketBytes.
+func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (gw.RXPacketBytes, error) {
 	dataRate, err := newDataRateFromDatR(rxpk.DatR)
 	if err != nil {
-		return models.RXPacket{}, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)
+		return gw.RXPacketBytes{}, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)
 	}
 
-	rxPacket := models.RXPacket{
-		PHYPayload: phy,
-		RXInfo: models.RXInfo{
+	b, err := base64.StdEncoding.DecodeString(rxpk.Data)
+	if err != nil {
+		return gw.RXPacketBytes{}, fmt.Errorf("gateway: could not base64 decode data: %s", err)
+	}
+
+	rxPacket := gw.RXPacketBytes{
+		PHYPayload: b,
+		RXInfo: gw.RXInfo{
 			MAC:       mac,
 			Time:      time.Time(rxpk.Time),
 			Timestamp: rxpk.Tmst,
@@ -428,14 +428,9 @@ func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (models.RXPacket, error) 
 	return rxPacket, nil
 }
 
-// newTXPKFromTXPacket transforms a models.TXPacket into a Semtech
+// newTXPKFromTXPacket transforms a gw.TXPacketBytes into a Semtech
 // compatible packet.
-func newTXPKFromTXPacket(txPacket models.TXPacket) (TXPK, error) {
-	b, err := txPacket.PHYPayload.MarshalBinary()
-	if err != nil {
-		return TXPK{}, err
-	}
-
+func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 	txpk := TXPK{
 		Imme: txPacket.TXInfo.Immediately,
 		Tmst: txPacket.TXInfo.Timestamp,
@@ -444,8 +439,8 @@ func newTXPKFromTXPacket(txPacket models.TXPacket) (TXPK, error) {
 		Modu: string(txPacket.TXInfo.DataRate.Modulation),
 		DatR: newDatRfromDataRate(txPacket.TXInfo.DataRate),
 		CodR: txPacket.TXInfo.CodeRate,
-		Size: uint16(len(b)),
-		Data: base64.RawStdEncoding.EncodeToString(b),
+		Size: uint16(len(txPacket.PHYPayload)),
+		Data: base64.StdEncoding.EncodeToString(txPacket.PHYPayload),
 	}
 
 	// TODO: do testing with FSK modulation

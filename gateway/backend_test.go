@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/loraserver/models"
+	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 	. "github.com/smartystreets/goconvey/convey"
@@ -140,19 +140,8 @@ func TestBackend(t *testing.T) {
 			})
 
 			Convey("Given a TXPacket", func() {
-				var nwkSKey lorawan.AES128Key
-
-				phy := lorawan.PHYPayload{
-					MHDR: lorawan.MHDR{
-						MType: lorawan.UnconfirmedDataDown,
-						Major: lorawan.LoRaWANR1,
-					},
-					MACPayload: &lorawan.MACPayload{},
-				}
-				So(phy.SetMIC(nwkSKey), ShouldBeNil)
-
-				txPacket := models.TXPacket{
-					TXInfo: models.TXInfo{
+				txPacket := gw.TXPacketBytes{
+					TXInfo: gw.TXInfo{
 						MAC:         [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 						Immediately: true,
 						Timestamp:   12345,
@@ -165,7 +154,7 @@ func TestBackend(t *testing.T) {
 						},
 						CodeRate: "4/5",
 					},
-					PHYPayload: phy,
+					PHYPayload: []byte{1, 2, 3, 4},
 				}
 
 				Convey("When sending the TXPacket and the gateway is not known to the backend", func() {
@@ -207,9 +196,6 @@ func TestBackend(t *testing.T) {
 						var pullResp PullRespPacket
 						So(pullResp.UnmarshalBinary(buf[:i]), ShouldBeNil)
 
-						str, err := phy.MarshalText()
-						So(err, ShouldBeNil)
-
 						So(pullResp, ShouldResemble, PullRespPacket{
 							ProtocolVersion: p.ProtocolVersion,
 							Payload: PullRespPayload{
@@ -223,8 +209,8 @@ func TestBackend(t *testing.T) {
 										LoRa: "SF12BW250",
 									},
 									CodR: "4/5",
-									Size: uint16(len(b)),
-									Data: string(str),
+									Size: uint16(len([]byte{1, 2, 3, 4})),
+									Data: base64.StdEncoding.EncodeToString([]byte{1, 2, 3, 4}),
 									IPol: true,
 								},
 							},
@@ -253,9 +239,9 @@ func TestNewGatewayStatPacket(t *testing.T) {
 		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
 
 		Convey("When calling newGatewayStatsPacket", func() {
-			gw := newGatewayStatsPacket(mac, stat)
+			gwStats := newGatewayStatsPacket(mac, stat)
 			Convey("Then all fields are set correctly", func() {
-				So(gw, ShouldResemble, models.GatewayStatsPacket{
+				So(gwStats, ShouldResemble, gw.GatewayStatsPacket{
 					Time:                now,
 					MAC:                 mac,
 					Latitude:            1.234,
@@ -286,7 +272,7 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 			RSSI: -51,
 			LSNR: 7,
 			Size: 16,
-			Data: "QAEBAQGAAAABVfdjR6YrSw==",
+			Data: base64.StdEncoding.EncodeToString([]byte{1, 2, 3, 4}),
 		}
 		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
 
@@ -295,15 +281,9 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Then all fields are set correctly", func() {
-				b, err := base64.StdEncoding.DecodeString(rxpk.Data)
-				So(err, ShouldBeNil)
+				So(rxPacket.PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
 
-				var phy lorawan.PHYPayload
-				So(phy.UnmarshalBinary(b), ShouldBeNil)
-
-				So(rxPacket.PHYPayload, ShouldResemble, phy)
-
-				So(rxPacket.RXInfo, ShouldResemble, models.RXInfo{
+				So(rxPacket.RXInfo, ShouldResemble, gw.RXInfo{
 					MAC:       mac,
 					Time:      now,
 					Timestamp: 708016819,

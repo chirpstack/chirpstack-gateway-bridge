@@ -9,10 +9,10 @@
 			"revisionTime": "2016-06-01T11:32:10Z"
 		},
 		{
-			"checksumSHA1": "GWMZl9IMZdul/8Y0vgo0dHJbn/A=",
-			"path": "github.com/brocaar/loraserver/models",
-			"revision": "ccdd00c0ae003efa5c7486e80a34c336ca5990f2",
-			"revisionTime": "2016-06-18T10:13:15Z"
+			"checksumSHA1": "B+5rsKovcc1yZDbCMa4ousZ/AZg=",
+			"path": "github.com/brocaar/loraserver/api/gw",
+			"revision": "88ec1c1f6f8f61628b3c2743338d4f7f93a9f8b6",
+			"revisionTime": "2016-09-25T17:12:27Z"
 		},
 		{
 			"checksumSHA1": "ya7tMk+wexXh1cmbdp0Sw0lbM1k=",
