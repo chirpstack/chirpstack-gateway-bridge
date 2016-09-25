@@ -56,8 +56,9 @@ wget https://github.com/brocaar/lora-gateway-bridge/releases/download/VERSION/lo
 # unpack
 tar zxf lora_gateway_bridge_VERSION_linux_amd64.tar.gz
 
-# move the binary to /usr/local/bin
-sudo mv lora-gateway-bridge /usr/local/bin
+# move the binary to /opt/lora-gateway-bridge/bin
+sudo mkdir -p /opt/lora-gateway-bridge/bin
+sudo mv lora-gateway-bridge /opt/lora-gateway-bridge/bin
 ```
 
 In order to start LoRa Gateway Bridge as a service, create the file
@@ -66,12 +67,12 @@ In order to start LoRa Gateway Bridge as a service, create the file
 ```
 [Unit]
 Description=lora-gateway-bridge
-After=network.target
+After=mosquitto.service
 
 [Service]
 User=gatewaybridge
 Group=gatewaybridge
-ExecStart=/usr/local/bin/lora-gateway-bridge
+ExecStart=/opt/lora-gateway-bridge/bin/lora-gateway-bridge
 Restart=on-failure
 
 [Install]
@@ -160,7 +161,3 @@ send to the LoRa Gateway Bridge see [topics](topics.md).
 
 Now you have your LoRa Gateway bridge instance up and running, it is time to
 setup [LoRa Server](https://docs.loraserver.io/loraserver/).
-
-!!! info
-	You can also use Ansible to setup a complete LoRa Server environment. See
-	[https://github.com/brocaar/loraserver-setup](https://github.com/brocaar/loraserver-setup).
