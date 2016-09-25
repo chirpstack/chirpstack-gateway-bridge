@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.1
+
+* Do not unmarshal and marshal PHYPayload on receiving / sending
+* Set FDev field when using FSK modulation ([#16](https://github.com/brocaar/lora-gateway-bridge/issues/16))
+* Omit empty time field ([#15](https://github.com/brocaar/lora-gateway-bridge/issues/16))
+
 ## 2.1.0
 
 * Support protocol v1 & v2 simultaneously.
