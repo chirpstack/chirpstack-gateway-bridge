@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.2
+
+* Add optional `iPol` field to `txInfo` struct in JSON to override the default
+  behaviour (which is `iPol=true` when using LoRa modulation)
+
 ## 2.1.1
 
 * Do not unmarshal and marshal PHYPayload on receiving / sending

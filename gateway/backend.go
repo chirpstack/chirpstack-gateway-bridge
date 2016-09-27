@@ -447,8 +447,11 @@ func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 		txpk.FDev = uint16(txPacket.TXInfo.DataRate.BitRate / 2)
 	}
 
-	// TODO: do testing with FSK modulation
-	if txPacket.TXInfo.DataRate.Modulation == band.LoRaModulation {
+	// by default IPol=true is used for downlink LoRa modulation, however in
+	// some cases one might want to override this.
+	if txPacket.TXInfo.IPol != nil {
+		txpk.IPol = *txPacket.TXInfo.IPol
+	} else if txPacket.TXInfo.DataRate.Modulation == band.LoRaModulation {
 		txpk.IPol = true
 	}
 

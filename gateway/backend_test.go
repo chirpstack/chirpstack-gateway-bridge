@@ -256,6 +256,55 @@ func TestNewGatewayStatPacket(t *testing.T) {
 	})
 }
 
+func TestNewTXPKFromTXPacket(t *testing.T) {
+	Convey("Given a TXPacket", t, func() {
+		txPacket := gw.TXPacketBytes{
+			TXInfo: gw.TXInfo{
+				Timestamp: 12345,
+				Frequency: 868100000,
+				Power:     14,
+				CodeRate:  "4/5",
+				DataRate: band.DataRate{
+					Modulation:   band.LoRaModulation,
+					SpreadFactor: 9,
+					Bandwidth:    250,
+				},
+			},
+			PHYPayload: []byte{1, 2, 3, 4},
+		}
+
+		Convey("Then te expected TXPK is returned (with default IPol", func() {
+			txpk, err := newTXPKFromTXPacket(txPacket)
+			So(err, ShouldBeNil)
+			So(txpk, ShouldResemble, TXPK{
+				Imme: false,
+				Tmst: 12345,
+				Freq: 868.1,
+				Powe: 14,
+				Modu: "LORA",
+				DatR: DatR{
+					LoRa: "SF9BW250",
+				},
+				CodR: "4/5",
+				Size: 4,
+				Data: "AQIDBA==",
+				IPol: true,
+			})
+		})
+
+		Convey("Given IPol is requested to false", func() {
+			f := false
+			txPacket.TXInfo.IPol = &f
+
+			Convey("Then the TXPK IPol is set to false", func() {
+				txpk, err := newTXPKFromTXPacket(txPacket)
+				So(err, ShouldBeNil)
+				So(txpk.IPol, ShouldBeFalse)
+			})
+		})
+	})
+}
+
 func TestNewRXPacketFromRXPK(t *testing.T) {
 	Convey("Given a (Semtech) RXPK and gateway MAC", t, func() {
 		now := time.Now().UTC()

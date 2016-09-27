@@ -79,3 +79,7 @@ Example payload:
     }
 }
 ```
+
+Optionally, the field `iPol` (type `bool`) can be used to control the
+LoRa modulation polarization inversion. When left blank (`null`), the default
+will be used (which is `true` for downlink LoRa modulation.

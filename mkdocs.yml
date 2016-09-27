@@ -16,7 +16,7 @@ pages:
     - Kerlink IoT Station: gateways/kerlink-iot-station.md
 
 extra:
-  version: '2.1.1'
+  version: '2.1.2'
   github:
     download_release: true
 
