@@ -91,18 +91,18 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "mqtt-server",
-			Usage:  "MQTT server",
+			Usage:  "mqtt server (e.g. scheme://host:port where scheme is tcp, ssl or ws)",
 			Value:  "tcp://127.0.0.1:1883",
 			EnvVar: "MQTT_SERVER",
 		},
 		cli.StringFlag{
 			Name:   "mqtt-username",
-			Usage:  "MQTT username",
+			Usage:  "mqtt server username (optional)",
 			EnvVar: "MQTT_USERNAME",
 		},
 		cli.StringFlag{
 			Name:   "mqtt-password",
-			Usage:  "MQTT password",
+			Usage:  "mqtt server password (optional)",
 			EnvVar: "MQTT_PASSWORD",
 		},
 		cli.IntFlag{
