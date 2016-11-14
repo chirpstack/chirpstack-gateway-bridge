@@ -40,6 +40,47 @@ Pre-compiled binaries are available from the [releases](https://github.com/broca
 
 Source-code can be found at [https://github.com/brocaar/lora-gateway-bridge](https://github.com/brocaar/lora-gateway-bridge).
 
+## Building from source
+
+The easiest way to get started is by using the provided 
+[docker-compose](https://docs.docker.com/compose/) environment. To start a bash
+shell within the docker-compose environment, execute the following command from
+the root of this project:
+
+```bash
+docker-compose run --rm gatewaybridge bash
+```
+
+A few example commands that you can run:
+
+```bash
+# run the tests
+make test
+
+# compile
+make build
+
+# cross-compile for Linux ARM
+GOOS=linux GOARCH=arm make build
+
+# cross-compile for Windows AMD64
+GOOS=windows BINEXT=.exe GOARCH=amd64 make build
+
+# build the .tar.gz file
+make package
+
+# build the .tar.gz file for Linux ARM
+GOOS=linux GOARCH=arm make build
+
+# build the .tar.gz file for Windows AMD64
+GOOS=windows BINEXT=.exe GOARCH=amd64 make build
+```
+
+Alternatively, you can run the same commands from any working
+[Go](https://golang.org/) environment. As all requirements are vendored,
+there is no need to `go get` these, but make sure vendoring is enabled for
+your Go environment or that you have Go 1.6+ installed.
+
 ## Issues / feature-requests
 
 Issues or feature-requests can be opened at [https://github.com/brocaar/lora-gateway-bridge/issues](https://github.com/brocaar/lora-gateway-bridge/issues).
