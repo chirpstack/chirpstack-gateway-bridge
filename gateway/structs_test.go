@@ -374,9 +374,9 @@ func TestStatUnmarshal(t *testing.T) {
 			err := s.UnmarshalJSON([]byte(stat))
 			So(err, ShouldBeNil)
 			So(s.RXNb, ShouldEqual, 10)
-			So(s.AllFields, ShouldHaveLength, 2)
-			So(s.AllFields, ShouldContainKey, "mail")
-			So(s.AllFields["mail"], ShouldEqual, "some@user.domain")
+			So(s.CustomFields, ShouldHaveLength, 1)
+			So(s.CustomFields, ShouldContainKey, "mail")
+			So(s.CustomFields["mail"], ShouldEqual, "some@user.domain")
 		})
 	})
 }
