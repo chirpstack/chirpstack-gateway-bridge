@@ -1,10 +1,10 @@
 language: go
 sudo: required
+
 go:
-  - 1.6.2
+  - 1.7.x
+
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y python-software-properties
   - sudo apt-add-repository -y ppa:mosquitto-dev/mosquitto-ppa
   - sudo apt-get -qq update
   - sudo apt-get install -y mosquitto
