@@ -1,0 +1,15 @@
+[Unit]
+Description=LoRa Gateway Bridge
+Documentation=https://docs.loraserver.io
+Wants=network-online.target
+After=network-online.target mosquitto.service
+
+[Service]
+User=gatewaybridge
+Group=gatewaybridge
+EnvironmentFile=/etc/default/lora-gateway-bridge
+ExecStart=/usr/bin/lora-gateway-bridge
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

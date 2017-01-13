@@ -19,9 +19,9 @@ before_deploy:
   - sudo pip install -r requirements.txt
   - mkdocs build
 
-  - GOOS=linux GOARCH=amd64 make package
-  - GOOS=linux GOARCH=386 make package
-  - GOOS=linux GOARCH=arm make package
+  - GOOS=linux GOARCH=amd64 make package package-deb
+  - GOOS=linux GOARCH=386 make package package-deb
+  - GOOS=linux GOARCH=arm make package package-deb
   - GOOS=darwin GOARCH=amd64 make package
   - GOOS=windows BINEXT=.exe GOARCH=386 make package
   - GOOS=windows BINEXT=.exe GOARCH=amd64 make package
@@ -40,6 +40,19 @@ deploy:
     on:
       repo: brocaar/lora-gateway-bridge
       branch: master
+
+  - provider: s3
+    skip_cleanup: true
+    access_key_id: AKIAJLTNEMD6RLNMP2NQ
+    secret_access_key:
+      secure: i9kTpzo0LVyMdMyN66SxXGBYovd98+B4DW9t/xFxx0cOzCwDKx/2p2WYF7cbT6FhVQVPZHJuIqatEFPVHgkRbiqsLIN26RL7xdCGV0gqjYoXVjJEdr6s9z1BhxUDGHY5oKhTZP7mHM+5jdHyZiwBbVFhJkeEbuZfwaOu7fho3IgGgnMASMh0LODk5niBnAJah1tMyUa5+7lW3fBAjwP2DNPICzIFm35JFjI5ViyirWcSapuTTE70BOH02PNd/wjx/4VnW5+wgCPeZXqjUQ5u94KHNLj5AxwotbzLNM1fDngJeDCmFMUPCjR+LCRnEO+4qhdMAhBdiTn0tXFoVQXlywrmfBdQtA3Kr8GSWHF1x2Oqr6/sIti0+fjyqdHRG2LdL7shEktBrG3muNUrVflpHXBzPOm9HvzQ7Hws6JudY52kermCeCRcbypcWz9PSK+XtAIbQxY0hO3cBRysNKjQ3K6IwPaUUqJzLrdowZ/LRhDur1JBXwc6cxS+4Yv885jUhIIfvFuM/lE1btK1zAtqVT1YVfXSpnMWk/FvBohHbQRy4i80Vd3an41hdM5Di/rPI8rkRaCqGRep3/FitKCVixvI1lKzgfRDFGLIBTBor0tL6tfD4T3ZuC/hRpTzI+UHx8XyO1RGZQIHNj3jIOJl+EBVYz+93KS3Z80v3uMj5ck=
+    bucket: builds.loraserver.io
+    local-dir: dist
+    acl: private
+    region: eu-west-1
+    on:
+      tags: true
+      repo: brocaar/lora-gateway-bridge
 
   - provider: releases
     skip_cleanup: true

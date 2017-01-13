@@ -1,0 +1,14 @@
+# ip:port to bind the UDP listener to (default: "0.0.0.0:1700")
+UDP_BIND=0.0.0.0:1700
+
+# mqtt server (e.g. scheme://host:port where scheme is tcp, ssl or ws) (default: "tcp://127.0.0.1:1883")
+MQTT_SERVER=tcp://127.0.0.1:1883
+
+# mqtt server username (optional) 
+MQTT_USERNAME=
+
+# mqtt server password (optional)
+MQTT_PASSWORD=
+
+# debug=5, info=4, warning=3, error=2, fatal=1, panic=0 (default: 4)
+LOG_LEVEL=4
