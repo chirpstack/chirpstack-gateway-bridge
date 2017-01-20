@@ -41,9 +41,9 @@ packet_forwarder on your gateway. Is your gateway not in the list? Please
 consider contributing to this documentation by documenting the steps needed
 to set your gateway up and create a pull-request!
 
-## LoRa Server Debian repository
+### LoRa Server Debian repository
 
-The LoRa Server provides pre-compiled binaries packaged as Debian (.deb)
+The LoRa Server project provides pre-compiled binaries packaged as Debian (.deb)
 packages. In order to activate this repository, execute the following
 commands:
 
