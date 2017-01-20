@@ -17,24 +17,19 @@ for documentation about setting up LoRa Gateway Bridge.
 
 ## Compatibility
 
-The table below shows the compatibility between LoRa Gateway Bridge and the
-packet_forwarder UDP protocol versions:
-
-| LoRa Gateway Bridge | packet_forwarder protocol version | Note                                                                |
-|---------------------|-----------------------------------|---------------------------------------------------------------------|
-| 1.x.x               | 1                                 |                                                                     |
-| 2.0.x               | 2                                 | This protocol is used since version 3.0.0 of the `packet_forwarder` |
-| >= 2.1.x            | 1 & 2 simultaneously              | Both protocol versions are supported and auto-detected              |
+LoRa Gateway Bridge version >= 2.1 supports both version 1 and version 2 of
+the `packet_forwarder` UDP protocol.
 
 ## Downloads
 
-Pre-compiled binaries are available from the [releases](https://github.com/brocaar/lora-gateway-bridge/releases) page:
+* Pre-compiled binaries are available at the [releases](https://github.com/brocaar/lora-gateway-bridge/releases) page:
 
-* Linux (including ARM / Raspberry Pi)
-* OS X
-* Windows
+	* Linux (including ARM / Raspberry Pi)
+	* OS X
+	* Windows
 
-Source-code can be found at [https://github.com/brocaar/lora-gateway-bridge](https://github.com/brocaar/lora-gateway-bridge).
+* Debian and Ubuntu packages are available at [https://repos.loraserver.io](https://repos.loraserver.io/).
+* Source-code can be found at [https://github.com/brocaar/lora-gateway-bridge](https://github.com/brocaar/lora-gateway-bridge).
 
 ## Building from source
 
@@ -66,20 +61,29 @@ GOOS=windows BINEXT=.exe GOARCH=amd64 make build
 make package
 
 # build the .tar.gz file for Linux ARM
-GOOS=linux GOARCH=arm make build
+GOOS=linux GOARCH=arm make package
 
 # build the .tar.gz file for Windows AMD64
-GOOS=windows BINEXT=.exe GOARCH=amd64 make build
+GOOS=windows BINEXT=.exe GOARCH=amd64 make package
 ```
 
 Alternatively, you can run the same commands from any working
 [Go](https://golang.org/) environment. As all requirements are vendored,
-there is no need to `go get` these, but make sure vendoring is enabled for
-your Go environment or that you have Go 1.6+ installed.
+there is no need to `go get` these. Make sure you have Go 1.7.x installed
+and that you clone this repository to
+`$GOPATH/src/github.com/brocaar/lora-gateway-bridge`.
 
-## Issues / feature-requests
+## Contributing
 
-Issues or feature-requests can be opened at [https://github.com/brocaar/lora-gateway-bridge/issues](https://github.com/brocaar/lora-gateway-bridge/issues).
+There are a couple of ways to get involved:
+
+* Join the discussions and share your feedback at [https://gitter.io/loraserver/lora-gateway-bridge](https://gitter.io/loraserver/lora-gateway-bridge)
+* Report bugs or make feature-requests by opening an issue at [https://github.com/brocaar/lora-gateway-bridge/issues](https://github.com/brocaar/lora-gateway-bridge/issues)
+* Fix issues or improve documentation by creating pull-requests
+
+When you would like to add new features, please discuss the feature first
+by creating an issue describing your feature, how you're planning to implement
+it, what the usecase is etc...
 
 ## License
 
