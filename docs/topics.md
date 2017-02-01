@@ -12,7 +12,10 @@ mosquitto_sub -t "gateway/#" -v                   # show data from all gateways
 mosquitto_sub -t "gateway/0101010101010101/+" -v  # show all data for the given gateway
 ```
 
-## gateway/[MAC]/stats
+!!! info
+	Note that the MQTT topics are lowercase
+
+## gateway/[mac]/stats
 
 Topic for gateway statistics. Example payload:
 
@@ -28,7 +31,7 @@ Topic for gateway statistics. Example payload:
 }
 ```
 
-## gateway/[MAC]/rx
+## gateway/[mac]/rx
 
 Topic for received packets (from nodes). Example payload:
 
@@ -56,7 +59,7 @@ Topic for received packets (from nodes). Example payload:
 }
 ```
 
-## gateway/[MAC]/tx
+## gateway/[mac]/tx
 
 Topic for publishing packets to be transmitted by the given gateway.
 Example payload:
