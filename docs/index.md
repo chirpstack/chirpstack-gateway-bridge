@@ -7,7 +7,7 @@ receiving data from and sending data to your gateways.
 
 ## Project components
 
-![architecture](https://www.gliffy.com/go/publish/image/11010339/L.png)
+![architecture](img/architecture.png)
 
 * [lora-gateway-bridge](https://github.com/brocaar/lora-gateway-bridge) - converts
   the [packet_forwarder protocol](https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT)
