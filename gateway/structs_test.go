@@ -365,3 +365,18 @@ func TestTXACKPacket(t *testing.T) {
 		})
 	})
 }
+
+func TestStatUnmarshal(t *testing.T) {
+	Convey("Given a stat packet with custom data", t, func() {
+		var s Stat
+		stat := `{"rxnb":10,"mail":"some@user.domain"}`
+		Convey("Then UnmarshalJSON unmarshals the Stat packet with custom data", func() {
+			err := s.UnmarshalJSON([]byte(stat))
+			So(err, ShouldBeNil)
+			So(s.RXNb, ShouldEqual, 10)
+			So(s.CustomFields, ShouldHaveLength, 1)
+			So(s.CustomFields, ShouldContainKey, "mail")
+			So(s.CustomFields["mail"], ShouldEqual, "some@user.domain")
+		})
+	})
+}
