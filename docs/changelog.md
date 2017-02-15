@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.3
+
+* Provide `TXPacketsReceived` and `TXPacketsEmitted` in stats.
+
 ## 2.1.2
 
 * Add optional `iPol` field to `txInfo` struct in JSON to override the default
