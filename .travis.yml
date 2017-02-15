@@ -46,9 +46,9 @@ deploy:
 
   - provider: s3
     skip_cleanup: true
-    access_key_id: AKIAJLTNEMD6RLNMP2NQ
+    access_key_id: AKIAJRLX7TQLGT6NN7WQ
     secret_access_key:
-      secure: i9kTpzo0LVyMdMyN66SxXGBYovd98+B4DW9t/xFxx0cOzCwDKx/2p2WYF7cbT6FhVQVPZHJuIqatEFPVHgkRbiqsLIN26RL7xdCGV0gqjYoXVjJEdr6s9z1BhxUDGHY5oKhTZP7mHM+5jdHyZiwBbVFhJkeEbuZfwaOu7fho3IgGgnMASMh0LODk5niBnAJah1tMyUa5+7lW3fBAjwP2DNPICzIFm35JFjI5ViyirWcSapuTTE70BOH02PNd/wjx/4VnW5+wgCPeZXqjUQ5u94KHNLj5AxwotbzLNM1fDngJeDCmFMUPCjR+LCRnEO+4qhdMAhBdiTn0tXFoVQXlywrmfBdQtA3Kr8GSWHF1x2Oqr6/sIti0+fjyqdHRG2LdL7shEktBrG3muNUrVflpHXBzPOm9HvzQ7Hws6JudY52kermCeCRcbypcWz9PSK+XtAIbQxY0hO3cBRysNKjQ3K6IwPaUUqJzLrdowZ/LRhDur1JBXwc6cxS+4Yv885jUhIIfvFuM/lE1btK1zAtqVT1YVfXSpnMWk/FvBohHbQRy4i80Vd3an41hdM5Di/rPI8rkRaCqGRep3/FitKCVixvI1lKzgfRDFGLIBTBor0tL6tfD4T3ZuC/hRpTzI+UHx8XyO1RGZQIHNj3jIOJl+EBVYz+93KS3Z80v3uMj5ck=
+      secure: OJZy+FZeI/S9wM/qqnTHAqjItI266K5tfIqx1+au1MC1QrXAV61NbTjKAo/xUGaKLOcTh1h1/KPTTdYZnQQa8e7QjA+1PF/89Ou7pIhMqWDKCNvFHUoUCTVCLf0f4dmKZcVTEZrobFct+ZhMq5mnzvuIvvf+TT4pfee1BUUpxbMWjA/HaMQIKfRxeb5tLyOnOkKg66Gd99trAY55r8SqPzkqcqvuOqeh7Ic2Uk+Uxlosf+9gRUIWHk7i4miiKvZQmPJfOOKTlvy3BStt1KGSycBt2mYkPAtAAScnobV8GHRcA0ZVI8Blp9W5/D18L43xAP+BRdBnoblr5GNnHGznlltYOskbTPuHzo8TVOl+8sct3uVwbrxg0rzJttAqkoMce7Xg4TLLe44gsp38YOyS4D2NzvEJZMvwoq1uCdR72JOANP5fxOxLnBO2weHy1K1F3SlXXaTJpQZ6lg2j/eaZO3V9tFFbqqHB4PdwQrZ9tjvuA2Dm6NNtQIMPeD8hq6Rq/6/4sXLi7+V8Sbl9f5W+FFfqKTFUl4WH1QPu/bFwC04UL1LDX9kO30Wg9Rlgc18S5HeMivofF1NVDnY+V8SV8lHVyHXASwSRl/OrMvRf21u5+wJf6U8E1s1cK/wYdIOSm6Rbot+6UK9M3ev8VALerqAr6uTVbCmm6Bqmlc+79jw=
     bucket: builds.loraserver.io
     local-dir: dist
     acl: private
@@ -62,7 +62,7 @@ deploy:
     api_key:
       secure: i9kTpzo0LVyMdMyN66SxXGBYovd98+B4DW9t/xFxx0cOzCwDKx/2p2WYF7cbT6FhVQVPZHJuIqatEFPVHgkRbiqsLIN26RL7xdCGV0gqjYoXVjJEdr6s9z1BhxUDGHY5oKhTZP7mHM+5jdHyZiwBbVFhJkeEbuZfwaOu7fho3IgGgnMASMh0LODk5niBnAJah1tMyUa5+7lW3fBAjwP2DNPICzIFm35JFjI5ViyirWcSapuTTE70BOH02PNd/wjx/4VnW5+wgCPeZXqjUQ5u94KHNLj5AxwotbzLNM1fDngJeDCmFMUPCjR+LCRnEO+4qhdMAhBdiTn0tXFoVQXlywrmfBdQtA3Kr8GSWHF1x2Oqr6/sIti0+fjyqdHRG2LdL7shEktBrG3muNUrVflpHXBzPOm9HvzQ7Hws6JudY52kermCeCRcbypcWz9PSK+XtAIbQxY0hO3cBRysNKjQ3K6IwPaUUqJzLrdowZ/LRhDur1JBXwc6cxS+4Yv885jUhIIfvFuM/lE1btK1zAtqVT1YVfXSpnMWk/FvBohHbQRy4i80Vd3an41hdM5Di/rPI8rkRaCqGRep3/FitKCVixvI1lKzgfRDFGLIBTBor0tL6tfD4T3ZuC/hRpTzI+UHx8XyO1RGZQIHNj3jIOJl+EBVYz+93KS3Z80v3uMj5ck=
     file_glob: true
-    file: "dist/*.tar.gz"
+    file: "dist/tar/*.tar.gz"
     on:
       tags: true
       repo: brocaar/lora-gateway-bridge
