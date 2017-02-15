@@ -80,17 +80,18 @@ func (c *gateways) cleanup() error {
 
 // Backend implements a Semtech gateway backend.
 type Backend struct {
-	conn        *net.UDPConn
-	rxChan      chan gw.RXPacketBytes
-	statsChan   chan gw.GatewayStatsPacket
-	udpSendChan chan udpPacket
-	closed      bool
-	gateways    gateways
-	wg          sync.WaitGroup
+	conn         *net.UDPConn
+	rxChan       chan gw.RXPacketBytes
+	statsChan    chan gw.GatewayStatsPacket
+	udpSendChan  chan udpPacket
+	closed       bool
+	gateways     gateways
+	wg           sync.WaitGroup
+	skipCRCCheck bool
 }
 
 // NewBackend creates a new backend.
-func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lorawan.EUI64) error) (*Backend, error) {
+func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lorawan.EUI64) error, skipCRCCheck bool) (*Backend, error) {
 	addr, err := net.ResolveUDPAddr("udp", bind)
 	if err != nil {
 		return nil, err
@@ -102,10 +103,11 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 	}
 
 	b := &Backend{
-		conn:        conn,
-		rxChan:      make(chan gw.RXPacketBytes),
-		statsChan:   make(chan gw.GatewayStatsPacket),
-		udpSendChan: make(chan udpPacket),
+		skipCRCCheck: skipCRCCheck,
+		conn:         conn,
+		rxChan:       make(chan gw.RXPacketBytes),
+		statsChan:    make(chan gw.GatewayStatsPacket),
+		udpSendChan:  make(chan udpPacket),
 		gateways: gateways{
 			gateways: make(map[lorawan.EUI64]gateway),
 			onNew:    onNew,
@@ -347,7 +349,7 @@ func (b *Backend) handleRXPacket(addr *net.UDPAddr, mac lorawan.EUI64, rxpk RXPK
 	}
 
 	// check CRC
-	if rxPacket.RXInfo.CRCStatus != 1 {
+	if !b.skipCRCCheck && rxPacket.RXInfo.CRCStatus != 1 {
 		log.WithFields(logFields).Warningf("gateway: invalid packet CRC: %d", rxPacket.RXInfo.CRCStatus)
 		return errors.New("gateway: invalid CRC")
 	}

@@ -3,6 +3,8 @@
 ## 2.1.3
 
 * Provide `TXPacketsReceived` and `TXPacketsEmitted` in stats.
+* Implement `--skip-crc-check` / `SKIP_CRC_CHECK` config flag to disable CRC
+  checks by LoRa Gateway Bridge.
 
 ## 2.1.2
 

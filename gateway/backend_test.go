@@ -14,7 +14,7 @@ import (
 
 func TestBackend(t *testing.T) {
 	Convey("Given a new Backend binding at a random port", t, func() {
-		backend, err := NewBackend("127.0.0.1:0", nil, nil)
+		backend, err := NewBackend("127.0.0.1:0", nil, nil, false)
 		So(err, ShouldBeNil)
 
 		backendAddr, err := net.ResolveUDPAddr("udp", backend.conn.LocalAddr().String())
@@ -91,52 +91,203 @@ func TestBackend(t *testing.T) {
 				})
 			})
 
-			Convey("When sending a PUSH_DATA packet with RXPK", func() {
-				p := PushDataPacket{
-					ProtocolVersion: ProtocolVersion2,
-					RandomToken:     1234,
-					GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Payload: PushDataPayload{
-						RXPK: []RXPK{
-							{
-								Time: CompactTime(time.Now().UTC()),
-								Tmst: 708016819,
-								Freq: 868.5,
-								Chan: 2,
-								RFCh: 1,
-								Stat: 1,
-								Modu: "LORA",
-								DatR: DatR{LoRa: "SF7BW125"},
-								CodR: "4/5",
-								RSSI: -51,
-								LSNR: 7,
-								Size: 16,
-								Data: "QAEBAQGAAAABVfdjR6YrSw==",
+			Convey("Given skipCRCCheck=false", func() {
+				backend.skipCRCCheck = false
+
+				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK)", func() {
+					p := PushDataPacket{
+						ProtocolVersion: ProtocolVersion2,
+						RandomToken:     1234,
+						GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+						Payload: PushDataPayload{
+							RXPK: []RXPK{
+								{
+									Time: CompactTime(time.Now().UTC()),
+									Tmst: 708016819,
+									Freq: 868.5,
+									Chan: 2,
+									RFCh: 1,
+									Stat: 1,
+									Modu: "LORA",
+									DatR: DatR{LoRa: "SF7BW125"},
+									CodR: "4/5",
+									RSSI: -51,
+									LSNR: 7,
+									Size: 16,
+									Data: "QAEBAQGAAAABVfdjR6YrSw==",
+								},
 							},
 						},
-					},
-				}
-				b, err := p.MarshalBinary()
-				So(err, ShouldBeNil)
-				_, err = gwConn.WriteToUDP(b, backendAddr)
-				So(err, ShouldBeNil)
-
-				Convey("Then an ACK packet is returned", func() {
-					buf := make([]byte, 65507)
-					i, _, err := gwConn.ReadFromUDP(buf)
+					}
+					b, err := p.MarshalBinary()
 					So(err, ShouldBeNil)
-					var ack PushACKPacket
-					So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
-					So(ack.RandomToken, ShouldEqual, p.RandomToken)
-					So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
+					_, err = gwConn.WriteToUDP(b, backendAddr)
+					So(err, ShouldBeNil)
+
+					Convey("Then an ACK packet is returned", func() {
+						buf := make([]byte, 65507)
+						i, _, err := gwConn.ReadFromUDP(buf)
+						So(err, ShouldBeNil)
+						var ack PushACKPacket
+						So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
+						So(ack.RandomToken, ShouldEqual, p.RandomToken)
+						So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
+					})
+
+					Convey("Then the packet is returned by the RX packet channel", func() {
+						rxPacket := <-backend.RXPacketChan()
+
+						rxPacket2, err := newRXPacketFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						So(err, ShouldBeNil)
+						So(rxPacket, ShouldResemble, rxPacket2)
+					})
 				})
 
-				Convey("Then the packet is returned by the RX packet channel", func() {
-					rxPacket := <-backend.RXPacketChan()
-
-					rxPacket2, err := newRXPacketFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+				Convey("When sending a PUSH_DATA packet with RXPK (CRC not OK)", func() {
+					p := PushDataPacket{
+						ProtocolVersion: ProtocolVersion2,
+						RandomToken:     1234,
+						GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+						Payload: PushDataPayload{
+							RXPK: []RXPK{
+								{
+									Time: CompactTime(time.Now().UTC()),
+									Tmst: 708016819,
+									Freq: 868.5,
+									Chan: 2,
+									RFCh: 1,
+									Stat: -1,
+									Modu: "LORA",
+									DatR: DatR{LoRa: "SF7BW125"},
+									CodR: "4/5",
+									RSSI: -51,
+									LSNR: 7,
+									Size: 16,
+									Data: "QAEBAQGAAAABVfdjR6YrSw==",
+								},
+							},
+						},
+					}
+					b, err := p.MarshalBinary()
 					So(err, ShouldBeNil)
-					So(rxPacket, ShouldResemble, rxPacket2)
+					_, err = gwConn.WriteToUDP(b, backendAddr)
+					So(err, ShouldBeNil)
+
+					Convey("Then an ACK packet is returned", func() {
+						buf := make([]byte, 65507)
+						i, _, err := gwConn.ReadFromUDP(buf)
+						So(err, ShouldBeNil)
+						var ack PushACKPacket
+						So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
+						So(ack.RandomToken, ShouldEqual, p.RandomToken)
+						So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
+					})
+
+					Convey("Then the packet is not returned by the RX packet channel", func() {
+						So(backend.RXPacketChan(), ShouldHaveLength, 0)
+					})
+				})
+			})
+
+			Convey("Given skipCRCCheck=true", func() {
+				backend.skipCRCCheck = true
+
+				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK)", func() {
+					p := PushDataPacket{
+						ProtocolVersion: ProtocolVersion2,
+						RandomToken:     1234,
+						GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+						Payload: PushDataPayload{
+							RXPK: []RXPK{
+								{
+									Time: CompactTime(time.Now().UTC()),
+									Tmst: 708016819,
+									Freq: 868.5,
+									Chan: 2,
+									RFCh: 1,
+									Stat: 1,
+									Modu: "LORA",
+									DatR: DatR{LoRa: "SF7BW125"},
+									CodR: "4/5",
+									RSSI: -51,
+									LSNR: 7,
+									Size: 16,
+									Data: "QAEBAQGAAAABVfdjR6YrSw==",
+								},
+							},
+						},
+					}
+					b, err := p.MarshalBinary()
+					So(err, ShouldBeNil)
+					_, err = gwConn.WriteToUDP(b, backendAddr)
+					So(err, ShouldBeNil)
+
+					Convey("Then an ACK packet is returned", func() {
+						buf := make([]byte, 65507)
+						i, _, err := gwConn.ReadFromUDP(buf)
+						So(err, ShouldBeNil)
+						var ack PushACKPacket
+						So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
+						So(ack.RandomToken, ShouldEqual, p.RandomToken)
+						So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
+					})
+
+					Convey("Then the packet is returned by the RX packet channel", func() {
+						rxPacket := <-backend.RXPacketChan()
+
+						rxPacket2, err := newRXPacketFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						So(err, ShouldBeNil)
+						So(rxPacket, ShouldResemble, rxPacket2)
+					})
+				})
+
+				Convey("When sending a PUSH_DATA packet with RXPK (CRC not OK)", func() {
+					p := PushDataPacket{
+						ProtocolVersion: ProtocolVersion2,
+						RandomToken:     1234,
+						GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+						Payload: PushDataPayload{
+							RXPK: []RXPK{
+								{
+									Time: CompactTime(time.Now().UTC()),
+									Tmst: 708016819,
+									Freq: 868.5,
+									Chan: 2,
+									RFCh: 1,
+									Stat: -1,
+									Modu: "LORA",
+									DatR: DatR{LoRa: "SF7BW125"},
+									CodR: "4/5",
+									RSSI: -51,
+									LSNR: 7,
+									Size: 16,
+									Data: "QAEBAQGAAAABVfdjR6YrSw==",
+								},
+							},
+						},
+					}
+					b, err := p.MarshalBinary()
+					So(err, ShouldBeNil)
+					_, err = gwConn.WriteToUDP(b, backendAddr)
+					So(err, ShouldBeNil)
+
+					Convey("Then an ACK packet is returned", func() {
+						buf := make([]byte, 65507)
+						i, _, err := gwConn.ReadFromUDP(buf)
+						So(err, ShouldBeNil)
+						var ack PushACKPacket
+						So(ack.UnmarshalBinary(buf[:i]), ShouldBeNil)
+						So(ack.RandomToken, ShouldEqual, p.RandomToken)
+						So(ack.ProtocolVersion, ShouldEqual, p.ProtocolVersion)
+					})
+
+					Convey("Then the packet is returned by the RX packet channel", func() {
+						rxPacket := <-backend.RXPacketChan()
+
+						rxPacket2, err := newRXPacketFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						So(err, ShouldBeNil)
+						So(rxPacket, ShouldResemble, rxPacket2)
+					})
 				})
 			})
 

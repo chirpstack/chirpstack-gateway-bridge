@@ -38,7 +38,7 @@ func run(c *cli.Context) error {
 		return pubsub.UnSubscribeGatewayTX(mac)
 	}
 
-	gw, err := gateway.NewBackend(c.String("udp-bind"), onNew, onDelete)
+	gw, err := gateway.NewBackend(c.String("udp-bind"), onNew, onDelete, c.Bool("skip-crc-check"))
 	if err != nil {
 		log.Fatalf("could not setup gateway backend: %s", err)
 	}
@@ -104,6 +104,11 @@ func main() {
 			Name:   "mqtt-password",
 			Usage:  "mqtt server password (optional)",
 			EnvVar: "MQTT_PASSWORD",
+		},
+		cli.BoolFlag{
+			Name:   "skip-crc-check",
+			Usage:  "skip the CRC status-check of received packets",
+			EnvVar: "SKIP_CRC_CHECK",
 		},
 		cli.IntFlag{
 			Name:   "log-level",

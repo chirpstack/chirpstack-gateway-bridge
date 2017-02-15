@@ -12,3 +12,6 @@ MQTT_PASSWORD=
 
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0 (default: 4)
 LOG_LEVEL=4
+
+# skip the CRC status-check of received packets
+# SKIP_CRC_CHECK=true
