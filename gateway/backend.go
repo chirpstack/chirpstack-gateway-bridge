@@ -128,7 +128,7 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 		b.wg.Add(1)
 		err := b.readPackets()
 		if !b.closed {
-			log.Fatal(err)
+			log.Error(err)
 		}
 		b.wg.Done()
 	}()
@@ -137,7 +137,7 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 		b.wg.Add(1)
 		err := b.sendPackets()
 		if !b.closed {
-			log.Fatal(err)
+			log.Error(err)
 		}
 		b.wg.Done()
 	}()
