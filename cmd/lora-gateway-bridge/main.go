@@ -3,7 +3,6 @@ package main
 //go:generate ./doc.sh
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -27,12 +26,15 @@ func run(c *cli.Context) error {
 	}).Info("starting LoRa Gateway Bridge")
 
 	var pubsub *mqttpubsub.Backend
-	for err := fmt.Errorf( "Fake Error" ); nil != err; {
+	for {
+		var err error
 		pubsub, err = mqttpubsub.NewBackend(c.String("mqtt-server"), c.String("mqtt-username"), c.String("mqtt-password"))
-		if err != nil {
-			log.Errorf("could not setup mqtt backend, retry in 2 seconds: %s", err)
-			time.Sleep( 2 * time.Second )
+		if err == nil {
+			break
 		}
+
+		log.Errorf("could not setup mqtt backend, retry in 2 seconds: %s", err)
+		time.Sleep(2 * time.Second)
 	}
 	defer pubsub.Close()
 
@@ -44,13 +46,9 @@ func run(c *cli.Context) error {
 		return pubsub.UnSubscribeGatewayTX(mac)
 	}
 
-    var gw *gateway.Backend
-	for err := fmt.Errorf( "Fake Error" ); nil != err; {
-		gw, err = gateway.NewBackend(c.String("udp-bind"), onNew, onDelete, c.Bool("skip-crc-check"))
-		if err != nil {
-			log.Errorf("could not setup gateway backend, retry in 2 seconds: %s", err)
-			time.Sleep( 2 * time.Second )
-		}
+	gw, err := gateway.NewBackend(c.String("udp-bind"), onNew, onDelete, c.Bool("skip-crc-check"))
+	if err != nil {
+		log.Fatalf("could not setup gateway backend: %s", err)
 	}
 	defer gw.Close()
 
