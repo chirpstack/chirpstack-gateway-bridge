@@ -387,17 +387,23 @@ func (b *Backend) handleTXACK(addr *net.UDPAddr, data []byte) error {
 // newGatewayStatsPacket from Stat transforms a Semtech Stat packet into a
 // gw.GatewayStatsPacket.
 func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) gw.GatewayStatsPacket {
-	return gw.GatewayStatsPacket{
+	gwStat := gw.GatewayStatsPacket{
 		Time:                time.Time(stat.Time),
 		MAC:                 mac,
 		Latitude:            stat.Lati,
 		Longitude:           stat.Long,
-		Altitude:            float64(stat.Alti),
 		RXPacketsReceived:   int(stat.RXNb),
 		RXPacketsReceivedOK: int(stat.RXOK),
 		TXPacketsReceived:   int(stat.DWNb),
 		TXPacketsEmitted:    int(stat.TXNb),
 	}
+
+	if stat.Alti != nil {
+		alt := float64(*stat.Alti)
+		gwStat.Altitude = &alt
+	}
+
+	return gwStat
 }
 
 // newRXPacketFromRXPK transforms a Semtech packet into a gw.RXPacketBytes.

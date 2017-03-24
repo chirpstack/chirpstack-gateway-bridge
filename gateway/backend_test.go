@@ -20,6 +20,10 @@ func TestBackend(t *testing.T) {
 		backendAddr, err := net.ResolveUDPAddr("udp", backend.conn.LocalAddr().String())
 		So(err, ShouldBeNil)
 
+		latitude := float64(1.234)
+		longitude := float64(2.123)
+		altitude := int32(123)
+
 		Convey("Given a fake gateway UDP publisher", func() {
 			gwAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:0")
 			So(err, ShouldBeNil)
@@ -58,9 +62,9 @@ func TestBackend(t *testing.T) {
 					Payload: PushDataPayload{
 						Stat: &Stat{
 							Time: ExpandedTime(time.Time{}.UTC()),
-							Lati: 1.234,
-							Long: 2.123,
-							Alti: 123,
+							Lati: &latitude,
+							Long: &longitude,
+							Alti: &altitude,
 							RXNb: 1,
 							RXOK: 2,
 							RXFW: 3,
@@ -375,13 +379,52 @@ func TestBackend(t *testing.T) {
 }
 
 func TestNewGatewayStatPacket(t *testing.T) {
-	Convey("Given a (Semtech) Stat struct and gateway MAC", t, func() {
+	Convey("Given a (Semtech) Stat struct and gateway MAC with GPS data", t, func() {
+		latitude := float64(1.234)
+		longitude := float64(2.123)
+		altitude := int32(123)
+
 		now := time.Now().UTC()
 		stat := Stat{
 			Time: ExpandedTime(now),
-			Lati: 1.234,
-			Long: 2.123,
-			Alti: 234,
+			Lati: &latitude,
+			Long: &longitude,
+			Alti: &altitude,
+			RXNb: 1,
+			RXOK: 2,
+			RXFW: 3,
+			ACKR: 33.3,
+			DWNb: 4,
+			TXNb: 3,
+		}
+		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
+
+		Convey("When calling newGatewayStatsPacket", func() {
+			latitude := float64(1.234)
+			longitude := float64(2.123)
+			altitude := float64(123)
+
+			gwStats := newGatewayStatsPacket(mac, stat)
+			Convey("Then all fields are set correctly", func() {
+				So(gwStats, ShouldResemble, gw.GatewayStatsPacket{
+					Time:                now,
+					MAC:                 mac,
+					Latitude:            &latitude,
+					Longitude:           &longitude,
+					Altitude:            &altitude,
+					RXPacketsReceived:   1,
+					RXPacketsReceivedOK: 2,
+					TXPacketsReceived:   4,
+					TXPacketsEmitted:    3,
+				})
+			})
+		})
+	})
+
+	Convey("Given a (Semtech) Stat struct and gateway MAC without GPS data", t, func() {
+		now := time.Now().UTC()
+		stat := Stat{
+			Time: ExpandedTime(now),
 			RXNb: 1,
 			RXOK: 2,
 			RXFW: 3,
@@ -397,9 +440,6 @@ func TestNewGatewayStatPacket(t *testing.T) {
 				So(gwStats, ShouldResemble, gw.GatewayStatsPacket{
 					Time:                now,
 					MAC:                 mac,
-					Latitude:            1.234,
-					Longitude:           2.123,
-					Altitude:            234,
 					RXPacketsReceived:   1,
 					RXPacketsReceivedOK: 2,
 					TXPacketsReceived:   4,
@@ -407,7 +447,6 @@ func TestNewGatewayStatPacket(t *testing.T) {
 				})
 			})
 		})
-
 	})
 }
 

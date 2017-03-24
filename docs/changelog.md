@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.4
+
+* Retry connecting to MQTT broker on startup (thanks @jcampanell-cablelabs).
+* Make latitude, longitude and altitude optional as this data is not always
+  provided by the packet_forwarder and would else incorrectly be set to `0`.
+
 ## 2.1.3
 
 * Provide `TXPacketsReceived` and `TXPacketsEmitted` in stats.

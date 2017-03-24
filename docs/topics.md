@@ -21,12 +21,14 @@ Topic for gateway statistics. Example payload:
 
 ```json
 {
-    "altitude": 0,
-    "latitude": 0,
-    "longitude": 0,
+    "altitude": 10,                 // only available when gateway has gps
+    "latitude": 52.3740364,         // only available when gateway has gps
+    "longitude": 4.9144401,         // only available when gateway has gps
     "mac": "1dee08d0b691d149",
-    "rxPacketsReceived": 2,
-    "rxPacketsReceivedOK": 1,
+    "rxPacketsReceived": 20,
+    "rxPacketsReceivedOK": 15,
+	"txPacketsReceived": 10,
+	"txPacketsEmitted": 9,
     "time": "2016-06-10T14:04:53Z"
 }
 ```
