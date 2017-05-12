@@ -16,18 +16,25 @@ script:
   - make test
 
 before_deploy:
-  - rvm --default use system
-  - sudo apt-get install -y python-pip ruby ruby-dev
-  - sudo pip install -r requirements.txt
-  - sudo gem install --no-ri --no-rdoc fpm
-  - mkdocs build
+  - >
+    if ! [ "$BEFORE_DEPLOY_RUN" ]; then
+      export BEFORE_DEPLOY_RUN=1;
 
-  - GOOS=linux GOARCH=amd64 make package package-deb
-  - GOOS=linux GOARCH=386 make package package-deb
-  - GOOS=linux GOARCH=arm make package package-deb
-  - GOOS=darwin GOARCH=amd64 make package
-  - GOOS=windows BINEXT=.exe GOARCH=386 make package
-  - GOOS=windows BINEXT=.exe GOARCH=amd64 make package
+      rvm --default use system;
+      wget https://github.com/spf13/hugo/releases/download/v0.20.7/hugo_0.20.7_Linux-64bit.deb;
+      sudo dpkg -i hugo_0.20.7_Linux-64bit.deb;
+      rm *.deb;
+      sudo apt-get install -y ruby ruby-dev;
+      sudo gem install --no-ri --no-rdoc fpm;
+      make documentation;
+
+      GOOS=linux GOARCH=amd64 make package package-deb;
+      GOOS=linux GOARCH=386 make package package-deb;
+      GOOS=linux GOARCH=arm make package package-deb;
+      GOOS=darwin GOARCH=amd64 make package;
+      GOOS=windows BINEXT=.exe GOARCH=386 make package;
+      GOOS=windows BINEXT=.exe GOARCH=amd64 make package;
+    fi
 
 deploy:
   - provider: s3
@@ -35,14 +42,14 @@ deploy:
     access_key_id: AKIAJRLX7TQLGT6NN7WQ
     secret_access_key:
       secure: OJZy+FZeI/S9wM/qqnTHAqjItI266K5tfIqx1+au1MC1QrXAV61NbTjKAo/xUGaKLOcTh1h1/KPTTdYZnQQa8e7QjA+1PF/89Ou7pIhMqWDKCNvFHUoUCTVCLf0f4dmKZcVTEZrobFct+ZhMq5mnzvuIvvf+TT4pfee1BUUpxbMWjA/HaMQIKfRxeb5tLyOnOkKg66Gd99trAY55r8SqPzkqcqvuOqeh7Ic2Uk+Uxlosf+9gRUIWHk7i4miiKvZQmPJfOOKTlvy3BStt1KGSycBt2mYkPAtAAScnobV8GHRcA0ZVI8Blp9W5/D18L43xAP+BRdBnoblr5GNnHGznlltYOskbTPuHzo8TVOl+8sct3uVwbrxg0rzJttAqkoMce7Xg4TLLe44gsp38YOyS4D2NzvEJZMvwoq1uCdR72JOANP5fxOxLnBO2weHy1K1F3SlXXaTJpQZ6lg2j/eaZO3V9tFFbqqHB4PdwQrZ9tjvuA2Dm6NNtQIMPeD8hq6Rq/6/4sXLi7+V8Sbl9f5W+FFfqKTFUl4WH1QPu/bFwC04UL1LDX9kO30Wg9Rlgc18S5HeMivofF1NVDnY+V8SV8lHVyHXASwSRl/OrMvRf21u5+wJf6U8E1s1cK/wYdIOSm6Rbot+6UK9M3ev8VALerqAr6uTVbCmm6Bqmlc+79jw=
-    bucket: docs.loraserver.io
-    local-dir: site
-    upload-dir: lora-gateway-bridge
-    acl: public_read
+    bucket: builds.loraserver.io
+    local-dir: dist/docs
+    upload-dir: docs
+    acl: private
     region: eu-west-1
     on:
       repo: brocaar/lora-gateway-bridge
-      branch: master
+      branch: documentation
 
   - provider: s3
     skip_cleanup: true
