@@ -13,6 +13,7 @@ clean:
 	@echo "Cleaning up workspace"
 	@rm -rf build
 	@rm -rf dist/tar/$(VERSION)
+	@rm -rf docs/public
 
 test:
 	@echo "Running tests"
@@ -21,6 +22,12 @@ test:
 	done
 	@go vet $(PKGS)
 	@go test -cover -v $(PKGS)
+
+documentation:
+	@echo "Building documentation"
+	@mkdir -p dist/docs
+	@cd docs && hugo
+	@cd docs/public/ && tar -pczf ../../dist/docs/lora-gateway-bridge.tar.gz .
 
 package: clean build
 	@echo "Creating package for $(GOOS) $(GOARCH)"
