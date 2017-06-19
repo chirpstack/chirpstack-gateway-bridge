@@ -16,9 +16,11 @@ type PublishPacket struct {
 }
 
 func (p *PublishPacket) String() string {
-	str := fmt.Sprintf("%s\n", p.FixedHeader)
-	str += fmt.Sprintf("topicName: %s MessageID: %d\n", p.TopicName, p.MessageID)
-	str += fmt.Sprintf("payload: %s\n", string(p.Payload))
+	str := fmt.Sprintf("%s", p.FixedHeader)
+	str += " "
+	str += fmt.Sprintf("topicName: %s MessageID: %d", p.TopicName, p.MessageID)
+	str += " "
+	str += fmt.Sprintf("payload: %s", string(p.Payload))
 	return str
 }
 
@@ -41,7 +43,7 @@ func (p *PublishPacket) Write(w io.Writer) error {
 
 //Unpack decodes the details of a ControlPacket after the fixed
 //header has been read
-func (p *PublishPacket) Unpack(b io.Reader) {
+func (p *PublishPacket) Unpack(b io.Reader) error {
 	var payloadLength = p.FixedHeader.RemainingLength
 	p.TopicName = decodeString(b)
 	if p.Qos > 0 {
@@ -50,8 +52,13 @@ func (p *PublishPacket) Unpack(b io.Reader) {
 	} else {
 		payloadLength -= len(p.TopicName) + 2
 	}
+	if payloadLength < 0 {
+		return fmt.Errorf("Error upacking publish, payload length < 0")
+	}
 	p.Payload = make([]byte, payloadLength)
-	b.Read(p.Payload)
+	_, err := b.Read(p.Payload)
+
+	return err
 }
 
 //Copy creates a new PublishPacket with the same topic and payload

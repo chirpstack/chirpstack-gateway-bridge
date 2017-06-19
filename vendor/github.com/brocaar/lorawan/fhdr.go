@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 )
 
 // DevAddr represents the device address.
@@ -76,10 +77,10 @@ func (a *DevAddr) Scan(src interface{}) error {
 
 // FCtrl represents the FCtrl (frame control) field.
 type FCtrl struct {
-	ADR       bool
-	ADRACKReq bool
-	ACK       bool
-	FPending  bool  // only used for downlink messages
+	ADR       bool  `json:"adr"`
+	ADRACKReq bool  `json:"adrAckReq"`
+	ACK       bool  `json:"ack"`
+	FPending  bool  `json:"fPending"` // only used for downlink messages
 	fOptsLen  uint8 // will be set automatically by the FHDR when serialized to []byte
 }
 
@@ -119,10 +120,10 @@ func (c *FCtrl) UnmarshalBinary(data []byte) error {
 
 // FHDR represents the frame header.
 type FHDR struct {
-	DevAddr DevAddr
-	FCtrl   FCtrl
-	FCnt    uint32       // only the least-significant 16 bits will be marshalled
-	FOpts   []MACCommand // max. number of allowed bytes is 15
+	DevAddr DevAddr      `json:"devAddr"`
+	FCtrl   FCtrl        `json:"fCtrl"`
+	FCnt    uint32       `json:"fCnt"`  // only the least-significant 16 bits will be marshalled
+	FOpts   []MACCommand `json:"fOpts"` // max. number of allowed bytes is 15
 }
 
 // MarshalBinary marshals the object in binary form.
@@ -182,7 +183,7 @@ func (h *FHDR) UnmarshalBinary(uplink bool, data []byte) error {
 	if len(data) > 7 {
 		var pLen int
 		for i := 0; i < len(data[7:]); i++ {
-			if _, s, err := getMACPayloadAndSize(uplink, CID(data[7+i])); err != nil {
+			if _, s, err := GetMACPayloadAndSize(uplink, CID(data[7+i])); err != nil {
 				pLen = 0
 			} else {
 				pLen = s
@@ -195,7 +196,8 @@ func (h *FHDR) UnmarshalBinary(uplink bool, data []byte) error {
 
 			mc := MACCommand{}
 			if err := mc.UnmarshalBinary(uplink, data[7+i:7+i+1+pLen]); err != nil {
-				return err
+				log.Printf("warning: unmarshal mac-command error (skipping remaining mac-command bytes): %s", err)
+				break
 			}
 			h.FOpts = append(h.FOpts, mc)
 

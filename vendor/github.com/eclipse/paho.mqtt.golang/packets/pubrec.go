@@ -13,7 +13,8 @@ type PubrecPacket struct {
 }
 
 func (pr *PubrecPacket) String() string {
-	str := fmt.Sprintf("%s\n", pr.FixedHeader)
+	str := fmt.Sprintf("%s", pr.FixedHeader)
+	str += " "
 	str += fmt.Sprintf("MessageID: %d", pr.MessageID)
 	return str
 }
@@ -30,8 +31,10 @@ func (pr *PubrecPacket) Write(w io.Writer) error {
 
 //Unpack decodes the details of a ControlPacket after the fixed
 //header has been read
-func (pr *PubrecPacket) Unpack(b io.Reader) {
+func (pr *PubrecPacket) Unpack(b io.Reader) error {
 	pr.MessageID = decodeUint16(b)
+
+	return nil
 }
 
 //Details returns a Details struct containing the Qos and

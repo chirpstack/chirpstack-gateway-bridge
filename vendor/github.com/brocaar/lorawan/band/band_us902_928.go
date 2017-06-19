@@ -1,8 +1,52 @@
 package band
 
+import "github.com/brocaar/lorawan"
+import "sort"
 import "time"
 
-func newUS902Band() (Band, error) {
+func newUS902Band(repeaterCompatible bool) (Band, error) {
+	var maxPayloadSize []MaxPayloadSize
+
+	if repeaterCompatible {
+		maxPayloadSize = []MaxPayloadSize{
+			{M: 19, N: 11},
+			{M: 61, N: 53},
+			{M: 133, N: 125},
+			{M: 250, N: 242},
+			{M: 250, N: 242},
+			{}, // Not defined
+			{}, // Not defined
+			{}, // Not defined
+			{M: 41, N: 33},
+			{M: 117, N: 109},
+			{M: 230, N: 222},
+			{M: 230, N: 222},
+			{M: 230, N: 222},
+			{M: 230, N: 222},
+			{}, // Not defined
+			{}, // Not defined
+		}
+	} else {
+		maxPayloadSize = []MaxPayloadSize{
+			{M: 19, N: 11},
+			{M: 61, N: 53},
+			{M: 133, N: 125},
+			{M: 250, N: 242},
+			{M: 250, N: 242},
+			{}, // Not defined
+			{}, // Not defined
+			{}, // Not defined
+			{M: 61, N: 53},
+			{M: 137, N: 129},
+			{M: 250, N: 242},
+			{M: 250, N: 242},
+			{M: 250, N: 242},
+			{M: 250, N: 242},
+			{}, // Not defined
+			{}, // Not defined
+		}
+	}
+
 	band := Band{
 		DefaultTXPower:   20,
 		ImplementsCFlist: false,
@@ -38,26 +82,9 @@ func newUS902Band() (Band, error) {
 			{}, // RFU
 		},
 
-		MaxPayloadSize: []MaxPayloadSize{
-			{M: 19, N: 11},
-			{M: 61, N: 53},
-			{M: 137, N: 129},
-			{M: 250, N: 242},
-			{M: 250, N: 242},
-			{}, // Not defined
-			{}, // Not defined
-			{}, // Not defined
-			{M: 41, N: 33},
-			{M: 117, N: 109},
-			{M: 230, N: 222},
-			{M: 230, N: 222},
-			{M: 230, N: 222},
-			{M: 230, N: 222},
-			{}, // Not defined
-			{}, // Not defined
-		},
+		MaxPayloadSize: maxPayloadSize,
 
-		RX1DataRate: [][]int{
+		rx1DataRate: [][]int{
 			{10, 9, 8, 8},
 			{11, 10, 9, 8},
 			{12, 11, 10, 9},
@@ -98,6 +125,106 @@ func newUS902Band() (Band, error) {
 
 		getRX1ChannelFunc: func(txChannel int) int {
 			return txChannel % 8
+		},
+
+		getRX1FrequencyFunc: func(b *Band, txFrequency int) (int, error) {
+			uplinkChan, err := b.GetUplinkChannelNumber(txFrequency)
+			if err != nil {
+				return 0, err
+			}
+
+			rx1Chan := b.GetRX1Channel(uplinkChan)
+			return b.DownlinkChannels[rx1Chan].Frequency, nil
+		},
+
+		getLinkADRReqPayloadsForEnabledChannelsFunc: func(b *Band, nodeChannels []int) []lorawan.LinkADRReqPayload {
+			enabledChannels := b.GetEnabledUplinkChannels()
+			sort.Ints(enabledChannels)
+
+			out := []lorawan.LinkADRReqPayload{
+				{Redundancy: lorawan.Redundancy{ChMaskCntl: 7}}, // All 125 kHz OFF ChMask applies to channels 64 to 71
+			}
+
+			chMaskCntl := -1
+
+			for _, c := range enabledChannels {
+				// use the ChMask of the first LinkADRReqPayload, besides
+				// turning off all 125 kHz this payload contains the ChMask
+				// for the last block of channels.
+				if c >= 64 {
+					out[0].ChMask[c%16] = true
+					continue
+				}
+
+				if c/16 != chMaskCntl {
+					chMaskCntl = c / 16
+					pl := lorawan.LinkADRReqPayload{
+						Redundancy: lorawan.Redundancy{
+							ChMaskCntl: uint8(chMaskCntl),
+						},
+					}
+
+					// set the channel mask for this block
+					for _, ec := range enabledChannels {
+						if ec >= chMaskCntl*16 && ec < (chMaskCntl+1)*16 {
+							pl.ChMask[ec%16] = true
+						}
+					}
+
+					out = append(out, pl)
+				}
+			}
+
+			return out
+		},
+
+		getEnabledChannelsForLinkADRReqPayloadsFunc: func(b *Band, nodeChannels []int, pls []lorawan.LinkADRReqPayload) ([]int, error) {
+			chMask := make([]bool, len(b.UplinkChannels))
+			for _, c := range nodeChannels {
+				// make sure that we don't exceed the chMask length. in case we exceed
+				// we ignore the channel as it might have been removed from the network
+				if c < len(chMask) {
+					chMask[c] = true
+				}
+			}
+
+			for _, pl := range pls {
+				if pl.Redundancy.ChMaskCntl == 6 || pl.Redundancy.ChMaskCntl == 7 {
+					for i := 0; i < 64; i++ {
+						if pl.Redundancy.ChMaskCntl == 6 {
+							chMask[i] = true
+						} else {
+							chMask[i] = false
+						}
+					}
+
+					for i, cm := range pl.ChMask[0:8] {
+						chMask[64+i] = cm
+					}
+				} else {
+					for i, enabled := range pl.ChMask {
+						if int(pl.Redundancy.ChMaskCntl*16)+i >= len(chMask) && !enabled {
+							continue
+						}
+
+						if int(pl.Redundancy.ChMaskCntl*16)+i >= len(chMask) {
+							return nil, ErrChannelDoesNotExist
+						}
+
+						chMask[int(pl.Redundancy.ChMaskCntl*16)+i] = enabled
+					}
+				}
+			}
+
+			// turn the chMask into a slice of enabled channel numbers
+			var out []int
+			for i, enabled := range chMask {
+				if enabled {
+					out = append(out, i)
+				}
+			}
+
+			return out, nil
 		},
 	}
 

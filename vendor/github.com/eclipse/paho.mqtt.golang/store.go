@@ -33,10 +33,10 @@ const (
 // possible by prepending "i." or "o." to each message id
 type Store interface {
 	Open()
-	Put(string, packets.ControlPacket)
-	Get(string) packets.ControlPacket
+	Put(key string, message packets.ControlPacket)
+	Get(key string) packets.ControlPacket
 	All() []string
-	Del(string)
+	Del(key string)
 	Close()
 	Reset()
 }
@@ -77,7 +77,7 @@ func persistOutbound(s Store, m packets.ControlPacket) {
 			// until puback received
 			s.Put(outboundKeyFromMID(m.Details().MessageID), m)
 		default:
-			chkcond(false)
+			ERROR.Println(STR, "Asked to persist an invalid message type")
 		}
 	case 2:
 		switch m.(type) {
@@ -86,7 +86,7 @@ func persistOutbound(s Store, m packets.ControlPacket) {
 			// until pubrel received
 			s.Put(outboundKeyFromMID(m.Details().MessageID), m)
 		default:
-			chkcond(false)
+			ERROR.Println(STR, "Asked to persist an invalid message type")
 		}
 	}
 }
@@ -102,7 +102,7 @@ func persistInbound(s Store, m packets.ControlPacket) {
 			s.Del(outboundKeyFromMID(m.Details().MessageID))
 		case *packets.PublishPacket, *packets.PubrecPacket, *packets.PingrespPacket, *packets.ConnackPacket:
 		default:
-			chkcond(false)
+			ERROR.Println(STR, "Asked to persist an invalid messages type")
 		}
 	case 1:
 		switch m.(type) {
@@ -111,7 +111,7 @@ func persistInbound(s Store, m packets.ControlPacket) {
 			// until puback sent
 			s.Put(inboundKeyFromMID(m.Details().MessageID), m)
 		default:
-			chkcond(false)
+			ERROR.Println(STR, "Asked to persist an invalid messages type")
 		}
 	case 2:
 		switch m.(type) {
@@ -120,7 +120,7 @@ func persistInbound(s Store, m packets.ControlPacket) {
 			// until pubrel received
 			s.Put(inboundKeyFromMID(m.Details().MessageID), m)
 		default:
-			chkcond(false)
+			ERROR.Println(STR, "Asked to persist an invalid messages type")
 		}
 	}
 }

@@ -3,14 +3,15 @@ package lorawan
 import (
 	"errors"
 	"fmt"
+	"log"
 )
 
 // MACPayload represents the MAC payload. Use NewMACPayload for creating a new
 // MACPayload.
 type MACPayload struct {
-	FHDR       FHDR
-	FPort      *uint8 // optional, but must be set when FRMPayload is set
-	FRMPayload []Payload
+	FHDR       FHDR      `json:"fhdr"`
+	FPort      *uint8    `json:"fPort"` // optional, but must be set when FRMPayload is set
+	FRMPayload []Payload `json:"frmPayload"`
 }
 
 func (p MACPayload) marshalPayload() ([]byte, error) {
@@ -51,7 +52,7 @@ func (p *MACPayload) decodeFRMPayloadToMACCommands(uplink bool) error {
 	var pLen int
 	p.FRMPayload = make([]Payload, 0)
 	for i := 0; i < len(dataPL.Bytes); i++ {
-		if _, s, err := getMACPayloadAndSize(uplink, CID(dataPL.Bytes[i])); err != nil {
+		if _, s, err := GetMACPayloadAndSize(uplink, CID(dataPL.Bytes[i])); err != nil {
 			pLen = 0
 		} else {
 			pLen = s
@@ -64,7 +65,8 @@ func (p *MACPayload) decodeFRMPayloadToMACCommands(uplink bool) error {
 
 		mc := &MACCommand{}
 		if err := mc.UnmarshalBinary(uplink, dataPL.Bytes[i:i+1+pLen]); err != nil {
-			return err
+			log.Printf("warning: unmarshal mac-command error (skipping remaining mac-command bytes): %s", err)
+			break
 		}
 		p.FRMPayload = append(p.FRMPayload, mc)
 

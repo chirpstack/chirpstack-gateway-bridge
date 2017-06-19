@@ -3,106 +3,106 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "htjvdG/znrHmFYRQBqA2vHrJsF4=",
+			"checksumSHA1": "Liv7AJyNinmP3pvwohcXp4R6xY4=",
 			"path": "github.com/Sirupsen/logrus",
-			"revision": "f3cfb454f4c209e6668c95216c4744b8fddb2356",
-			"revisionTime": "2016-06-01T11:32:10Z"
+			"revision": "85b1699d505667d13f8ac4478c1debbf85d6c5de",
+			"revisionTime": "2017-06-08T22:14:41Z"
 		},
 		{
 			"checksumSHA1": "6EjJ4tPAes1IG51evTGi4DMLoSc=",
 			"path": "github.com/brocaar/loraserver/api/gw",
-			"revision": "09db862703abb0923cc842d0e54e201de47df219",
-			"revisionTime": "2017-03-24T09:36:17Z"
+			"revision": "1d605e3a5d305fe089e0737778dc78bc5fcb7b7b",
+			"revisionTime": "2017-06-02T09:33:00Z"
 		},
 		{
-			"checksumSHA1": "ya7tMk+wexXh1cmbdp0Sw0lbM1k=",
+			"checksumSHA1": "u52BzfoKG0x7CgBgg/PB1AEVSag=",
 			"path": "github.com/brocaar/lorawan",
-			"revision": "be799be7b529ec03666a5c553c1f4b1ef3f6728e",
-			"revisionTime": "2016-06-18T09:49:21Z"
+			"revision": "909df3392c6ae1acc73b075640d7dce3cdf4305d",
+			"revisionTime": "2017-05-24T09:31:27Z"
 		},
 		{
-			"checksumSHA1": "Br8FZLBfv+Vzk9HtH41bG4LOCd0=",
+			"checksumSHA1": "tx2/4FHCKRIh99kSwf9ck5ACODI=",
 			"path": "github.com/brocaar/lorawan/band",
-			"revision": "be799be7b529ec03666a5c553c1f4b1ef3f6728e",
-			"revisionTime": "2016-06-18T09:49:21Z"
+			"revision": "909df3392c6ae1acc73b075640d7dce3cdf4305d",
+			"revisionTime": "2017-05-24T09:31:27Z"
 		},
 		{
-			"checksumSHA1": "QQwkMIFJ0bMwgO3F0bf+bPPVb8Y=",
+			"checksumSHA1": "PdPhAvEGoA1DjOCv6MV0XdITGpo=",
 			"path": "github.com/codegangsta/cli",
-			"revision": "b438abf775124d32be72016935a9553dbffe8473",
-			"revisionTime": "2016-06-16T19:48:14Z"
+			"revision": "cf33a9befefdd6c6ea1a236ab6d546e797a62cbf",
+			"revisionTime": "2017-06-12T00:00:38Z"
 		},
 		{
-			"checksumSHA1": "opuXLaxKgRhnpxjq0a0Fkj39PC0=",
+			"checksumSHA1": "LHwm1G0lFyQ3X0iHZ/MOYnAtjd4=",
 			"path": "github.com/eclipse/paho.mqtt.golang",
-			"revision": "45f9b18f4864c81d49c3ed01e5faec9eeb05de31",
-			"revisionTime": "2016-06-09T10:02:40Z"
+			"revision": "d06cc70ac43d625e602946b5ff2346ddebb768e4",
+			"revisionTime": "2017-06-02T16:30:32Z"
 		},
 		{
-			"checksumSHA1": "4S2JvfaLl2hOzrRJ0akG3zVPSSk=",
+			"checksumSHA1": "g2AaO9VMaxzFQZkrCfxBUV3yAyM=",
 			"path": "github.com/eclipse/paho.mqtt.golang/packets",
-			"revision": "45f9b18f4864c81d49c3ed01e5faec9eeb05de31",
-			"revisionTime": "2016-06-09T10:02:40Z"
+			"revision": "d06cc70ac43d625e602946b5ff2346ddebb768e4",
+			"revisionTime": "2017-06-02T16:30:32Z"
 		},
 		{
-			"checksumSHA1": "YEZ/qI/rjyPhyyjuGI0NysuKIfA=",
+			"checksumSHA1": "7PLlrIaGI1TKWB96RkizgkTtOtQ=",
 			"path": "github.com/jacobsa/crypto/cmac",
-			"revision": "42daa9d04c68a12aca47231abd9fb7f8aac27ef7",
-			"revisionTime": "2016-04-10T22:58:39Z"
+			"revision": "293ce0c192fb4f59cd879b46544922b9ed09a13a",
+			"revisionTime": "2016-11-11T03:08:13Z"
 		},
 		{
 			"checksumSHA1": "NBvtX91AEKxFLmj8mwwhXEKl6d0=",
 			"path": "github.com/jacobsa/crypto/common",
-			"revision": "42daa9d04c68a12aca47231abd9fb7f8aac27ef7",
-			"revisionTime": "2016-04-10T22:58:39Z"
+			"revision": "293ce0c192fb4f59cd879b46544922b9ed09a13a",
+			"revisionTime": "2016-11-11T03:08:13Z"
 		},
 		{
-			"checksumSHA1": "tewA7jXVGCw1zb5mA0BDecWi4iQ=",
+			"checksumSHA1": "Js/yx9fZ3+wH1wZpHNIxSTMIaCg=",
 			"path": "github.com/jtolds/gls",
-			"revision": "8ddce2a84170772b95dd5d576c48d517b22cac63",
-			"revisionTime": "2016-01-05T22:08:40Z"
+			"revision": "77f18212c9c7edc9bd6a33d383a7b545ce62f064",
+			"revisionTime": "2017-05-03T22:40:06Z"
 		},
 		{
-			"checksumSHA1": "6AYg4fjEvFuAVN3wHakGApjhZAM=",
+			"checksumSHA1": "AikWjAOvWHSJ8G1iU+wNReZnyCk=",
 			"path": "github.com/smartystreets/assertions",
-			"revision": "40711f7748186bbf9c99977cd89f21ce1a229447",
-			"revisionTime": "2016-04-22T19:53:51Z"
+			"revision": "4ea54c1f28ad3ae597e76607dea3871fa177e263",
+			"revisionTime": "2017-06-07T22:27:57Z"
 		},
 		{
 			"checksumSHA1": "Vzb+dEH/LTYbvr8RXHmt6xJHz04=",
 			"path": "github.com/smartystreets/assertions/internal/go-render/render",
-			"revision": "40711f7748186bbf9c99977cd89f21ce1a229447",
-			"revisionTime": "2016-04-22T19:53:51Z"
+			"revision": "4ea54c1f28ad3ae597e76607dea3871fa177e263",
+			"revisionTime": "2017-06-07T22:27:57Z"
 		},
 		{
-			"checksumSHA1": "SLC6TfV4icQA9l8YJQu8acJYbuo=",
+			"checksumSHA1": "r6FauVdOTFnwYQgrKGFuWUbIAJE=",
 			"path": "github.com/smartystreets/assertions/internal/oglematchers",
-			"revision": "40711f7748186bbf9c99977cd89f21ce1a229447",
-			"revisionTime": "2016-04-22T19:53:51Z"
+			"revision": "4ea54c1f28ad3ae597e76607dea3871fa177e263",
+			"revisionTime": "2017-06-07T22:27:57Z"
 		},
 		{
-			"checksumSHA1": "/mwAihy9AmznMzmbPQ5nWJXBiRU=",
+			"checksumSHA1": "f4m09DHEetaanti/GqUJzyCBTaI=",
 			"path": "github.com/smartystreets/goconvey/convey",
-			"revision": "c53abc99456fa3402dd33c15ee51c3e545e04a3f",
-			"revisionTime": "2016-05-23T15:31:47Z"
+			"revision": "9e8dc3f972df6c8fcc0375ef492c24d0bb204857",
+			"revisionTime": "2017-06-02T16:46:21Z"
 		},
 		{
 			"checksumSHA1": "9LakndErFi5uCXtY1KWl0iRnT4c=",
 			"path": "github.com/smartystreets/goconvey/convey/gotest",
-			"revision": "c53abc99456fa3402dd33c15ee51c3e545e04a3f",
-			"revisionTime": "2016-05-23T15:31:47Z"
+			"revision": "9e8dc3f972df6c8fcc0375ef492c24d0bb204857",
+			"revisionTime": "2017-06-02T16:46:21Z"
 		},
 		{
 			"checksumSHA1": "FWDhk37bhAwZ2363D/L2xePwR64=",
 			"path": "github.com/smartystreets/goconvey/convey/reporting",
-			"revision": "c53abc99456fa3402dd33c15ee51c3e545e04a3f",
-			"revisionTime": "2016-05-23T15:31:47Z"
+			"revision": "9e8dc3f972df6c8fcc0375ef492c24d0bb204857",
+			"revisionTime": "2017-06-02T16:46:21Z"
 		},
 		{
-			"checksumSHA1": "likOl7O0BJntqagR050kkOBuY4o=",
+			"checksumSHA1": "7EZyXN0EmZLgGxZxK01IJua4c8o=",
 			"path": "golang.org/x/net/websocket",
-			"revision": "1961d9def2b2d7a28d7958926d2457d05a178ecd",
-			"revisionTime": "2016-06-15T20:37:29Z"
+			"revision": "973f3f3bbd50e92b13faa6c53ec16f49b45e851c",
+			"revisionTime": "2017-06-16T05:16:31Z"
 		}
 	],
 	"rootPath": "github.com/brocaar/lora-gateway-bridge"

@@ -13,7 +13,7 @@ import (
 //written
 type ControlPacket interface {
 	Write(io.Writer) error
-	Unpack(io.Reader)
+	Unpack(io.Reader) error
 	String() string
 	Details() Details
 }
@@ -116,8 +116,8 @@ func ReadPacket(r io.Reader) (cp ControlPacket, err error) {
 	if err != nil {
 		return nil, err
 	}
-	cp.Unpack(bytes.NewBuffer(packetBytes))
-	return cp, nil
+	err = cp.Unpack(bytes.NewBuffer(packetBytes))
+	return cp, err
 }
 
 //NewControlPacket is used to create a new ControlPacket of the type specified
@@ -309,7 +309,7 @@ func decodeLength(r io.Reader) int {
 	var rLength uint32
 	var multiplier uint32
 	b := make([]byte, 1)
-	for {
+	for multiplier < 27 { //fix: Infinite '(digit & 128) == 1' will cause the dead loop
 		io.ReadFull(r, b)
 		digit := b[0]
 		rLength |= uint32(digit&127) << multiplier
