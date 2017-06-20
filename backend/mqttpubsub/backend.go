@@ -21,11 +21,6 @@ type Backend struct {
 }
 
 // NewBackend creates a new Backend.
-func NewBackend(server, username, password string) (*Backend, error) {
-	return NewBackend(server, username, password, "")
-}
-
-// NewBackend creates a new Backend.
 func NewBackend(server, username, password, cafile string) (*Backend, error) {
 	b := Backend{
 		txPacketChan: make(chan gw.TXPacketBytes),
