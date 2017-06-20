@@ -35,8 +35,8 @@ func NewBackend(server, username, password, cafile string) (*Backend, error) {
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 	
 	if len(cafile) != 0 {
-		tlsconfig := NewTLSConfig(cafile)
-		if(tlsconfig != nil) {
+		tlsconfig, err := NewTLSConfig(cafile)
+		if(err == nil) {
 			opts.SetClientID("ssl-client").SetTLSConfig(tlsconfig)
 		}
 	}
@@ -50,12 +50,13 @@ func NewBackend(server, username, password, cafile string) (*Backend, error) {
 	return &b, nil
 }
 
+// NewTLSConfig returns the TLS configuration.
 func NewTLSConfig(cafile string) (*tls.Config, error) {
 	// Import trusted certificates from CAfile.pem.
 	
 	cert, err := ioutil.ReadFile(cafile)
 	if err != nil {
-		log.Errorf("backend: couldn't load cafile", err)
+		log.Errorf("backend: couldn't load cafile: %s", err)
 		return nil, err
 	}
 	
