@@ -37,10 +37,10 @@ func NewBackend(server, username, password, cafile string) (*Backend, error) {
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 	
-	if len(cafile) != 0 {
+	if cafile != "" {
 		tlsconfig, err := NewTLSConfig(cafile)
-		if(err == nil) {
-			opts.SetClientID("ssl-client").SetTLSConfig(tlsconfig)
+		if err == nil {
+			opts.SetTLSConfig(tlsconfig)
 		}
 	}
 	
