@@ -33,16 +33,16 @@
 			"revisionTime": "2017-06-12T00:00:38Z"
 		},
 		{
-			"checksumSHA1": "LHwm1G0lFyQ3X0iHZ/MOYnAtjd4=",
+			"checksumSHA1": "tvYdaseAcuMs8AlmM/4JFI6V2ng=",
 			"path": "github.com/eclipse/paho.mqtt.golang",
-			"revision": "d06cc70ac43d625e602946b5ff2346ddebb768e4",
-			"revisionTime": "2017-06-02T16:30:32Z"
+			"revision": "5bc155e7a24bc4780f51f7a2a1c90ad6807d312a",
+			"revisionTime": "2017-06-28T09:47:32Z"
 		},
 		{
-			"checksumSHA1": "g2AaO9VMaxzFQZkrCfxBUV3yAyM=",
+			"checksumSHA1": "p5cI1q3Cz+iLJ/JcTKdB8U/YmLg=",
 			"path": "github.com/eclipse/paho.mqtt.golang/packets",
-			"revision": "d06cc70ac43d625e602946b5ff2346ddebb768e4",
-			"revisionTime": "2017-06-02T16:30:32Z"
+			"revision": "5bc155e7a24bc4780f51f7a2a1c90ad6807d312a",
+			"revisionTime": "2017-06-28T09:47:32Z"
 		},
 		{
 			"checksumSHA1": "7PLlrIaGI1TKWB96RkizgkTtOtQ=",
@@ -97,6 +97,12 @@
 			"path": "github.com/smartystreets/goconvey/convey/reporting",
 			"revision": "9e8dc3f972df6c8fcc0375ef492c24d0bb204857",
 			"revisionTime": "2017-06-02T16:46:21Z"
+		},
+		{
+			"checksumSHA1": "fjMK2G5arnjllpoeBYeyf9Y2Iok=",
+			"path": "golang.org/x/net/proxy",
+			"revision": "8663ed5da4fd087c3cfb99a996e628b72e2f0948",
+			"revisionTime": "2017-06-28T03:07:11Z"
 		},
 		{
 			"checksumSHA1": "7EZyXN0EmZLgGxZxK01IJua4c8o=",

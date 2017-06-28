@@ -29,6 +29,7 @@ GLOBAL OPTIONS:
    --mqtt-server value    mqtt server (e.g. scheme://host:port where scheme is tcp, ssl or ws) (default: "tcp://127.0.0.1:1883") [$MQTT_SERVER]
    --mqtt-username value  mqtt server username (optional) [$MQTT_USERNAME]
    --mqtt-password value  mqtt server password (optional) [$MQTT_PASSWORD]
+   --mqtt-ca-cert value   mqtt CA certificate file (optional) [$MQTT_CA_CERT]
    --skip-crc-check       skip the CRC status-check of received packets [$SKIP_CRC_CHECK]
    --log-level value      debug=5, info=4, warning=3, error=2, fatal=1, panic=0 (default: 4) [$LOG_LEVEL]
    --help, -h             show help

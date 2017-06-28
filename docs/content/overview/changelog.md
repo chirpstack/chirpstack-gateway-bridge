@@ -8,6 +8,21 @@ menu:
 
 ## Changelog
 
+### 2.1.5
+
+**Improvements:**
+
+* `--gw-mqtt-ca-cert` / `GW_MQTT_CA_CERT` configuration flag was added to
+  specify an optional CA certificate
+  (thanks [@minggi](https://github.com/minggi)).
+
+**Bugfixes:**
+
+* MQTT client library update which fixes an issue where during a failed
+  re-connect the protocol version would be downgraded
+  ([paho.mqtt.golang#116](https://github.com/eclipse/paho.mqtt.golang/issues/116)).
+
+
 ### 2.1.4
 
 * Retry connecting to MQTT broker on startup (thanks @jcampanell-cablelabs).
