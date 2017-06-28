@@ -12,7 +12,7 @@ menu:
 
 **Improvements:**
 
-* `--gw-mqtt-ca-cert` / `GW_MQTT_CA_CERT` configuration flag was added to
+* `--mqtt-ca-cert` / `MQTT_CA_CERT` configuration flag was added to
   specify an optional CA certificate
   (thanks [@minggi](https://github.com/minggi)).
 
