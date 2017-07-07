@@ -418,6 +418,11 @@ func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (gw.RXPacketBytes, error)
 		return gw.RXPacketBytes{}, fmt.Errorf("gateway: could not base64 decode data: %s", err)
 	}
 
+	//Extract Data in case of dual antenna
+	var rssi int16
+	var lsnr float64
+	rssi, lsnr = newRSSIandLSNRfromRXPK(rxpk)
+
 	rxPacket := gw.RXPacketBytes{
 		PHYPayload: b,
 		RXInfo: gw.RXInfo{
@@ -430,8 +435,8 @@ func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (gw.RXPacketBytes, error)
 			CRCStatus: int(rxpk.Stat),
 			DataRate:  dataRate,
 			CodeRate:  rxpk.CodR,
-			RSSI:      int(rxpk.RSSI),
-			LoRaSNR:   rxpk.LSNR,
+			RSSI:      int(rssi),
+			LoRaSNR:   lsnr,
 			Size:      int(rxpk.Size),
 		},
 	}
@@ -513,4 +518,24 @@ func newDatRfromDataRate(d band.DataRate) DatR {
 	return DatR{
 		FSK: uint32(d.BitRate),
 	}
+}
+
+// Function goes through RXData and looks, if Rsig from multiple antennas is provided.
+// If positive it looks for best RSSI(signal) and returns the according LSNR
+// else it just returns Data from Package as usual
+
+func newRSSIandLSNRfromRXPK(rxpk RXPK) (int16, float64) {
+
+	if len(rxpk.Rsig) == 0 {
+		return int16(rxpk.RSSI), float64(rxpk.LSNR)
+	}
+	var RSSI int16 = -512
+	var LSNR float64 = 0
+	for i := range rxpk.Rsig {
+		if rxpk.Rsig[i].Rssis > RSSI && rxpk.Rsig[i].Rssis < 0 {
+			RSSI = rxpk.Rsig[i].Rssis
+			LSNR = rxpk.Rsig[i].Lsnr
+		}
+	}
+	return RSSI, LSNR
 }

@@ -389,6 +389,22 @@ type RXPK struct {
 	LSNR float64     `json:"lsnr"` // Lora SNR ratio in dB (signed float, 0.1 dB precision)
 	Size uint16      `json:"size"` // RF packet payload size in bytes (unsigned integer)
 	Data string      `json:"data"` // Base64 encoded RF packet payload, padded
+	Rsig []RSIG      `json:"rsig"`
+}
+
+type RSIG struct {
+	Ant    int     `json:"ant"`    // Antenna number on which signal has been received
+	Chan   uint    `json:"chang"`  // Concentrator "IF" channel used for RX (unsigned integer)
+	Rssic  int16   `json:"rssic"`  // RSSI in dBm of the channel (signed integer, 1 dB precision)
+	Lsnr   float64 `json:"lsnr"`   // Lora SNR ratio in dB (signed float, 0.1 dB precision)
+	Etime  string  `json:"etime"`  // Encrypted timestamp, ns precision [0..999999999] (Optional)
+	Rssis  int16   `json:"rssis"`  // RSSI in dBm of the signal (signed integer, 1 DB precision) (Optional)
+	Rssisd uint16  `json:"rssisd"` // Standard deviation of RSSI during preamble (unsigned integer) (Optional)
+	Ftime  int     `json:"ftime"`  // not documented
+	Foff   int     `json:"foff"`   // Frequency offset in Hz [-125kHz..+125Khz] (Optional)
+	Ft2d   int     `json:"ft2d"`   // not documented
+	Rfbsb  int     `json:"rfbsb"`  // not documented
+	Rs2s1  int     `json:"rs2s1"`  // not documented
 }
 
 // Stat contains the status of the gateway.
