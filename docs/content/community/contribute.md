@@ -10,7 +10,7 @@ menu:
 
 There are a couple of ways to get involved:
 
-* Join the discussions and share your feedback at [https://gitter.io/loraserver/lora-gateway-bridge](https://gitter.io/loraserver/lora-gateway-bridge)
+* Join the discussions and share your feedback at [https://gitter.im/loraserver/lora-gateway-bridge](https://gitter.im/loraserver/lora-gateway-bridge)
 * Report bugs or make feature-requests by opening an issue at [https://github.com/brocaar/lora-gateway-bridge/issues](https://github.com/brocaar/lora-gateway-bridge/issues)
 * Fix issues or improve documentation by creating pull-requests
 
