@@ -1,15 +1,19 @@
-gatewaybridge:
-  build: .
-  command: make serve
-  ports:
-    - "1700/udp:1700/udp"
-  volumes:
-    - ./:/go/src/github.com/brocaar/lora-gateway-bridge
-  links:
-    - mosquitto
-  environment:
-    - MQTT_SERVER=tcp://mosquitto:1883
-    - TEST_MQTT_SERVER=tcp://mosquitto:1883
+version: "2"
+services:
+  gatewaybridge:
+    build:
+      context: .
+      dockerfile: Dockerfile-devel
+    command: make serve
+    ports:
+      - "1700:1700/udp"
+    volumes:
+      - ./:/go/src/github.com/brocaar/lora-gateway-bridge
+    links:
+      - mosquitto
+    environment:
+      - MQTT_SERVER=tcp://mosquitto:1883
+      - TEST_MQTT_SERVER=tcp://mosquitto:1883
 
-mosquitto:
-  image: ansi/mosquitto
+  mosquitto:
+    image: ansi/mosquitto

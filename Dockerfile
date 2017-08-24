@@ -1,20 +1,20 @@
-FROM golang:1.6.2
+FROM golang:1.8-alpine3.6 AS development
 
 ENV PROJECT_PATH=/go/src/github.com/brocaar/lora-gateway-bridge
 ENV PATH=$PATH:$PROJECT_PATH/build
 
-# install tools
-RUN go get github.com/golang/lint/golint
-RUN go get github.com/kisielk/errcheck
+RUN apk add --no-cache ca-certificates make git bash
 
-# setup work directory
 RUN mkdir -p $PROJECT_PATH
+COPY . $PROJECT_PATH
 WORKDIR $PROJECT_PATH
 
-# copy source code
-COPY . $PROJECT_PATH
+RUN make requirements
+RUN make
 
-# build
-RUN make build
+FROM alpine:latest AS production
 
-CMD ["lora-gateway-bridge"]
+WORKDIR /root/
+RUN apk --no-cache add ca-certificates
+COPY --from=development /go/src/github.com/brocaar/lora-gateway-bridge/build/lora-gateway-bridge .
+CMD ["./lora-gateway-bridge"]

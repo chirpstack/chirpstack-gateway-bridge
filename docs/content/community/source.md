@@ -50,6 +50,9 @@ go get github.com/kisielk/errcheck
 A few example commands that you can run:
 
 ```bash
+# install all requirements
+make requirements
+
 # run the tests
 make test
 

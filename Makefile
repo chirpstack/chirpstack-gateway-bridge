@@ -39,6 +39,10 @@ package: clean build
 package-deb:
 	@cd packaging && TARGET=deb ./package.sh
 
+requirements:
+	@go get -u github.com/golang/lint/golint
+	@go get -u github.com/kisielk/errcheck
+
 # shortcuts for development
 
 serve: build
