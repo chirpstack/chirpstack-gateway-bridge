@@ -53,18 +53,15 @@ Then reboot, and obtain the issued IP address as outlined above.
 The basic setup steps are outlined below for the packet forwarder for each 
 device, followed by `Install lora-gateway-bridge` below.
 
-####Multitech Conduit AEP
+#### Multitech Conduit AEP
 
 Use the web interface to set up the Conduit's packet forwarder.  By default, 
 the connection will not be “secure” over https because the device uses a self-
 signed certificate.  Accept the certificate to proceed.
  
 1. Log in to the interface.
-2. On the home screen, you should be able to see information about the version 
-   of the LoRa card.  Find the corresponding section on the web page:
-
-	`http://www.multitech.net/developer/software/lora/aep-lora-packet-forwarder/`
-
+2. On the home screen, you should be able to see information about the version of the LoRa card.  Find the corresponding section on the web page:  
+  http://www.multitech.net/developer/software/lora/aep-lora-packet-forwarder/  
    This page has links to basic configuration for each card version which you 
    will need below.
 3. You should see the “First-Time Setup Wizard” welcome screen.  If not, you
@@ -87,11 +84,12 @@ signed certificate.  Accept the certificate to proceed.
 13. At the top of the right column, set “Mode” to be “PACKET FORWARDER”.
 14. In the “Config” text box, copy and paste the configuration data for your 
     MTAC LoRa card and region.  In addition, you will want to modify/add the 
-    following configuration details in the gateway_conf section.  Leave any 
-    other settings in this section as they are.  The ref_* fields should be set 
+    following configuration details in the gateway\_conf section.  Leave any 
+    other settings in this section as they are.  The ref\_* fields should be set 
     for the gateway.  (Altitude is specified in meters.):
-
-    ```{
+    
+    ```javascript
+    {
         ...
         "gateway_conf": {
             ...
@@ -103,22 +101,21 @@ signed certificate.  Accept the certificate to proceed.
             "ref_longitude": -105.1603241,
             "ref_altitude": 1664
         }
-    }```
-
+    }
+    ```
+    
 15. Select “Submit”.
 16. Select the “Save and Restart” option on the left menu.
 
-####Multitech Conduit mLinux
+#### Multitech Conduit mLinux
 
 The latest Conduit mLinux version makes setting up the device pretty straight 
 forward.  Start by disabling the lora-network-server and enabling the 
 lora-packet-forwarder.  This is done by:
 
 1. Create the file /var/config/lora/global_conf.json and create the serrings by 
-   referencing the information at
-
-    `http://www.multitech.net/developer/software/lora/conduit-mlinux-convert-to-basic-packet-forwarder/`
-    
+   referencing the information at  
+   http://www.multitech.net/developer/software/lora/conduit-mlinux-convert-to-basic-packet-forwarder/  
    and be sure to update the settings as described in step 14 for the
    Conduit AEP instructions above.
 
@@ -131,7 +128,7 @@ lora-packet-forwarder.  This is done by:
    
        `update-rc.d lora-packet-forwarder defaults`
 
-####Multitech Conduit - Install lora-gateway-bridge
+#### Multitech Conduit - Install lora-gateway-bridge
 
 Now you will want to set up the lora-gateway-bridge on the device.  The 
 following are suggested files and locations:
@@ -142,7 +139,8 @@ following are suggested files and locations:
 2. Create a script to run the application with the appropriate settings for your
    installation in /opt/lora-gateway-bridge/bin/runGateway.sh:
    
-   '''#!/bin/bash
+   ```
+    #!/bin/bash
     # Starts the gateway code
 
     # Accept a single parameter of where to put the pid of the actual lora-app-server 
@@ -171,11 +169,12 @@ following are suggested files and locations:
     PID=$!
     if [[ $PIDFILE != "" ]]; then
         echo $PID > $PIDFILE
-    fi'''
+    fi```
     
 3. Then create a startup script in /etc/init.d/lora-gateway-bridge:
 
-   '''#!/bin/bash
+   ```
+    #!/bin/bash
     #
     # A SysV init script for the lora-gateway-bridge
     #
@@ -253,7 +252,7 @@ following are suggested files and locations:
             exit 1
             ;;
     esac
-    exit $RETVAL'''
+    exit $RETVAL```
     
 4. Make sure the script start on reboot:
 
