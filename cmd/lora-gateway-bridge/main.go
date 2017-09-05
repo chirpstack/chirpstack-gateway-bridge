@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/brocaar/lora-gateway-bridge/backend/mqttpubsub"
 	"github.com/brocaar/lora-gateway-bridge/gateway"
 	"github.com/brocaar/lorawan"

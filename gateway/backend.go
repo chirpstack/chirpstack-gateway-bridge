@@ -14,7 +14,7 @@ import (
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 var errGatewayDoesNotExist = errors.New("gateway does not exist")
