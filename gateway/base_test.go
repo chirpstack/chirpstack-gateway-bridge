@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func init() {

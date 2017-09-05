@@ -3,7 +3,7 @@ package mqttpubsub
 import (
 	"os"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func init() {
