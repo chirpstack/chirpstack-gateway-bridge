@@ -10,11 +10,10 @@ menu:
 
 ### Bugs
 
-Did you find a bug? Please check first if this issue has already been reported.
-If not, please create an issue at:
+Did you find a bug or want to request a new feature? Please first check if
+this issue has already been reported. If not, please create an issue:
 [https://github.com/brocaar/lora-gateway-bridge/issues](https://github.com/brocaar/lora-gateway-bridge/issues).
 
 ### Questions
 
-For questions please refer to the LoRa App Server Gitter channel:
-[https://gitter.im/loraserver/lora-gateway-bridge](https://gitter.im/loraserver/lora-gateway-bridge).
+For support questions, please refer to the [LoRa Server project forum](https://forum.loraserver.io/).
