@@ -45,7 +45,11 @@ netmask by adding a “#” at the beginning of each line:
 Then reboot, and obtain the issued IP address as outlined above.
 
 The basic setup steps are outlined below for the packet forwarder for each 
-device, followed by `Install lora-gateway-bridge` below.
+device, followed by `Install lora-gateway-bridge` below.  This image shows how 
+the components connect to each other, and what some of the various settings 
+represent:
+
+![Gateway Pieces and Connections](../MultitechGatewaySettings.png)
 
 #### Multitech Conduit AEP
 
@@ -97,6 +101,9 @@ signed certificate.  Accept the certificate to proceed.
         }
     }
     ```
+    Note that the serv_port_up and serv_port_down represent the ports used to 
+    communicate with the lora-gateway-bridge, usually on localhost (the 
+    server_address parameter).  See the image above.
     
 15. Select “Submit”.
 16. Select the “Save and Restart” option on the left menu.
@@ -128,12 +135,19 @@ Now you will want to set up the lora-gateway-bridge on the device.  The
 following are suggested files and locations:
 
 1. Download the arm build of the lora-gateway-bridge (see `Downloads` on the 
-   left), and extract it to `/opt/lora-gateway-bridge/bin/`
+   left), and extract it to `/opt/lora-gateway-bridge/bin/`.  Note that at the 
+   time of this writing, the Multitech boxes are all running 32-bit amd 
+   processors.  This can be verified by issuing the command `uname -a`, where 
+   'armv7' or lower in the output represents 32-bit arm processors, and 'armv8'
+   or higher represents 64-bit arm processors.  Be sure to download the 
+   appropriate binary package for the system processor.
 
-2. Create a script to run the application with the appropriate settings for your
-   installation in /opt/lora-gateway-bridge/bin/runGateway.sh:
+2. Create a script (or download [here](../runGateway.sh)) to run the application 
+   with the appropriate settings for your installation in 
+   /opt/lora-gateway-bridge/bin/runGateway.sh (ensure that the script is 
+   executable `chmod +x /opt/lora-gateway-bridge/bin/runGateway.sh`):
    
-   ```
+    ```
     #!/bin/bash
     # Starts the gateway code
 
@@ -163,11 +177,17 @@ following are suggested files and locations:
     PID=$!
     if [[ $PIDFILE != "" ]]; then
         echo $PID > $PIDFILE
-    fi```
-    
-3. Then create a startup script in /etc/init.d/lora-gateway-bridge:
+    fi
+ 
+    ```
+    Modify the MQTT_* values to reflect the settings for your system.    
 
-   ```
+3. Then create a startup script (or download [here](../lora-gateway-bridge)) in 
+   /etc/init.d/lora-gateway-bridge (ensure that the script is executable 
+   `chmod +x /etc/init.d/lora-gateway-bridge`):
+
+
+    ```
     #!/bin/bash
     #
     # A SysV init script for the lora-gateway-bridge
@@ -246,7 +266,8 @@ following are suggested files and locations:
             exit 1
             ;;
     esac
-    exit $RETVAL```
+    exit $RETVAL
+    ```
     
 4. Make sure the script start on reboot:
 
