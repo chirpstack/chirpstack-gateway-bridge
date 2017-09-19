@@ -114,16 +114,16 @@ The latest Conduit mLinux version makes setting up the device pretty straight
 forward.  Start by disabling the lora-network-server and enabling the 
 lora-packet-forwarder.  This is done by:
 
-1. Create the file /var/config/lora/global_conf.json and create the serrings by 
+1. Create the file /var/config/lora/global_conf.json and create the settings by 
    referencing the information at  
    http://www.multitech.net/developer/software/lora/conduit-mlinux-convert-to-basic-packet-forwarder/  
    and be sure to update the settings as described in step 14 for the
    Conduit AEP instructions above.
 
-2. Edit /etc/defaults/lora-network-server and change ENABLED="true" to
-   ENABLED="false".
-3. Edit /etc/defaults/lora-packet-forwarder and change ENABLED="false" to
-   ENABLED="true".
+2. Edit /etc/defaults/lora-network-server and change ENABLED="yes" to
+   ENABLED="no".
+3. Edit /etc/defaults/lora-packet-forwarder and change ENABLED="no" to
+   ENABLED="yes".
 4. Ensure that the lora-packet-forwarder will run after reboot by issuing the 
    command:
    
@@ -136,7 +136,7 @@ following are suggested files and locations:
 
 1. Download the arm build of the lora-gateway-bridge (see `Downloads` on the 
    left), and extract it to `/opt/lora-gateway-bridge/bin/`.  Note that at the 
-   time of this writing, the Multitech boxes are all running 32-bit amd 
+   time of this writing, the Multitech boxes are all running 32-bit arm 
    processors.  This can be verified by issuing the command `uname -a`, where 
    'armv7' or lower in the output represents 32-bit arm processors, and 'armv8'
    or higher represents 64-bit arm processors.  Be sure to download the 
@@ -273,4 +273,24 @@ following are suggested files and locations:
 
     `update-rc.d lora-gateway-bridge defaults`
     
-5. Finally, restart the system to get everything running.
+5. Be sure to add the gateway to the lora-app-server.  See [here](/lora-app-server/use/gateways/).
+
+6. Finally, restart the system to get everything running.
+
+A few words about troubleshooting:
+
+Be sure to check log files to see what is happening.  Logs can be found on the 
+gateway in the directory `/var/log/`.  
+
+Also, if the gateway seems to be running, but no statistics are 
+appearing in lora-app-server, you may be experiencing a known bug with the 
+Multitech packet forwarding code.  On these systems, we need to swap out the 
+application that runs for packet formwarding.  The following should resolve the issue:
+```
+    $ cd /opt/lora
+    $ mv basic_pkt_fwd-usb basic_pkt_fwd-usb.orig
+    $ ln -s gps_pkt_fwd-usb basic_pkt_fwd-usb
+
+```
+
+Once these steps have been performed, reboot.
