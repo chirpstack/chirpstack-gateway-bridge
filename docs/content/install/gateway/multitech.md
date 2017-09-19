@@ -49,7 +49,7 @@ device, followed by `Install lora-gateway-bridge` below.  This image shows how
 the components connect to each other, and what some of the various settings 
 represent:
 
-![Gateway Pieces and Connections](../MultitechGatewaySettings.png)
+![Gateway Pieces and Connections](/lora-gateway-bridge/img/MultitechGatewaySettings.png)
 
 #### Multitech Conduit AEP
 
@@ -142,7 +142,7 @@ following are suggested files and locations:
    or higher represents 64-bit arm processors.  Be sure to download the 
    appropriate binary package for the system processor.
 
-2. Create a script (or download [here](../runGateway.sh)) to run the application 
+2. Create a script (or download [here](/lora-gateway-bridge/scripts/multitech/runGateway.sh)) to run the application 
    with the appropriate settings for your installation in 
    /opt/lora-gateway-bridge/bin/runGateway.sh (ensure that the script is 
    executable `chmod +x /opt/lora-gateway-bridge/bin/runGateway.sh`):
@@ -182,7 +182,7 @@ following are suggested files and locations:
     ```
     Modify the MQTT_* values to reflect the settings for your system.    
 
-3. Then create a startup script (or download [here](../lora-gateway-bridge)) in 
+3. Then create a startup script (or download [here](/lora-gateway-bridge/scripts/multitech/lora-gateway-bridge)) in 
    /etc/init.d/lora-gateway-bridge (ensure that the script is executable 
    `chmod +x /etc/init.d/lora-gateway-bridge`):
 
