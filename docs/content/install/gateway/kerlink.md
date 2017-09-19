@@ -5,7 +5,6 @@ menu:
         parent: gateway
 ---
 
-## Kerlink
 
 ### Kerlink IOT station
 

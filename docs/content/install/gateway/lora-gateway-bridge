@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# A SysV init script for the lora-gateway-bridge
+#
+### BEGIN INIT INFO
+# Provides:             lora-gateway-bridge
+# Required-Start:       $syslog $network
+# Required-Stop:        $syslog $network
+# Should-Start:         $local_fs
+# Should-Stop:          $local_fs
+# Default-Start:        2 3 4 5
+# Default-Stop:         0 1 6
+# Short-Description:    lora-gateway-bridge
+# Description:          Sends lora messages from the gateway to the open source server..
+### END INIT INFO
+#
+PIDFILE=/var/run/lora-gateway-bridge.pid
+NAME=lora-gateway-bridge
+STARTSCRIPT=/opt/lora-gateway-bridge/bin/runGateway.sh
+RETVAL=0
+
+start() {
+if [ -f $PIDFILE ]; then
+    echo "$NAME is already running"
+else
+    echo "Starting $NAME"
+    # Start the server, passing in the file to get the PID
+    $STARTSCRIPT $PIDFILE
+    RETVAL=$?
+fi
+}
+
+stop() {
+if [ -f $PIDFILE ]; then
+    echo "Shutting down $NAME"
+    kill `cat $PIDFILE`
+    # Get rid of the pidfile so we don't assume it's running any more.
+    rm -f $PIDFILE
+    RETVAL=$?
+else
+    echo "$NAME is not running."
+fi
+}
+
+restart() {
+echo "Restarting $NAME"
+stop
+start
+}
+
+status() {
+if [ -f $PIDFILE ]; then
+    echo "Status for $NAME:"
+    ps -ef `cat $PIDFILE`
+    RETVAL=$?
+else
+    echo "$NAME is not running"
+fi
+}
+
+case "$1" in
+start)
+    start
+    ;;
+stop)
+    stop
+    ;;
+status)
+    status
+    ;;
+restart)
+    restart
+    ;;
+*)
+    echo "Usage: {start|stop|status|restart}"
+    exit 1
+    ;;
+esac
+exit $RETVAL
