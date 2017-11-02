@@ -36,6 +36,7 @@ project.
 ## Sponsors
 
 [![CableLabs](https://www.loraserver.io/img/sponsors/cablelabs.png)](https://www.cablelabs.com/)
+[![SIDNFonds](https://www.loraserver.io/img/sponsors/sidn_fonds.png)](https://www.sidnfonds.nl/)
 [![acklio](https://www.loraserver.io/img/sponsors/acklio.png)](http://www.ackl.io/)
 
 ## License
