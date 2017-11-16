@@ -30,6 +30,8 @@ GLOBAL OPTIONS:
    --mqtt-username value  mqtt server username (optional) [$MQTT_USERNAME]
    --mqtt-password value  mqtt server password (optional) [$MQTT_PASSWORD]
    --mqtt-ca-cert value   mqtt CA certificate file (optional) [$MQTT_CA_CERT]
+   --mqtt-cert value      mqtt certificate file (optional) [$MQTT_CERT]
+   --mqtt-cert-key value  mqtt key file of certificate (optional) [$MQTT_CERT_KEY]
    --skip-crc-check       skip the CRC status-check of received packets [$SKIP_CRC_CHECK]
    --log-level value      debug=5, info=4, warning=3, error=2, fatal=1, panic=0 (default: 4) [$LOG_LEVEL]
    --help, -h             show help
