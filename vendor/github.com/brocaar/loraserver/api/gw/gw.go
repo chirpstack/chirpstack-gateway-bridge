@@ -1,3 +1,5 @@
+//go:generate protoc -I . --go_out=plugins=grpc:. gw.proto
+
 package gw
 
 import (
@@ -14,7 +16,6 @@ type RXPacket struct {
 }
 
 // RXPacketBytes contains the PHYPayload as []byte received from the gateway.
-// The JSON output is compatible with RXPacket.
 type RXPacketBytes struct {
 	RXInfo     RXInfo `json:"rxInfo"`
 	PHYPayload []byte `json:"phyPayload"`
@@ -34,6 +35,8 @@ type RXInfo struct {
 	LoRaSNR   float64       `json:"loRaSNR"`        // LoRa signal-to-noise ratio in dB
 	Size      int           `json:"size"`           // packet payload size
 	DataRate  band.DataRate `json:"dataRate"`       // RX datarate (either LoRa or FSK)
+	Board     int           `json:"board"`          // Concentrator board used for RX
+	Antenna   int           `json:"antenna"`        // Antenna number on which signal has been received
 }
 
 // TXPacket contains the PHYPayload which should be send to the
@@ -44,7 +47,7 @@ type TXPacket struct {
 }
 
 // TXPacketBytes contains the PHYPayload as []byte which should be send to the
-// gateway. The JSON output is compatible with TXPacket.
+// gateway.
 type TXPacketBytes struct {
 	TXInfo     TXInfo `json:"txInfo"`
 	PHYPayload []byte `json:"phyPayload"`
@@ -60,6 +63,8 @@ type TXInfo struct {
 	DataRate    band.DataRate `json:"dataRate"`    // TX datarate (either LoRa or FSK)
 	CodeRate    string        `json:"codeRate"`    // ECC code rate
 	IPol        *bool         `json:"iPol"`        // when left nil, the gateway-bridge will use the default (true for LoRa modulation)
+	Board       int           `json:"board"`       // Concentrator board used for RX
+	Antenna     int           `json:"antenna"`     // Antenna number on which signal has been received
 }
 
 // GatewayStatsPacket contains the information of a gateway.

@@ -342,18 +342,21 @@ func (b *Backend) handleRXPacket(addr *net.UDPAddr, mac lorawan.EUI64, rxpk RXPK
 	}
 	log.WithFields(logFields).Info("gateway: rxpk packet received")
 
-	// decode packet
-	rxPacket, err := newRXPacketFromRXPK(mac, rxpk)
+	// decode packet(s)
+	rxPackets, err := newRXPacketsFromRXPK(mac, rxpk)
 	if err != nil {
 		return err
 	}
 
-	// check CRC
-	if !b.skipCRCCheck && rxPacket.RXInfo.CRCStatus != 1 {
-		log.WithFields(logFields).Warningf("gateway: invalid packet CRC: %d", rxPacket.RXInfo.CRCStatus)
-		return errors.New("gateway: invalid CRC")
+	for i := range rxPackets {
+		// check CRC
+		if !b.skipCRCCheck && rxPackets[i].RXInfo.CRCStatus != 1 {
+			log.WithFields(logFields).Warningf("gateway: invalid packet CRC: %d", rxPackets[i].RXInfo.CRCStatus)
+			return errors.New("gateway: invalid CRC")
+		}
+		b.rxChan <- rxPackets[i]
 	}
-	b.rxChan <- rxPacket
+
 	return nil
 }
 
@@ -406,17 +409,20 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) gw.GatewayStatsPacket {
 	return gwStat
 }
 
-// newRXPacketFromRXPK transforms a Semtech packet into a gw.RXPacketBytes.
-func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (gw.RXPacketBytes, error) {
+// newRXPacketsFromRXPK transforms a Semtech packet into a slice of
+// gw.RXPacketBytes.
+func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, error) {
 	dataRate, err := newDataRateFromDatR(rxpk.DatR)
 	if err != nil {
-		return gw.RXPacketBytes{}, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)
+		return nil, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)
 	}
 
 	b, err := base64.StdEncoding.DecodeString(rxpk.Data)
 	if err != nil {
-		return gw.RXPacketBytes{}, fmt.Errorf("gateway: could not base64 decode data: %s", err)
+		return nil, fmt.Errorf("gateway: could not base64 decode data: %s", err)
 	}
+
+	var rxPackets []gw.RXPacketBytes
 
 	rxPacket := gw.RXPacketBytes{
 		PHYPayload: b,
@@ -433,9 +439,24 @@ func newRXPacketFromRXPK(mac lorawan.EUI64, rxpk RXPK) (gw.RXPacketBytes, error)
 			RSSI:      int(rxpk.RSSI),
 			LoRaSNR:   rxpk.LSNR,
 			Size:      int(rxpk.Size),
+			Board:     int(rxpk.Brd),
 		},
 	}
-	return rxPacket, nil
+
+	if len(rxpk.RSig) == 0 {
+		rxPackets = append(rxPackets, rxPacket)
+	}
+
+	for _, s := range rxpk.RSig {
+		rxPacket.RXInfo.Antenna = int(s.Ant)
+		rxPacket.RXInfo.Channel = int(s.Chan)
+		rxPacket.RXInfo.LoRaSNR = s.LSNR
+		rxPacket.RXInfo.RSSI = int(s.RSSIC)
+
+		rxPackets = append(rxPackets, rxPacket)
+	}
+
+	return rxPackets, nil
 }
 
 // newTXPKFromTXPacket transforms a gw.TXPacketBytes into a Semtech
@@ -451,6 +472,8 @@ func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 		CodR: txPacket.TXInfo.CodeRate,
 		Size: uint16(len(txPacket.PHYPayload)),
 		Data: base64.StdEncoding.EncodeToString(txPacket.PHYPayload),
+		Ant:  uint8(txPacket.TXInfo.Antenna),
+		Brd:  uint8(txPacket.TXInfo.Board),
 	}
 
 	if txPacket.TXInfo.DataRate.Modulation == band.FSKModulation {

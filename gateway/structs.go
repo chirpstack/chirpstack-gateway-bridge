@@ -379,6 +379,7 @@ type RXPK struct {
 	Time CompactTime `json:"time"` // UTC time of pkt RX, us precision, ISO 8601 'compact' format (e.g. 2013-03-31T16:21:17.528002Z)
 	Tmst uint32      `json:"tmst"` // Internal timestamp of "RX finished" event (32b unsigned)
 	Freq float64     `json:"freq"` // RX central frequency in MHz (unsigned float, Hz precision)
+	Brd  uint8       `json:"brd"`  // Concentrator board used for RX (unsigned integer)
 	Chan uint8       `json:"chan"` // Concentrator "IF" channel used for RX (unsigned integer)
 	RFCh uint8       `json:"rfch"` // Concentrator "RF chain" used for RX (unsigned integer)
 	Stat int8        `json:"stat"` // CRC status: 1 = OK, -1 = fail, 0 = no CRC
@@ -389,6 +390,15 @@ type RXPK struct {
 	LSNR float64     `json:"lsnr"` // Lora SNR ratio in dB (signed float, 0.1 dB precision)
 	Size uint16      `json:"size"` // RF packet payload size in bytes (unsigned integer)
 	Data string      `json:"data"` // Base64 encoded RF packet payload, padded
+	RSig []RSig      `json:"rsig"` // Received signal information, per antenna (Optional)
+}
+
+// RSig contains the received signal information per antenna.
+type RSig struct {
+	Ant   uint8   `json:"ant"`   // Antenna number on which signal has been received
+	Chan  uint8   `json:"chan"`  // Concentrator "IF" channel used for RX (unsigned integer)
+	LSNR  float64 `json:"lsnr"`  // Lora SNR ratio in dB (signed float, 0.1 dB precision)
+	RSSIC int16   `json:"rssic"` // RSSI in dBm of the channel (signed integer, 1 dB precision)
 }
 
 // Stat contains the status of the gateway.
@@ -422,6 +432,8 @@ type TXPK struct {
 	Size uint16       `json:"size"`           // RF packet payload size in bytes (unsigned integer)
 	NCRC bool         `json:"ncrc,omitempty"` // If true, disable the CRC of the physical layer (optional)
 	Data string       `json:"data"`           // Base64 encoded RF packet payload, padding optional
+	Brd  uint8        `json:"brd"`            // Concentrator board used for RX (unsigned integer)
+	Ant  uint8        `json:"ant"`            // Antenna number on which signal has been received
 }
 
 // GetPacketType returns the packet type for the given packet data.

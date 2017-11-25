@@ -141,9 +141,9 @@ func TestBackend(t *testing.T) {
 					Convey("Then the packet is returned by the RX packet channel", func() {
 						rxPacket := <-backend.RXPacketChan()
 
-						rxPacket2, err := newRXPacketFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
 						So(err, ShouldBeNil)
-						So(rxPacket, ShouldResemble, rxPacket2)
+						So(rxPacket, ShouldResemble, rxPackets[0])
 					})
 				})
 
@@ -239,9 +239,9 @@ func TestBackend(t *testing.T) {
 					Convey("Then the packet is returned by the RX packet channel", func() {
 						rxPacket := <-backend.RXPacketChan()
 
-						rxPacket2, err := newRXPacketFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
 						So(err, ShouldBeNil)
-						So(rxPacket, ShouldResemble, rxPacket2)
+						So(rxPacket, ShouldResemble, rxPackets[0])
 					})
 				})
 
@@ -288,9 +288,9 @@ func TestBackend(t *testing.T) {
 					Convey("Then the packet is returned by the RX packet channel", func() {
 						rxPacket := <-backend.RXPacketChan()
 
-						rxPacket2, err := newRXPacketFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
 						So(err, ShouldBeNil)
-						So(rxPacket, ShouldResemble, rxPacket2)
+						So(rxPacket, ShouldResemble, rxPackets[0])
 					})
 				})
 			})
@@ -463,6 +463,8 @@ func TestNewTXPKFromTXPacket(t *testing.T) {
 					SpreadFactor: 9,
 					Bandwidth:    250,
 				},
+				Board:   1,
+				Antenna: 2,
 			},
 			PHYPayload: []byte{1, 2, 3, 4},
 		}
@@ -483,6 +485,8 @@ func TestNewTXPKFromTXPacket(t *testing.T) {
 				Size: 4,
 				Data: "AQIDBA==",
 				IPol: true,
+				Brd:  1,
+				Ant:  2,
 			})
 		})
 
@@ -519,14 +523,15 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 		}
 		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
 
-		Convey("When calling newRXPacketFromRXPK(", func() {
-			rxPacket, err := newRXPacketFromRXPK(mac, rxpk)
+		Convey("When calling newRXPacketsFromRXPK without RSig field", func() {
+			rxPackets, err := newRXPacketsFromRXPK(mac, rxpk)
 			So(err, ShouldBeNil)
+			So(rxPackets, ShouldHaveLength, 1)
 
 			Convey("Then all fields are set correctly", func() {
-				So(rxPacket.PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
+				So(rxPackets[0].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
 
-				So(rxPacket.RXInfo, ShouldResemble, gw.RXInfo{
+				So(rxPackets[0].RXInfo, ShouldResemble, gw.RXInfo{
 					MAC:       mac,
 					Time:      now,
 					Timestamp: 708016819,
@@ -543,6 +548,73 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 					RSSI:     -51,
 					LoRaSNR:  7,
 					Size:     16,
+				})
+			})
+		})
+
+		Convey("When calling newRXPacketsFromRXPK with multiple RSig elements", func() {
+			rxpk.Brd = 2
+			rxpk.RSig = []RSig{
+				{
+					Ant:   1,
+					Chan:  3,
+					LSNR:  1.5,
+					RSSIC: -50,
+				},
+				{
+					Ant:   2,
+					Chan:  3,
+					LSNR:  2,
+					RSSIC: -30,
+				},
+			}
+			rxPackets, err := newRXPacketsFromRXPK(mac, rxpk)
+			So(err, ShouldBeNil)
+			So(rxPackets, ShouldHaveLength, 2)
+
+			Convey("Then all fields are set correctly", func() {
+				So(rxPackets[0].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
+				So(rxPackets[0].RXInfo, ShouldResemble, gw.RXInfo{
+					MAC:       mac,
+					Time:      now,
+					Timestamp: 708016819,
+					Frequency: 868500000,
+					Channel:   3,
+					RFChain:   1,
+					CRCStatus: 1,
+					DataRate: band.DataRate{
+						Modulation:   band.LoRaModulation,
+						SpreadFactor: 7,
+						Bandwidth:    125,
+					},
+					CodeRate: "4/5",
+					RSSI:     -50,
+					LoRaSNR:  1.5,
+					Size:     16,
+					Antenna:  1,
+					Board:    2,
+				})
+
+				So(rxPackets[1].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
+				So(rxPackets[1].RXInfo, ShouldResemble, gw.RXInfo{
+					MAC:       mac,
+					Time:      now,
+					Timestamp: 708016819,
+					Frequency: 868500000,
+					Channel:   3,
+					RFChain:   1,
+					CRCStatus: 1,
+					DataRate: band.DataRate{
+						Modulation:   band.LoRaModulation,
+						SpreadFactor: 7,
+						Bandwidth:    125,
+					},
+					CodeRate: "4/5",
+					RSSI:     -30,
+					LoRaSNR:  2,
+					Size:     16,
+					Antenna:  2,
+					Board:    2,
 				})
 			})
 		})

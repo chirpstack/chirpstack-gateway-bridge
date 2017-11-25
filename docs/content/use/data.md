@@ -48,6 +48,8 @@ Topic for received packets (from nodes). Example payload:
 {
     "phyPayload": "AAEBAQEBAQEBAgICAgICAgJpNbxrAh8=",  // base64 encoded LoRaWAN packet
     "rxInfo": {
+        "board": 0,
+        "antenna": 0,
         "channel": 1,
         "codeRate": "4/5",
         "crcStatus": 1,
@@ -77,6 +79,8 @@ Example payload:
 {
     "phyPayload": "IKu70cumKom7BREUFrxlHtM=",
     "txInfo": {
+        "board": 0,
+        "antenna": 0,
         "codeRate": "4/5",
         "dataRate": {
             "bandwidth": 125,
