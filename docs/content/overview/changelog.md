@@ -8,6 +8,12 @@ menu:
 
 ## Changelog
 
+### 2.1.6
+
+**Features:**
+
+* Add Kerlink iBTS compatibility (multi antenna and multi board).
+
 ### 2.1.5
 
 **Improvements:**
