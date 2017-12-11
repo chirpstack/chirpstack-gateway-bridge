@@ -64,7 +64,7 @@ Topic for received packets (from nodes). Example payload:
         "rfChain": 1,
         "rssi": -57,
         "size": 23,
-        "time": "0001-01-01T00:00:00Z",
+        "time": "2017-12-11T10:14:54.619571Z",         // timestamp (only set when the gateway has a GPS time-source)
         "timestamp": 2074240683                        // gateway internal timestamp (32 bit) with microsecond precision
     }
 }
@@ -77,6 +77,7 @@ Example payload:
 
 ```json
 {
+    "token": 65535,  // random token (uint16), used for acknowledgements
     "phyPayload": "IKu70cumKom7BREUFrxlHtM=",
     "txInfo": {
         "board": 0,
@@ -91,11 +92,37 @@ Example payload:
         "immediately": false,
         "mac": "1dee08d0b691d149",
         "power": 14,
-        "timestamp": 2079240683
+        "timestamp": 2079240683,               // gateway internal timestamp for transmission -OR-
+        "time": "2017-12-11T10:14:54.619571Z"  // timestamp for transmission (only when the gateway has a GPS time-source)
     }
 }
 ```
 
+When `immediately` is set to `false`, either the `timestamp` **or** the
+`time` field must be present to tell the gateway at what (internal) time
+the frame must be transmitted.
+
 Optionally, the field `iPol` (type `bool`) can be used to control the
 LoRa modulation polarization inversion. When left blank (`null`), the default
 will be used (which is `true` for downlink LoRa modulation.
+
+### gateway/[mac]/ack
+
+Topic for received TX acknowledgements (or TX errors). Example payload:
+
+```json
+{
+    "token": 65535,              // same token used during transmission
+    "error": "COLLISION_PACKET"  // not set in case of acknowledgement
+}
+```
+
+Possible error values are:
+
+* `TOO_LATE`: Rejected because it was already too late to program this packet for downlink
+* `TOO_EARLY`: Rejected because downlink packet timestamp is too much in advance
+* `COLLISION_PACKET`: Rejected because there was already a packet programmed in requested timeframe
+* `COLLISION_BEACON`: Rejected because there was already a beacon planned in requested timeframe
+* `TX_FREQ`: Rejected because requested frequency is not supported by TX RF chain
+* `TX_POWER`: Rejected because requested power is not supported by gateway
+* `GPS_UNLOCKED`: Rejected because GPS is unlocked, so GPS timestamp cannot be used

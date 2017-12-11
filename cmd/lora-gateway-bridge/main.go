@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/brocaar/lora-gateway-bridge/backend/mqttpubsub"
 	"github.com/brocaar/lora-gateway-bridge/gateway"
 	"github.com/brocaar/lorawan"
 	"github.com/codegangsta/cli"
+	log "github.com/sirupsen/logrus"
 )
 
 var version string // set by the compiler
@@ -72,6 +72,14 @@ func run(c *cli.Context) error {
 		for txPacket := range pubsub.TXPacketChan() {
 			if err := gw.Send(txPacket); err != nil {
 				log.Errorf("could not send TXPacket: %s", err)
+			}
+		}
+	}()
+
+	go func() {
+		for txAck := range gw.TXAckChan() {
+			if err := pubsub.PublishGatewayTXAck(txAck.MAC, txAck); err != nil {
+				log.Errorf("could not publish TXAck: %s", err)
 			}
 		}
 	}()

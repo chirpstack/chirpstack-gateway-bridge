@@ -39,10 +39,11 @@ func TestBackend(t *testing.T) {
 				So(token.Error(), ShouldBeNil)
 
 				Convey("When publishing a RXPacket", func() {
+					now := time.Now().UTC()
 					rxPacket := gw.RXPacketBytes{
 						RXInfo: gw.RXInfo{
 							MAC:  [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
-							Time: time.Now().UTC(),
+							Time: &now,
 						},
 						PHYPayload: []byte{1, 2, 3, 4},
 					}

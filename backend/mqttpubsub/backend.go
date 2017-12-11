@@ -3,16 +3,16 @@ package mqttpubsub
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/eclipse/paho.mqtt.golang"
+	log "github.com/sirupsen/logrus"
 )
 
 // Backend implements a MQTT pub-sub backend.
@@ -123,6 +123,12 @@ func (b *Backend) PublishGatewayRX(mac lorawan.EUI64, rxPacket gw.RXPacketBytes)
 func (b *Backend) PublishGatewayStats(mac lorawan.EUI64, stats gw.GatewayStatsPacket) error {
 	topic := fmt.Sprintf("gateway/%s/stats", mac.String())
 	return b.publish(topic, stats)
+}
+
+// PublishGatewayTXAck publishes a TX ack to the MQTT broker.
+func (b *Backend) PublishGatewayTXAck(mac lorawan.EUI64, ack gw.TXAck) error {
+	topic := fmt.Sprintf("gateway/%s/ack", mac.String())
+	return b.publish(topic, ack)
 }
 
 func (b *Backend) publish(topic string, v interface{}) error {

@@ -98,7 +98,9 @@ func TestBackend(t *testing.T) {
 			Convey("Given skipCRCCheck=false", func() {
 				backend.skipCRCCheck = false
 
-				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK)", func() {
+				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK + GPS timestamp)", func() {
+					ts := CompactTime(time.Now().UTC())
+
 					p := PushDataPacket{
 						ProtocolVersion: ProtocolVersion2,
 						RandomToken:     1234,
@@ -106,7 +108,7 @@ func TestBackend(t *testing.T) {
 						Payload: PushDataPayload{
 							RXPK: []RXPK{
 								{
-									Time: CompactTime(time.Now().UTC()),
+									Time: &ts,
 									Tmst: 708016819,
 									Freq: 868.5,
 									Chan: 2,
@@ -155,7 +157,6 @@ func TestBackend(t *testing.T) {
 						Payload: PushDataPayload{
 							RXPK: []RXPK{
 								{
-									Time: CompactTime(time.Now().UTC()),
 									Tmst: 708016819,
 									Freq: 868.5,
 									Chan: 2,
@@ -196,7 +197,8 @@ func TestBackend(t *testing.T) {
 			Convey("Given skipCRCCheck=true", func() {
 				backend.skipCRCCheck = true
 
-				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK)", func() {
+				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK + GPS timestamp)", func() {
+					ts := CompactTime(time.Now().UTC())
 					p := PushDataPacket{
 						ProtocolVersion: ProtocolVersion2,
 						RandomToken:     1234,
@@ -204,7 +206,7 @@ func TestBackend(t *testing.T) {
 						Payload: PushDataPayload{
 							RXPK: []RXPK{
 								{
-									Time: CompactTime(time.Now().UTC()),
+									Time: &ts,
 									Tmst: 708016819,
 									Freq: 868.5,
 									Chan: 2,
@@ -253,7 +255,6 @@ func TestBackend(t *testing.T) {
 						Payload: PushDataPayload{
 							RXPK: []RXPK{
 								{
-									Time: CompactTime(time.Now().UTC()),
 									Tmst: 708016819,
 									Freq: 868.5,
 									Chan: 2,
@@ -296,11 +297,16 @@ func TestBackend(t *testing.T) {
 			})
 
 			Convey("Given a TXPacket", func() {
+				internalTS := uint32(12345)
+				ts := time.Now().UTC()
+				tsCompact := CompactTime(ts)
+
 				txPacket := gw.TXPacketBytes{
 					TXInfo: gw.TXInfo{
 						MAC:         [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 						Immediately: true,
-						Timestamp:   12345,
+						Timestamp:   &internalTS,
+						Time:        &ts,
 						Frequency:   868100000,
 						Power:       14,
 						DataRate: band.DataRate{
@@ -357,7 +363,8 @@ func TestBackend(t *testing.T) {
 							Payload: PullRespPayload{
 								TXPK: TXPK{
 									Imme: true,
-									Tmst: 12345,
+									Tmst: &internalTS,
+									Tmms: &tsCompact,
 									Freq: 868.1,
 									Powe: 14,
 									Modu: "LORA",
@@ -451,10 +458,15 @@ func TestNewGatewayStatPacket(t *testing.T) {
 }
 
 func TestNewTXPKFromTXPacket(t *testing.T) {
+	internalTS := uint32(12345)
+	ts := time.Now().UTC()
+	tsCompact := CompactTime(ts)
+
 	Convey("Given a TXPacket", t, func() {
 		txPacket := gw.TXPacketBytes{
 			TXInfo: gw.TXInfo{
-				Timestamp: 12345,
+				Timestamp: &internalTS,
+				Time:      &ts,
 				Frequency: 868100000,
 				Power:     14,
 				CodeRate:  "4/5",
@@ -474,7 +486,8 @@ func TestNewTXPKFromTXPacket(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(txpk, ShouldResemble, TXPK{
 				Imme: false,
-				Tmst: 12345,
+				Tmst: &internalTS,
+				Tmms: &tsCompact,
 				Freq: 868.1,
 				Powe: 14,
 				Modu: "LORA",
@@ -504,10 +517,12 @@ func TestNewTXPKFromTXPacket(t *testing.T) {
 }
 
 func TestNewRXPacketFromRXPK(t *testing.T) {
-	Convey("Given a (Semtech) RXPK and gateway MAC", t, func() {
+	Convey("Given a RXPK and gateway MAC", t, func() {
 		now := time.Now().UTC()
+		nowCompact := CompactTime(now)
+
 		rxpk := RXPK{
-			Time: CompactTime(now),
+			Time: &nowCompact,
 			Tmst: 708016819,
 			Freq: 868.5,
 			Chan: 2,
@@ -533,7 +548,7 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 
 				So(rxPackets[0].RXInfo, ShouldResemble, gw.RXInfo{
 					MAC:       mac,
-					Time:      now,
+					Time:      &now,
 					Timestamp: 708016819,
 					Frequency: 868500000,
 					Channel:   2,
@@ -576,7 +591,7 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 				So(rxPackets[0].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
 				So(rxPackets[0].RXInfo, ShouldResemble, gw.RXInfo{
 					MAC:       mac,
-					Time:      now,
+					Time:      &now,
 					Timestamp: 708016819,
 					Frequency: 868500000,
 					Channel:   3,
@@ -598,7 +613,7 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 				So(rxPackets[1].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
 				So(rxPackets[1].RXInfo, ShouldResemble, gw.RXInfo{
 					MAC:       mac,
-					Time:      now,
+					Time:      &now,
 					Timestamp: 708016819,
 					Frequency: 868500000,
 					Channel:   3,
@@ -664,6 +679,36 @@ func TestGatewaysCallbacks(t *testing.T) {
 					Convey("Then onDelete has been called once", func() {
 						So(onDeleteCalls, ShouldEqual, 1)
 					})
+				})
+			})
+		})
+	})
+}
+
+func TestNewTXAckFromTXPKACK(t *testing.T) {
+	Convey("Given a TXPKACK with error and a gateway mac", t, func() {
+		mac := lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8}
+		ack := TXPKACK{
+			Error: gw.ErrTooEarly,
+		}
+
+		Convey("Then newTXAckFromTXPKACK returns the expected value", func() {
+			txAck := newTXAckFromTXPKACK(mac, 12345, ack)
+			So(txAck, ShouldResemble, gw.TXAck{
+				MAC:   mac,
+				Token: 12345,
+				Error: gw.ErrTooEarly,
+			})
+		})
+
+		Convey("Given the TXPKACK does not contain an error", func() {
+			ack.Error = "NONE"
+
+			Convey("Then newTXAckFromTXPKACK returns the expected value", func() {
+				txAck := newTXAckFromTXPKACK(mac, 12345, ack)
+				So(txAck, ShouldResemble, gw.TXAck{
+					MAC:   mac,
+					Token: 12345,
 				})
 			})
 		})

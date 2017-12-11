@@ -8,6 +8,22 @@ menu:
 
 ## Changelog
 
+### 2.2.0
+
+**Features:**
+
+* LoRa Gateway Bridge now publishes TX acknowledgement messages over MQTT.
+  See [MQTT topics](https://docs.loraserver.io/lora-gateway-bridge/use/data/).
+
+* TX (GPS) time field is now implemented to transmit at given timestamp
+  (only possible when the gateway has a GPS time-source).
+
+**Bugfixes:**
+
+* Without GPS time-source, the gateway would use `0001-01-01T00:00:00Z`
+  as RX `time`. The `time` field is now omitted when unavailable.
+
+
 ### 2.1.6
 
 **Features:**
@@ -27,7 +43,6 @@ menu:
 * MQTT client library update which fixes an issue where during a failed
   re-connect the protocol version would be downgraded
   ([paho.mqtt.golang#116](https://github.com/eclipse/paho.mqtt.golang/issues/116)).
-
 
 ### 2.1.4
 

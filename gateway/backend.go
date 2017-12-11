@@ -81,6 +81,7 @@ func (c *gateways) cleanup() error {
 // Backend implements a Semtech gateway backend.
 type Backend struct {
 	conn         *net.UDPConn
+	txAckChan    chan gw.TXAck
 	rxChan       chan gw.RXPacketBytes
 	statsChan    chan gw.GatewayStatsPacket
 	udpSendChan  chan udpPacket
@@ -105,6 +106,7 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 	b := &Backend{
 		skipCRCCheck: skipCRCCheck,
 		conn:         conn,
+		txAckChan:    make(chan gw.TXAck),
 		rxChan:       make(chan gw.RXPacketBytes),
 		statsChan:    make(chan gw.GatewayStatsPacket),
 		udpSendChan:  make(chan udpPacket),
@@ -163,9 +165,15 @@ func (b *Backend) RXPacketChan() chan gw.RXPacketBytes {
 	return b.rxChan
 }
 
-// StatsChan returns the channel containg the received gateway stats.
+// StatsChan returns the channel containing the received gateway stats.
 func (b *Backend) StatsChan() chan gw.GatewayStatsPacket {
 	return b.statsChan
+}
+
+// TXAckChan returns the channel containing the TX acknowledgements
+// (or errors).
+func (b *Backend) TXAckChan() chan gw.TXAck {
+	return b.txAckChan
 }
 
 // Send sends the given packet to the gateway.
@@ -179,6 +187,7 @@ func (b *Backend) Send(txPacket gw.TXPacketBytes) error {
 		return err
 	}
 	pullResp := PullRespPacket{
+		RandomToken:     txPacket.Token,
 		ProtocolVersion: gw.protocolVersion,
 		Payload: PullRespPayload{
 			TXPK: txpk,
@@ -365,23 +374,10 @@ func (b *Backend) handleTXACK(addr *net.UDPAddr, data []byte) error {
 	if err := p.UnmarshalBinary(data); err != nil {
 		return err
 	}
-	var errBool bool
 
-	logFields := log.Fields{
-		"mac":          p.GatewayMAC,
-		"random_token": p.RandomToken,
-	}
 	if p.Payload != nil {
-		if p.Payload.TXPKACK.Error != "NONE" {
-			errBool = true
-		}
-		logFields["error"] = p.Payload.TXPKACK.Error
-	}
-
-	if errBool {
-		log.WithFields(logFields).Error("gateway: tx ack received")
-	} else {
-		log.WithFields(logFields).Info("gateway: tx ack received")
+		txAck := newTXAckFromTXPKACK(p.GatewayMAC, p.RandomToken, p.Payload.TXPKACK)
+		b.txAckChan <- txAck
 	}
 
 	return nil
@@ -428,7 +424,6 @@ func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, err
 		PHYPayload: b,
 		RXInfo: gw.RXInfo{
 			MAC:       mac,
-			Time:      time.Time(rxpk.Time),
 			Timestamp: rxpk.Tmst,
 			Frequency: int(rxpk.Freq * 1000000),
 			Channel:   int(rxpk.Chan),
@@ -441,6 +436,11 @@ func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, err
 			Size:      int(rxpk.Size),
 			Board:     int(rxpk.Brd),
 		},
+	}
+
+	if rxpk.Time != nil {
+		ts := time.Time(*rxpk.Time)
+		rxPacket.RXInfo.Time = &ts
 	}
 
 	if len(rxpk.RSig) == 0 {
@@ -476,6 +476,11 @@ func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 		Brd:  uint8(txPacket.TXInfo.Board),
 	}
 
+	if txPacket.TXInfo.Time != nil {
+		ct := CompactTime(*txPacket.TXInfo.Time)
+		txpk.Tmms = &ct
+	}
+
 	if txPacket.TXInfo.DataRate.Modulation == band.FSKModulation {
 		txpk.FDev = uint16(txPacket.TXInfo.DataRate.BitRate / 2)
 	}
@@ -489,6 +494,19 @@ func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 	}
 
 	return txpk, nil
+}
+
+func newTXAckFromTXPKACK(mac lorawan.EUI64, token uint16, ack TXPKACK) gw.TXAck {
+	var err string
+	if ack.Error != "NONE" {
+		err = ack.Error
+	}
+
+	return gw.TXAck{
+		MAC:   mac,
+		Token: token,
+		Error: err,
+	}
 }
 
 func newDataRateFromDatR(d DatR) (band.DataRate, error) {

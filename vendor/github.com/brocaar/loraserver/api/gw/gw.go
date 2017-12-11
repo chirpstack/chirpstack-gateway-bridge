@@ -24,7 +24,7 @@ type RXPacketBytes struct {
 // RXInfo contains the RX information.
 type RXInfo struct {
 	MAC       lorawan.EUI64 `json:"mac"`            // MAC address of the gateway
-	Time      time.Time     `json:"time,omitempty"` // receive time
+	Time      *time.Time    `json:"time,omitempty"` // receive timestamp (only set when gateway has a GPS time-source)
 	Timestamp uint32        `json:"timestamp"`      // gateway internal receive timestamp with microsecond precision, will rollover every ~ 72 minutes
 	Frequency int           `json:"frequency"`      // frequency in Hz
 	Channel   int           `json:"channel"`        // concentrator IF channel used for RX
@@ -42,6 +42,7 @@ type RXInfo struct {
 // TXPacket contains the PHYPayload which should be send to the
 // gateway.
 type TXPacket struct {
+	Token      uint16             `json:"token"`
 	TXInfo     TXInfo             `json:"txInfo"`
 	PHYPayload lorawan.PHYPayload `json:"phyPayload"`
 }
@@ -49,22 +50,24 @@ type TXPacket struct {
 // TXPacketBytes contains the PHYPayload as []byte which should be send to the
 // gateway.
 type TXPacketBytes struct {
+	Token      uint16 `json:"token"`
 	TXInfo     TXInfo `json:"txInfo"`
 	PHYPayload []byte `json:"phyPayload"`
 }
 
 // TXInfo contains the information used for TX.
 type TXInfo struct {
-	MAC         lorawan.EUI64 `json:"mac"`         // MAC address of the gateway
-	Immediately bool          `json:"immediately"` // send the packet immediately (ignore Time)
-	Timestamp   uint32        `json:"timestamp"`   // gateway internal receive timestamp with microsecond precision, will rollover every ~ 72 minutes
-	Frequency   int           `json:"frequency"`   // frequency in Hz
-	Power       int           `json:"power"`       // TX power to use in dBm
-	DataRate    band.DataRate `json:"dataRate"`    // TX datarate (either LoRa or FSK)
-	CodeRate    string        `json:"codeRate"`    // ECC code rate
-	IPol        *bool         `json:"iPol"`        // when left nil, the gateway-bridge will use the default (true for LoRa modulation)
-	Board       int           `json:"board"`       // Concentrator board used for RX
-	Antenna     int           `json:"antenna"`     // Antenna number on which signal has been received
+	MAC         lorawan.EUI64 `json:"mac"`                 // MAC address of the gateway
+	Immediately bool          `json:"immediately"`         // send the packet immediately (ignore Time)
+	Time        *time.Time    `json:"time,omitempty"`      // transmit at timestamp (only possible when gateway has a GPS time-source)
+	Timestamp   *uint32       `json:"timestamp,omitempty"` // transmit at gateway internal timestamp (microsecond precision, will rollover every ~ 72 minutes)
+	Frequency   int           `json:"frequency"`           // frequency in Hz
+	Power       int           `json:"power"`               // TX power to use in dBm
+	DataRate    band.DataRate `json:"dataRate"`            // TX datarate (either LoRa or FSK)
+	CodeRate    string        `json:"codeRate"`            // ECC code rate
+	IPol        *bool         `json:"iPol"`                // when left nil, the gateway-bridge will use the default (true for LoRa modulation)
+	Board       int           `json:"board"`               // Concentrator board used for RX
+	Antenna     int           `json:"antenna"`             // Antenna number on which signal has been received
 }
 
 // GatewayStatsPacket contains the information of a gateway.
@@ -79,4 +82,23 @@ type GatewayStatsPacket struct {
 	TXPacketsReceived   int                    `json:"txPacketsReceived"`
 	TXPacketsEmitted    int                    `json:"txPacketsEmitted"`
 	CustomData          map[string]interface{} `json:"customData"` // custom fields defined by alternative packet_forwarder versions (e.g. TTN sends platform, contactEmail, and description)
+}
+
+// Possible TX errors.
+const (
+	ErrTooLate          = "TOO_LATE"
+	ErrTooEarly         = "TOO_EARLY"
+	ErrCollisionPacket  = "COLLISION_PACKET"
+	ErrCollisionBeackon = "COLLISION_BEACON"
+	ErrTXFrequency      = "TX_FREQ"
+	ErrTXPower          = "TX_POWER"
+	ErrGPSUnlocked      = "GPS_UNLOCKED"
+)
+
+// TXAck contains the acknowledgement of the requested frame transmission
+// or an error.
+type TXAck struct {
+	MAC   lorawan.EUI64 `json:"mac"`
+	Token uint16        `json:"token"`
+	Error string        `json:"error,omitempty"`
 }

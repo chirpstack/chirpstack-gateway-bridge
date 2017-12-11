@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "a0hL5kRhk5IzfoKWGFh/tdLzsKI=",
+			"checksumSHA1": "VyoxN6hXttd3vCGIRENZhe31qIs=",
 			"path": "github.com/brocaar/loraserver/api/gw",
-			"revision": "a28abf4a29f5c735c3b46d705436c290e1c1282f",
-			"revisionTime": "2017-11-25T09:41:02Z"
+			"revision": "ce8511fb0b34878edd221b6b2568457cd4e0c9b6",
+			"revisionTime": "2017-12-11T09:21:49Z"
 		},
 		{
 			"checksumSHA1": "u52BzfoKG0x7CgBgg/PB1AEVSag=",
