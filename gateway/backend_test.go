@@ -54,6 +54,67 @@ func TestBackend(t *testing.T) {
 				})
 			})
 
+			Convey("When sending a TX_ACK packet (no error)", func() {
+				p := TXACKPacket{
+					ProtocolVersion: ProtocolVersion2,
+					RandomToken:     12345,
+					GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+				}
+				b, err := p.MarshalBinary()
+				So(err, ShouldBeNil)
+				_, err = gwConn.WriteToUDP(b, backendAddr)
+				So(err, ShouldBeNil)
+
+				Convey("Then the ack is returned by the ack channel", func() {
+					ack := <-backend.TXAckChan()
+					So(ack, ShouldResemble, gw.TXAck{MAC: p.GatewayMAC, Token: p.RandomToken})
+				})
+			})
+
+			Convey("When sending a TX_ACK packet (with error)", func() {
+				p := TXACKPacket{
+					ProtocolVersion: ProtocolVersion2,
+					RandomToken:     12345,
+					GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+					Payload: &TXACKPayload{
+						TXPKACK: TXPKACK{
+							Error: gw.ErrGPSUnlocked,
+						},
+					},
+				}
+				b, err := p.MarshalBinary()
+				So(err, ShouldBeNil)
+				_, err = gwConn.WriteToUDP(b, backendAddr)
+				So(err, ShouldBeNil)
+
+				Convey("Then the ack is returned by the ack channel", func() {
+					ack := <-backend.TXAckChan()
+					So(ack, ShouldResemble, gw.TXAck{MAC: p.GatewayMAC, Token: p.RandomToken, Error: gw.ErrGPSUnlocked})
+				})
+			})
+
+			Convey("When sending a TX_ACK packet (with error 'NONE')", func() {
+				p := TXACKPacket{
+					ProtocolVersion: ProtocolVersion2,
+					RandomToken:     12345,
+					GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+					Payload: &TXACKPayload{
+						TXPKACK: TXPKACK{
+							Error: "NONE",
+						},
+					},
+				}
+				b, err := p.MarshalBinary()
+				So(err, ShouldBeNil)
+				_, err = gwConn.WriteToUDP(b, backendAddr)
+				So(err, ShouldBeNil)
+
+				Convey("Then the ack is returned by the ack channel", func() {
+					ack := <-backend.TXAckChan()
+					So(ack, ShouldResemble, gw.TXAck{MAC: p.GatewayMAC, Token: p.RandomToken})
+				})
+			})
+
 			Convey("When sending a PUSH_DATA packet with stats", func() {
 				p := PushDataPacket{
 					ProtocolVersion: ProtocolVersion2,

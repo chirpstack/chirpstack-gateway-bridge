@@ -378,6 +378,11 @@ func (b *Backend) handleTXACK(addr *net.UDPAddr, data []byte) error {
 	if p.Payload != nil {
 		txAck := newTXAckFromTXPKACK(p.GatewayMAC, p.RandomToken, p.Payload.TXPKACK)
 		b.txAckChan <- txAck
+	} else {
+		b.txAckChan <- gw.TXAck{
+			MAC:   p.GatewayMAC,
+			Token: p.RandomToken,
+		}
 	}
 
 	return nil
