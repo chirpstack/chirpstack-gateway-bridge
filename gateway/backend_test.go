@@ -161,6 +161,7 @@ func TestBackend(t *testing.T) {
 
 				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK + GPS timestamp)", func() {
 					ts := CompactTime(time.Now().UTC())
+					tmms := int64(time.Second / time.Millisecond)
 
 					p := PushDataPacket{
 						ProtocolVersion: ProtocolVersion2,
@@ -171,6 +172,7 @@ func TestBackend(t *testing.T) {
 								{
 									Time: &ts,
 									Tmst: 708016819,
+									Tmms: &tmms,
 									Freq: 868.5,
 									Chan: 2,
 									RFCh: 1,
@@ -359,17 +361,16 @@ func TestBackend(t *testing.T) {
 
 			Convey("Given a TXPacket", func() {
 				internalTS := uint32(12345)
-				ts := time.Now().UTC()
-				tsCompact := CompactTime(ts)
+				timeSinceGPSEpoch := gw.Duration(time.Second)
 
 				txPacket := gw.TXPacketBytes{
 					TXInfo: gw.TXInfo{
-						MAC:         [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
-						Immediately: true,
-						Timestamp:   &internalTS,
-						Time:        &ts,
-						Frequency:   868100000,
-						Power:       14,
+						MAC:               [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+						Immediately:       true,
+						Timestamp:         &internalTS,
+						TimeSinceGPSEpoch: &timeSinceGPSEpoch,
+						Frequency:         868100000,
+						Power:             14,
 						DataRate: band.DataRate{
 							Modulation:   band.LoRaModulation,
 							SpreadFactor: 12,
@@ -419,13 +420,14 @@ func TestBackend(t *testing.T) {
 						var pullResp PullRespPacket
 						So(pullResp.UnmarshalBinary(buf[:i]), ShouldBeNil)
 
+						tmms := int64(time.Second / time.Millisecond)
 						So(pullResp, ShouldResemble, PullRespPacket{
 							ProtocolVersion: p.ProtocolVersion,
 							Payload: PullRespPayload{
 								TXPK: TXPK{
 									Imme: true,
 									Tmst: &internalTS,
-									Tmms: &tsCompact,
+									Tmms: &tmms,
 									Freq: 868.1,
 									Powe: 14,
 									Modu: "LORA",
@@ -520,17 +522,17 @@ func TestNewGatewayStatPacket(t *testing.T) {
 
 func TestNewTXPKFromTXPacket(t *testing.T) {
 	internalTS := uint32(12345)
-	ts := time.Now().UTC()
-	tsCompact := CompactTime(ts)
 
 	Convey("Given a TXPacket", t, func() {
+		timeSinceGPSEpoch := gw.Duration(time.Second)
+
 		txPacket := gw.TXPacketBytes{
 			TXInfo: gw.TXInfo{
-				Timestamp: &internalTS,
-				Time:      &ts,
-				Frequency: 868100000,
-				Power:     14,
-				CodeRate:  "4/5",
+				Timestamp:         &internalTS,
+				TimeSinceGPSEpoch: &timeSinceGPSEpoch,
+				Frequency:         868100000,
+				Power:             14,
+				CodeRate:          "4/5",
 				DataRate: band.DataRate{
 					Modulation:   band.LoRaModulation,
 					SpreadFactor: 9,
@@ -543,12 +545,13 @@ func TestNewTXPKFromTXPacket(t *testing.T) {
 		}
 
 		Convey("Then te expected TXPK is returned (with default IPol", func() {
+			tmms := int64(time.Second / time.Millisecond)
 			txpk, err := newTXPKFromTXPacket(txPacket)
 			So(err, ShouldBeNil)
 			So(txpk, ShouldResemble, TXPK{
 				Imme: false,
 				Tmst: &internalTS,
-				Tmms: &tsCompact,
+				Tmms: &tmms,
 				Freq: 868.1,
 				Powe: 14,
 				Modu: "LORA",
@@ -581,9 +584,12 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 	Convey("Given a RXPK and gateway MAC", t, func() {
 		now := time.Now().UTC()
 		nowCompact := CompactTime(now)
+		tmms := int64(time.Second / time.Millisecond)
+		timeSinceGPSEpoch := gw.Duration(time.Second)
 
 		rxpk := RXPK{
 			Time: &nowCompact,
+			Tmms: &tmms,
 			Tmst: 708016819,
 			Freq: 868.5,
 			Chan: 2,
@@ -608,13 +614,14 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 				So(rxPackets[0].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
 
 				So(rxPackets[0].RXInfo, ShouldResemble, gw.RXInfo{
-					MAC:       mac,
-					Time:      &now,
-					Timestamp: 708016819,
-					Frequency: 868500000,
-					Channel:   2,
-					RFChain:   1,
-					CRCStatus: 1,
+					MAC:               mac,
+					Time:              &now,
+					TimeSinceGPSEpoch: &timeSinceGPSEpoch,
+					Timestamp:         708016819,
+					Frequency:         868500000,
+					Channel:           2,
+					RFChain:           1,
+					CRCStatus:         1,
 					DataRate: band.DataRate{
 						Modulation:   band.LoRaModulation,
 						SpreadFactor: 7,
@@ -651,13 +658,14 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 			Convey("Then all fields are set correctly", func() {
 				So(rxPackets[0].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
 				So(rxPackets[0].RXInfo, ShouldResemble, gw.RXInfo{
-					MAC:       mac,
-					Time:      &now,
-					Timestamp: 708016819,
-					Frequency: 868500000,
-					Channel:   3,
-					RFChain:   1,
-					CRCStatus: 1,
+					MAC:               mac,
+					Time:              &now,
+					TimeSinceGPSEpoch: &timeSinceGPSEpoch,
+					Timestamp:         708016819,
+					Frequency:         868500000,
+					Channel:           3,
+					RFChain:           1,
+					CRCStatus:         1,
 					DataRate: band.DataRate{
 						Modulation:   band.LoRaModulation,
 						SpreadFactor: 7,
@@ -673,13 +681,14 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 
 				So(rxPackets[1].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
 				So(rxPackets[1].RXInfo, ShouldResemble, gw.RXInfo{
-					MAC:       mac,
-					Time:      &now,
-					Timestamp: 708016819,
-					Frequency: 868500000,
-					Channel:   3,
-					RFChain:   1,
-					CRCStatus: 1,
+					MAC:               mac,
+					Time:              &now,
+					TimeSinceGPSEpoch: &timeSinceGPSEpoch,
+					Timestamp:         708016819,
+					Frequency:         868500000,
+					Channel:           3,
+					RFChain:           1,
+					CRCStatus:         1,
 					DataRate: band.DataRate{
 						Modulation:   band.LoRaModulation,
 						SpreadFactor: 7,

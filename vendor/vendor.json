@@ -3,9 +3,9 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "VyoxN6hXttd3vCGIRENZhe31qIs=",
+			"checksumSHA1": "p6QgiezAbI49QUNRCJpiOHSPd4o=",
 			"path": "github.com/brocaar/loraserver/api/gw",
-			"revision": "ce8511fb0b34878edd221b6b2568457cd4e0c9b6",
+			"revision": "8c78862f992c63e4f57842a1acb17b7fe763749c",
 			"revisionTime": "2017-12-11T09:21:49Z"
 		},
 		{

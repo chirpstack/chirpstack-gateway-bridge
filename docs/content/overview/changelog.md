@@ -15,12 +15,17 @@ menu:
 * LoRa Gateway Bridge now publishes TX acknowledgement messages over MQTT.
   See [MQTT topics](https://docs.loraserver.io/lora-gateway-bridge/use/data/).
 
-* TX (GPS) time field is now implemented to transmit at given timestamp
-  (only possible when the gateway has a GPS time-source).
+* TX (GPS) `timeSinceGPSEpoch` field is now exposed to transmit at given
+  time since GPS epoch (1980-01-06, only possible when the gateway
+  has a GPS time source).
+
+* RX (GPS) `timeSinceGPSEpoch` field is now exposed, containing the time
+  since GPS epoch (1980-01-06, only available when the gateway has a GPS
+  time source).
 
 **Bugfixes:**
 
-* Without GPS time-source, the gateway would use `0001-01-01T00:00:00Z`
+* Without GPS time source, the gateway would use `0001-01-01T00:00:00Z`
   as RX `time`. The `time` field is now omitted when unavailable.
 
 

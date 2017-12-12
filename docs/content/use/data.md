@@ -64,7 +64,8 @@ Topic for received packets (from nodes). Example payload:
         "rfChain": 1,
         "rssi": -57,
         "size": 23,
-        "time": "2017-12-11T10:14:54.619571Z",         // timestamp (only set when the gateway has a GPS time-source)
+        "time": "2017-12-12T15:28:53.222434Z",         // timestamp (only set when the gateway has a GPS time source)
+        "timeSinceGPSEpoch": "332535h29m12.222s",      // time since GPS epoch (only set when the gateway has a GPS time source)
         "timestamp": 2074240683                        // gateway internal timestamp (32 bit) with microsecond precision
     }
 }
@@ -92,14 +93,14 @@ Example payload:
         "immediately": false,
         "mac": "1dee08d0b691d149",
         "power": 14,
-        "timestamp": 2079240683,               // gateway internal timestamp for transmission -OR-
-        "time": "2017-12-11T10:14:54.619571Z"  // timestamp for transmission (only when the gateway has a GPS time-source)
+        "timestamp": 2079240683,                  // gateway internal timestamp for transmission -OR-
+        "timeSinceGPSEpoch": "332535h29m12.222s"  // time since GPS epoch (only when the gateway has a GPS time source)
     }
 }
 ```
 
 When `immediately` is set to `false`, either the `timestamp` **or** the
-`time` field must be present to tell the gateway at what (internal) time
+`timeSinceGPSEpoch` field must be present to tell the gateway at what (internal) time
 the frame must be transmitted.
 
 Optionally, the field `iPol` (type `bool`) can be used to control the

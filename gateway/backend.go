@@ -448,6 +448,11 @@ func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, err
 		rxPacket.RXInfo.Time = &ts
 	}
 
+	if rxpk.Tmms != nil {
+		d := gw.Duration(time.Duration(*rxpk.Tmms) * time.Millisecond)
+		rxPacket.RXInfo.TimeSinceGPSEpoch = &d
+	}
+
 	if len(rxpk.RSig) == 0 {
 		rxPackets = append(rxPackets, rxPacket)
 	}
@@ -481,9 +486,9 @@ func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 		Brd:  uint8(txPacket.TXInfo.Board),
 	}
 
-	if txPacket.TXInfo.Time != nil {
-		ct := CompactTime(*txPacket.TXInfo.Time)
-		txpk.Tmms = &ct
+	if txPacket.TXInfo.TimeSinceGPSEpoch != nil {
+		tmms := int64(time.Duration(*txPacket.TXInfo.TimeSinceGPSEpoch) / time.Millisecond)
+		txpk.Tmms = &tmms
 	}
 
 	if txPacket.TXInfo.DataRate.Modulation == band.FSKModulation {
