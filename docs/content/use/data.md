@@ -118,6 +118,9 @@ Topic for received TX acknowledgements (or TX errors). Example payload:
 }
 ```
 
+**Note:** this topic is only available for gateways implementing v2 of
+the packet-forwarder [PROTOCOL.txt](https://github.com/Lora-net/packet_forwarder/blob/master/PROTOCOL.TXT).
+
 Possible error values are:
 
 * `TOO_LATE`: Rejected because it was already too late to program this packet for downlink
