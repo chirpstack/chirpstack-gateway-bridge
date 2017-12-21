@@ -14,6 +14,7 @@ menu:
 Instructions are available for the following vendors:
 
 * [Kerlink]({{<relref "kerlink.md">}})
+* [Laird]({{<relref "laird.md">}})
 * [MatchX]({{<relref "matchx.md">}})
 * [Multitech]({{<relref "multitech.md">}})
 
