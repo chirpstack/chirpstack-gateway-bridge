@@ -9,8 +9,7 @@ before_install:
   - sudo apt-add-repository -y ppa:mosquitto-dev/mosquitto-ppa
   - sudo apt-get -qq update
   - sudo apt-get install -y mosquitto
-  - go get github.com/golang/lint/golint
-  - go get github.com/kisielk/errcheck
+  - make requirements
 
 script:
   - make test
