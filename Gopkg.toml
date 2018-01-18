@@ -1,0 +1,26 @@
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+
+[[constraint]]
+  name = "github.com/brocaar/loraserver"
+  version = "0.23.2"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/brocaar/lorawan"
+
+[[constraint]]
+  name = "github.com/codegangsta/cli"
+  version = "1.20.0"
+
+[[constraint]]
+  name = "github.com/eclipse/paho.mqtt.golang"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.4"
+
+[[constraint]]
+  name = "github.com/smartystreets/goconvey"
+  version = "1.6.3"
