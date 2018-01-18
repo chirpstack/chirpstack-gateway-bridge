@@ -5,3 +5,7 @@
 dist/
 build/
 docs/public/
+
+# dependencies
+vendor/
+
