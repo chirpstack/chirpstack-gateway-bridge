@@ -7,7 +7,7 @@ GOARCH ?= amd64
 build:
 	@echo "Compiling source for $(GOOS) $(GOARCH)"
 	@mkdir -p build
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(GO_EXTRA_BUILD_ARGS) -ldflags "-X main.version=$(VERSION)" -o build/lora-gateway-bridge$(BINEXT) cmd/lora-gateway-bridge/main.go
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(GO_EXTRA_BUILD_ARGS) -ldflags "-s -w -X main.version=$(VERSION)" -o build/lora-gateway-bridge$(BINEXT) cmd/lora-gateway-bridge/main.go
 
 clean:
 	@echo "Cleaning up workspace"
