@@ -28,7 +28,7 @@ func run(c *cli.Context) error {
 	var pubsub *mqttpubsub.Backend
 	for {
 		var err error
-		pubsub, err = mqttpubsub.NewBackend(c.String("mqtt-server"), c.String("mqtt-username"), c.String("mqtt-password"), c.String("mqtt-ca-cert"))
+		pubsub, err = mqttpubsub.NewBackend(c.String("mqtt-server"), c.String("mqtt-username"), c.String("mqtt-password"), c.String("mqtt-ca-cert"), c.String("mqtt-tls-cert"), c.String("mqtt-tls-key"))
 		if err == nil {
 			break
 		}
@@ -125,6 +125,16 @@ func main() {
 			Name:   "mqtt-ca-cert",
 			Usage:  "mqtt CA certificate file (optional)",
 			EnvVar: "MQTT_CA_CERT",
+		},
+		cli.StringFlag{
+			Name:   "mqtt-tls-cert",
+			Usage:  "mqtt certificate file (optional)",
+			EnvVar: "MQTT_CERT",
+		},
+		cli.StringFlag{
+			Name:   "mqtt-tls-key",
+			Usage:  "mqtt key file of certificate (optional)",
+			EnvVar: "MQTT_CERT_KEY",
 		},
 		cli.BoolFlag{
 			Name:   "skip-crc-check",

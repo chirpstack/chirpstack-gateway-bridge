@@ -22,7 +22,7 @@ func TestBackend(t *testing.T) {
 		defer c.Disconnect(0)
 
 		Convey("Given a new Backend", func() {
-			backend, err := NewBackend(conf.Server, conf.Username, conf.Password, "")
+			backend, err := NewBackend(conf.Server, conf.Username, conf.Password, "", "", "")
 			So(err, ShouldBeNil)
 			defer backend.Close()
 
