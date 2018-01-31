@@ -129,12 +129,12 @@ func main() {
 		cli.StringFlag{
 			Name:   "mqtt-tls-cert",
 			Usage:  "mqtt certificate file (optional)",
-			EnvVar: "MQTT_CERT",
+			EnvVar: "MQTT_TLS_CERT",
 		},
 		cli.StringFlag{
 			Name:   "mqtt-tls-key",
 			Usage:  "mqtt key file of certificate (optional)",
-			EnvVar: "MQTT_CERT_KEY",
+			EnvVar: "MQTT_TLS_KEY",
 		},
 		cli.BoolFlag{
 			Name:   "skip-crc-check",
