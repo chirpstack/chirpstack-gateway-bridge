@@ -32,6 +32,12 @@
   version = "v1.4.7"
 
 [[projects]]
+  name = "github.com/fukata/golang-stats-api-handler"
+  packages = ["."]
+  revision = "90f0b59102629831cc109845475a8d77043412ec"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
   packages = [
@@ -269,6 +275,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fd5f0eabdc0685f9d7ccbd291063410eab55789287300307b378181176ea20fd"
+  inputs-digest = "26ba34644dbc4769869f81b933755336893416c86b11dc511fdd2d4152f61978"
   solver-name = "gps-cdcl"
   solver-version = 1

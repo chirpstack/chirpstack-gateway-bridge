@@ -15,6 +15,7 @@ import (
 	"github.com/brocaar/lora-gateway-bridge/internal/backend/mqttpubsub"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/lora-gateway-bridge/internal/gateway"
+	systemStats "github.com/brocaar/lora-gateway-bridge/internal/system/stats"
 	"github.com/brocaar/lorawan"
 )
 
@@ -153,6 +154,23 @@ func run(cmd *cobra.Command, args []string) error {
 				log.Errorf("could not publish TXAck: %s", err)
 			}
 		}
+	}()
+
+	go func() {
+		mdConfig := config.C.MonitoringDrain
+		path := mdConfig.Path
+		port := mdConfig.Port
+
+		if path == "" || port <= 0 {
+			log.WithFields(log.Fields{
+				"path": path,
+				"port": port,
+			}).Info("disabled the monitoring drain daemon. if you want to enable the the monitoring drain, please set `monitoring_drain.path` and  `monitoring_drain.port`")
+
+			return
+		}
+
+		systemStats.StartMonitoringDrain(path, port)
 	}()
 
 	sigChan := make(chan os.Signal)

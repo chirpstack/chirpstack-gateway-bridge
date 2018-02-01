@@ -43,7 +43,6 @@ Flags:
 
 Use "lora-gateway-bridge [command] --help" for more information about a command.
 ```
-
 #### Configuration file
 
 By default `lora-gateway-bridge` will look in the following order for a

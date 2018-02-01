@@ -21,6 +21,11 @@ type Config struct {
 			TLSKey   string `mapstructure:"tls_key"`
 		}
 	}
+
+	MonitoringDrain struct {
+		Path string
+		Port int
+	} `mapstructure:"monitoring_drain"`
 }
 
 // C holds the global configuration.
