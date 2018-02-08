@@ -20,23 +20,129 @@ You will need to change the following configuration keys:
 
 ### LoRa Gateway Bridge
 
-To list all configuration options, start `lora-gateway-bridge` with the
-`--help` flag. This will display:
+The `lora-gateway-bridge` has the following command-line flags:
 
-```
-GLOBAL OPTIONS:
-   --udp-bind value       ip:port to bind the UDP listener to (default: "0.0.0.0:1700") [$UDP_BIND]
-   --mqtt-server value    mqtt server (e.g. scheme://host:port where scheme is tcp, ssl or ws) (default: "tcp://127.0.0.1:1883") [$MQTT_SERVER]
-   --mqtt-username value  mqtt server username (optional) [$MQTT_USERNAME]
-   --mqtt-password value  mqtt server password (optional) [$MQTT_PASSWORD]
-   --mqtt-ca-cert value   mqtt CA certificate file (optional) [$MQTT_CA_CERT]
-   --mqtt-tls-cert value  mqtt certificate file (optional) [$MQTT_TLS_CERT]
-   --mqtt-tls-key value   mqtt key file of certificate (optional) [$MQTT_TLS_KEY]
-   --skip-crc-check       skip the CRC status-check of received packets [$SKIP_CRC_CHECK]
-   --log-level value      debug=5, info=4, warning=3, error=2, fatal=1, panic=0 (default: 4) [$LOG_LEVEL]
-   --help, -h             show help
-   --version, -v          print the version
+```text
+LoRa Gateway Bridge abstracts the packet_forwarder protocol into JSON over MQTT
+        > documentation & support: https://docs.loraserver.io/lora-gateway-bridge
+        > source & copyright information: https://github.com/brocaar/lora-gateway-bridge
+
+Usage:
+  lora-gateway-bridge [flags]
+  lora-gateway-bridge [command]
+
+Available Commands:
+  configfile  Print the LoRa Gateway configuration file
+  help        Help about any command
+  version     Print the LoRa Gateway Bridge version
+
+Flags:
+  -c, --config string   path to configuration file (optional)
+  -h, --help            help for lora-gateway-bridge
+      --log-level int   debug=5, info=4, error=2, fatal=1, panic=0 (default 4)
+
+Use "lora-gateway-bridge [command] --help" for more information about a command.
 ```
 
-Both cli arguments and environment-variables can be used to pass configuration
-options.
+#### Configuration file
+
+By default `lora-gateway-bridge` will look in the following order for a
+configuration at the following paths when `--config` / `-c` is not set:
+
+* `lora-gateway-bridge.toml` (current working directory)
+* `$HOME/.config/lora-gateway-bridge/lora-gateway-bridge.toml`
+* `/etc/lora-gateway-bridge/lora-gateway-bridge.toml`
+
+To load configuration from a different location, use the `--config` flag.
+
+To generate a new configuration file `lora-gateway-bridge.toml`, execute the following command:
+
+```bash
+lora-gateway-bridge configfile > lora-gateway-bridge.toml
+```
+
+Note that this configuration file will be pre-filled with the current configuration
+(either loaded from the paths mentioned above, or by using the `--config` flag).
+This makes it possible when new fields get added to upgrade your configuration file
+while preserving your old configuration. Example:
+
+```bash
+lora-gateway-bridge configfile --config lora-gateway-bridge-old.toml > lora-gateway-bridge-new.toml
+```
+
+Example configuration file:
+
+```toml
+[general]
+# debug=5, info=4, warning=3, error=2, fatal=1, panic=0
+log_level = 4
+
+
+# Configuration which relates to the packet-forwarder.
+[packet_forwarder]
+# ip:port to bind the UDP listener to
+#
+# Example: 0.0.0.0:1700 to listen on port 1700 for all network interfaces.
+# This is the listeren to which the packet-forwarder forwards its data
+# so make sure the 'serv_port_up' and 'serv_port_down' from your
+# packet-forwarder matches this port.
+udp_bind = "0.0.0.0:1700"
+
+# Skip the CRC status-check of received packets
+#
+# This is only has effect when the packet-forwarder is configured to forward
+# LoRa frames with CRC errors.
+skip_crc_check = false
+
+
+# Configuration for the MQTT backend.
+[backend.mqtt]
+# MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
+server="tcp://127.0.0.1:1883"
+
+# Connect with the given username (optional)
+username=""
+
+# Connect with the given password (optional)
+password=""
+
+# CA certificate file (optional)
+#
+# Use this when setting up a secure connection (when server uses ssl://...)
+# but the certificate used by the server is not trusted by any CA certificate
+# on the server (e.g. when self generated).
+ca_cert=""
+
+# mqtt TLS certificate file (optional)
+tls_cert=""
+
+# mqtt TLS key file (optional)
+tls_key=""
+```
+
+#### Warning: deprecation warning! update your configuration
+
+When you see this warning, you need to update your configuration!
+Before LoRa Gateway Bridge 2.3.0 environment variables were used for setting
+configuration flags. Since LoRa Gateway Bridge 2.3.0 the configuration format
+has changed.
+
+The `.deb` installer will automatically migrate your configuration. For non
+`.deb` installations, you can migrate your configuration in the following way:
+
+```bash
+# Export your environment variables, in this case from a file, but anything
+# that sets your environment variables will work.
+set -a
+source /etc/default/lora-gateway-bridge
+
+# Create the configuration directory.
+mkdir /etc/lora-gateway-bridge
+
+# Generate new configuration file, pre-filled with the configuration set
+# through the environment variables.
+lora-gateway-bridge configfile > /etc/lora-gateway-bridge/lora-gateway-bridge.toml
+
+# "Remove" the old configuration (in you were using a file).
+mv /etc/default/lora-gateway-bridge /etc/default/lora-gateway-bridge.old
+```

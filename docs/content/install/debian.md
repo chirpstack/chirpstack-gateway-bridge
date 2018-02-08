@@ -39,7 +39,7 @@ sudo apt-get install lora-gateway-bridge
 
 This will setup an user and group, create start scripts for systemd or init.d
 (this depends on your version of Debian / Ubuntu). The configuration file is
-located at `/etc/default/lora-gateway-bridge`.
+located at `/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
 
 ### Starting LoRa Gateway Bridge
 

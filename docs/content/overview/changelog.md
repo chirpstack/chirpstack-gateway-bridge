@@ -8,6 +8,19 @@ menu:
 
 ## Changelog
 
+### 2.3.0
+
+**Features:**
+
+* LoRa Gateway Bridge uses a new configuration file format.
+  See [configuration](https://docs.loraserver.io/lora-gateway-bridge/install/config/) for more information.
+
+**Upgrade notes:**
+
+When upgrading using the `.deb` package / using `apt` or `apt-get`, your
+configuration will be automatically migrated for you. In any other case,
+please see [configuration](https://docs.loraserver.io/lora-gateway-bridge/install/config/).
+
 ### 2.2.0
 
 **Features:**

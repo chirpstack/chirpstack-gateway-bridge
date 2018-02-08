@@ -5,7 +5,8 @@ ENV PATH=$PATH:$PROJECT_PATH/build
 ENV CGO_ENABLED=0
 ENV GO_EXTRA_BUILD_ARGS="-a -installsuffix cgo"
 
-RUN apk add --no-cache ca-certificates make git bash
+RUN apk add --no-cache ca-certificates make git bash alpine-sdk ruby ruby-dev libffi-dev
+RUN gem install fpm --no-rdoc --no-ri
 
 RUN mkdir -p $PROJECT_PATH
 COPY . $PROJECT_PATH
