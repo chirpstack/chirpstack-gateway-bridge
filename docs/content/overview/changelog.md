@@ -15,6 +15,8 @@ menu:
 * LoRa Gateway Bridge uses a new configuration file format.
   See [configuration](https://docs.loraserver.io/lora-gateway-bridge/install/config/) for more information.
 
+* Support MQTT client certificate authentication ([#74](https://github.com/brocaar/lora-gateway-bridge/pull/74)).
+
 **Upgrade notes:**
 
 When upgrading using the `.deb` package / using `apt` or `apt-get`, your
