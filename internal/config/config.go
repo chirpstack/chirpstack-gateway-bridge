@@ -22,10 +22,10 @@ type Config struct {
 		}
 	}
 
-	MonitoringDrain struct {
+	PrometheusExporter struct {
 		Path string
 		Port int
-	} `mapstructure:"monitoring_drain"`
+	} `mapstructure:"prometheus_exporter"`
 }
 
 // C holds the global configuration.

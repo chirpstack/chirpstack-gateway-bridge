@@ -15,7 +15,7 @@ import (
 	"github.com/brocaar/lora-gateway-bridge/internal/backend/mqttpubsub"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/lora-gateway-bridge/internal/gateway"
-	systemStats "github.com/brocaar/lora-gateway-bridge/internal/system/stats"
+	"github.com/brocaar/lora-gateway-bridge/internal/system/prometheus"
 	"github.com/brocaar/lorawan"
 )
 
@@ -157,20 +157,20 @@ func run(cmd *cobra.Command, args []string) error {
 	}()
 
 	go func() {
-		mdConfig := config.C.MonitoringDrain
-		path := mdConfig.Path
-		port := mdConfig.Port
+		promConfig := config.C.PrometheusExporter
+		path := promConfig.Path
+		port := promConfig.Port
 
 		if path == "" || port <= 0 {
 			log.WithFields(log.Fields{
 				"path": path,
 				"port": port,
-			}).Info("disabled the monitoring drain daemon. if you want to enable the the monitoring drain, please set `monitoring_drain.path` and  `monitoring_drain.port`")
+			}).Info("disabled the prometheus exporter daemon. if you want to enable the the exporter, please set `prometheus_exporter.path` and  `prometheus_exporter.port`")
 
 			return
 		}
 
-		systemStats.StartMonitoringDrain(path, port)
+		prometheus.StartExporter(path, port)
 	}()
 
 	sigChan := make(chan os.Signal)

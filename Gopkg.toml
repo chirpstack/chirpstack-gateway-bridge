@@ -34,5 +34,5 @@
   version = "0.8.0"
 
 [[constraint]]
-  name = "github.com/fukata/golang-stats-api-handler"
-  version = "v1.0.0"
+  name = "github.com/prometheus/client_golang"
+  branch = "master"
