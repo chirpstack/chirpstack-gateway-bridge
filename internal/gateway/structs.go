@@ -10,7 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"bytes"
+
 	"github.com/brocaar/lorawan"
+	log "github.com/sirupsen/logrus"
 )
 
 // PacketType defines the packet type.
@@ -35,6 +38,12 @@ const (
 // Errors
 var (
 	ErrInvalidProtocolVersion = errors.New("gateway: invalid protocol version")
+)
+
+// For RXPK JSON marshalling/unmarshalling value
+var (
+	bytesRepresentsJSONNull        = []byte("null")
+	bytesRepresentsJSONEmptyString = []byte(`""`)
 )
 
 func protocolSupported(p uint8) bool {
@@ -316,11 +325,21 @@ type CompactTime struct{ *time.Time }
 
 // MarshalJSON implements the json.Marshaler interface.
 func (t CompactTime) MarshalJSON() ([]byte, error) {
+	if t.Time == nil {
+		return bytesRepresentsJSONNull, nil
+	}
+
 	return []byte(t.Time.UTC().Format(`"` + time.RFC3339Nano + `"`)), nil
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (t *CompactTime) UnmarshalJSON(data []byte) error {
+	if bytes.Compare(data, bytesRepresentsJSONEmptyString) == 0 { // some vender's gateway sends an empty string as `time` property
+		log.Debug("Subject of CompactTime marshalling is empty")
+		*t = CompactTime{nil}
+		return nil
+	}
+
 	t2, err := time.Parse(`"`+time.RFC3339Nano+`"`, string(data))
 	if err != nil {
 		return err
