@@ -160,7 +160,8 @@ func TestBackend(t *testing.T) {
 				backend.skipCRCCheck = false
 
 				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK + GPS timestamp)", func() {
-					ts := CompactTime(time.Now().UTC())
+					utcTime := time.Now().UTC()
+					ts := CompactTime{&utcTime}
 					tmms := int64(time.Second / time.Millisecond)
 
 					p := PushDataPacket{
@@ -261,7 +262,8 @@ func TestBackend(t *testing.T) {
 				backend.skipCRCCheck = true
 
 				Convey("When sending a PUSH_DATA packet with RXPK (CRC OK + GPS timestamp)", func() {
-					ts := CompactTime(time.Now().UTC())
+					utcTime := time.Now().UTC()
+					ts := CompactTime{&utcTime}
 					p := PushDataPacket{
 						ProtocolVersion: ProtocolVersion2,
 						RandomToken:     1234,
@@ -583,7 +585,7 @@ func TestNewTXPKFromTXPacket(t *testing.T) {
 func TestNewRXPacketFromRXPK(t *testing.T) {
 	Convey("Given a RXPK and gateway MAC", t, func() {
 		now := time.Now().UTC()
-		nowCompact := CompactTime(now)
+		nowCompact := CompactTime{&now}
 		tmms := int64(time.Second / time.Millisecond)
 		timeSinceGPSEpoch := gw.Duration(time.Second)
 
