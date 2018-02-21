@@ -312,11 +312,11 @@ type PullRespPayload struct {
 
 // CompactTime implements time.Time but (un)marshals to and from
 // ISO 8601 'compact' format.
-type CompactTime struct{ *time.Time }
+type CompactTime time.Time
 
 // MarshalJSON implements the json.Marshaler interface.
 func (t CompactTime) MarshalJSON() ([]byte, error) {
-	return []byte(t.Time.UTC().Format(`"` + time.RFC3339Nano + `"`)), nil
+	return []byte(time.Time(t).UTC().Format(`"` + time.RFC3339Nano + `"`)), nil
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -325,7 +325,7 @@ func (t *CompactTime) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*t = CompactTime{&t2}
+	*t = CompactTime(t2)
 	return nil
 }
 

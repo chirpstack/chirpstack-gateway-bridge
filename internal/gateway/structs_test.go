@@ -64,8 +64,7 @@ func TestCompactTime(t *testing.T) {
 
 		Convey("MarshalJSON returns '\"2006-01-02T22:04:05Z\"'", func() {
 
-			ct := CompactTime{&ts}
-			b, err := ct.MarshalJSON()
+			b, err := CompactTime(ts).MarshalJSON()
 			So(err, ShouldBeNil)
 			So(string(b), ShouldEqual, `"2006-01-02T22:04:05Z"`)
 		})
@@ -76,7 +75,7 @@ func TestCompactTime(t *testing.T) {
 				var ct CompactTime
 				err := ct.UnmarshalJSON([]byte(s))
 				So(err, ShouldBeNil)
-				So(ct.Time.Equal(ts), ShouldBeTrue)
+				So(time.Time(ct).Equal(ts), ShouldBeTrue)
 			})
 		})
 	})
