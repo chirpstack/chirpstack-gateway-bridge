@@ -79,6 +79,22 @@ func TestCompactTime(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given an empty string as date value", t, func() {
+		Convey("UnmarshalJSON returns nil", func() {
+			var ct CompactTime
+			err := ct.UnmarshalJSON([]byte(`""`))
+			So(err, ShouldBeNil)
+			So(time.Time(ct).Equal(time.Time{}), ShouldBeTrue)
+		})
+
+		Convey("MarshalJSON returns null", func() {
+			ct := CompactTime(time.Time{})
+			b, err := ct.MarshalJSON()
+			So(err, ShouldBeNil)
+			So(string(b), ShouldEqual, "null")
+		})
+	})
 }
 
 func TestGetPacketType(t *testing.T) {

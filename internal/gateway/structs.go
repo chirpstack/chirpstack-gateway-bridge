@@ -316,11 +316,19 @@ type CompactTime time.Time
 
 // MarshalJSON implements the json.Marshaler interface.
 func (t CompactTime) MarshalJSON() ([]byte, error) {
-	return []byte(time.Time(t).UTC().Format(`"` + time.RFC3339Nano + `"`)), nil
+	t2 := time.Time(t)
+	if t2.IsZero() {
+		return []byte("null"), nil
+	}
+	return []byte(t2.UTC().Format(`"` + time.RFC3339Nano + `"`)), nil
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (t *CompactTime) UnmarshalJSON(data []byte) error {
+	if string(data) == `""` {
+		return nil
+	}
+
 	t2, err := time.Parse(`"`+time.RFC3339Nano+`"`, string(data))
 	if err != nil {
 		return err
