@@ -34,6 +34,20 @@ skip_crc_check = {{ .PacketForwarder.SkipCRCCheck }}
 
 # Configuration for the MQTT backend.
 [backend.mqtt]
+# MQTT topic templates for the different MQTT topics.
+#
+# The meaning of these topics are documented at:
+# https://docs.loraserver.io/lora-gateway-bridge/use/data/
+#
+# The default values match the default expected configuration of the
+# LoRa Server MQTT backend. Therefore only change these values when
+# absolutely needed.
+# Use "{{ "{{ .MAC }}" }}" as an substitution for the LoRa gateway MAC. 
+uplink_topic_template="gateway/{{ "{{ .MAC }}" }}/rx"
+downlink_topic_template="gateway/{{ "{{ .MAC }}" }}/tx"
+stats_topic_template="gateway/{{ "{{ .MAC }}" }}/stats"
+ack_topic_template="gateway/{{ "{{ .MAC }}" }}/ack"
+
 # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
 server="{{ .Backend.MQTT.Server }}"
 

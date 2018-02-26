@@ -37,14 +37,14 @@ func init() {
 	rootCmd.PersistentFlags().Int("log-level", 4, "debug=5, info=4, error=2, fatal=1, panic=0")
 
 	// for backwards compatibility
-	rootCmd.PersistentFlags().String("udp-bind", "0.0.0.0:1700", "ip:port to bind the UDP listener to")
-	rootCmd.PersistentFlags().String("mqtt-server", "tcp://127.0.0.1:1883", "mqtt server (e.g. scheme://host:port where scheme is tcp, ssl or ws)")
-	rootCmd.PersistentFlags().String("mqtt-username", "", "mqtt server username (optional)")
-	rootCmd.PersistentFlags().String("mqtt-password", "", "mqtt server password (optional)")
-	rootCmd.PersistentFlags().String("mqtt-ca-cert", "", "mqtt CA certificate file (optional)")
+	rootCmd.PersistentFlags().String("udp-bind", "", "")
+	rootCmd.PersistentFlags().String("mqtt-server", "", "")
+	rootCmd.PersistentFlags().String("mqtt-username", "", "")
+	rootCmd.PersistentFlags().String("mqtt-password", "", "")
+	rootCmd.PersistentFlags().String("mqtt-ca-cert", "", "")
 	rootCmd.PersistentFlags().String("mqtt-tls-cert", "", "")
 	rootCmd.PersistentFlags().String("mqtt-tls-key", "", "")
-	rootCmd.PersistentFlags().Bool("skip-crc-check", false, "skip the CRC status-check of received packets")
+	rootCmd.PersistentFlags().Bool("skip-crc-check", false, "")
 	rootCmd.PersistentFlags().MarkHidden("udp-bind")
 	rootCmd.PersistentFlags().MarkHidden("mqtt-server")
 	rootCmd.PersistentFlags().MarkHidden("mqtt-username")
@@ -76,6 +76,15 @@ func init() {
 	viper.BindPFlag("backend.mqtt.tls_cert", rootCmd.PersistentFlags().Lookup("mqtt-tls-cert"))
 	viper.BindPFlag("backend.mqtt.tls_key", rootCmd.PersistentFlags().Lookup("mqtt-tls-key"))
 
+	// default values
+	viper.SetDefault("packet_forwarder.udp_bind", "0.0.0.0:1700")
+
+	viper.SetDefault("backend.mqtt.uplink_topic_template", "gateway/{{ .MAC }}/rx")
+	viper.SetDefault("backend.mqtt.downlink_topic_template", "gateway/{{ .MAC }}/tx")
+	viper.SetDefault("backend.mqtt.stats_topic_template", "gateway/{{ .MAC }}/stats")
+	viper.SetDefault("backend.mqtt.ack_topic_template", "gateway/{{ .MAC }}/ack")
+	viper.SetDefault("backend.mqtt.server", "tcp://127.0.0.1:1883")
+
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
 }
@@ -99,7 +108,18 @@ func run(cmd *cobra.Command, args []string) error {
 	var pubsub *mqttpubsub.Backend
 	for {
 		var err error
-		pubsub, err = mqttpubsub.NewBackend(config.C.Backend.MQTT.Server, config.C.Backend.MQTT.Username, config.C.Backend.MQTT.Password, config.C.Backend.MQTT.CACert, config.C.Backend.MQTT.TLSCert, config.C.Backend.MQTT.TLSKey)
+		pubsub, err = mqttpubsub.NewBackend(
+			config.C.Backend.MQTT.Server,
+			config.C.Backend.MQTT.Username,
+			config.C.Backend.MQTT.Password,
+			config.C.Backend.MQTT.CACert,
+			config.C.Backend.MQTT.TLSCert,
+			config.C.Backend.MQTT.TLSKey,
+			config.C.Backend.MQTT.UplinkTopicTemplate,
+			config.C.Backend.MQTT.DownlinkTopicTemplate,
+			config.C.Backend.MQTT.StatsTopicTemplate,
+			config.C.Backend.MQTT.AckTopicTemplate,
+		)
 		if err == nil {
 			break
 		}

@@ -8,6 +8,13 @@ menu:
 
 ## Changelog
 
+### 2.3.1
+
+**Improvements:**
+
+* MQTT topics are now configurable through the configuration file.
+  See [Configuration](https://docs.loraserver.io/lora-gateway-bridge/install/config/).
+
 ### 2.3.0
 
 **Features:**

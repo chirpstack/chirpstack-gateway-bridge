@@ -3,6 +3,7 @@ package mqttpubsub
 import (
 	"os"
 
+	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -10,14 +11,19 @@ func init() {
 	log.SetLevel(log.ErrorLevel)
 }
 
-type config struct {
+type conf struct {
 	Server   string
 	Username string
 	Password string
 }
 
-func getConfig() *config {
-	c := &config{
+func getConfig() *conf {
+	config.C.Backend.MQTT.DownlinkTopicTemplate = "gateway/{{ .MAC }}/tx"
+	config.C.Backend.MQTT.UplinkTopicTemplate = "gateway/{{ .MAC }}/rx"
+	config.C.Backend.MQTT.StatsTopicTemplate = "gateway/{{ .MAC }}/stats"
+	config.C.Backend.MQTT.AckTopicTemplate = "gateway/{{ .MAC }}/ack"
+
+	c := &conf{
 		Server: "tcp://127.0.0.1:1883",
 	}
 
