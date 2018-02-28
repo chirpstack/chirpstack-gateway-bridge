@@ -140,7 +140,7 @@ use the `mlinux-base*.jffs2` image!**
    Example:
    ```text
    uadmin@mtcdt:~# /etc/init.d/lora-gateway-bridge start
-   uadmin@mtcdt:~# update-rc.d lora-packet-forwarder defaults
+   uadmin@mtcdt:~# update-rc.d lora-gateway-bridge defaults
    ```
 
 6. Be sure to add the gateway to the lora-app-server.
