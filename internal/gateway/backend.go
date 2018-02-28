@@ -445,7 +445,9 @@ func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, err
 
 	if rxpk.Time != nil {
 		ts := time.Time(*rxpk.Time)
-		rxPacket.RXInfo.Time = &ts
+		if !ts.IsZero() {
+			rxPacket.RXInfo.Time = &ts
+		}
 	}
 
 	if rxpk.Tmms != nil {
