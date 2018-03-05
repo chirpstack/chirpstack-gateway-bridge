@@ -97,7 +97,7 @@ skip_crc_check = false
 
 # Configuration for the MQTT backend.
 [backend.mqtt]
-# MQTT topic templates for the different MQTT topic.
+# MQTT topic templates for the different MQTT topics.
 #
 # The meaning of these topics are documented at:
 # https://docs.loraserver.io/lora-gateway-bridge/use/data/
@@ -119,6 +119,30 @@ username=""
 
 # Connect with the given password (optional)
 password=""
+
+# Quality of service level
+#
+# 0: at most once
+# 1: at least once
+# 2: exactly once
+#
+# Note: an increase of this value will decrease the performance.
+# For more information: https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels
+qos=0
+
+# Clean session
+#
+# Set the "clean session" flag in the connect message when this client
+# connects to an MQTT broker. By setting this flag you are indicating
+# that no messages saved by the broker for this client should be delivered.
+clean_session=true
+
+# Client ID
+#
+# Set the client id to be used by this client when connecting to the MQTT
+# broker. A client id must be no longer than 23 characters. When left blank,
+# a random id will be generated. This requires clean_session=true.
+client_id=""
 
 # CA certificate file (optional)
 #

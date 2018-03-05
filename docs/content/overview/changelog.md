@@ -8,6 +8,19 @@ menu:
 
 ## Changelog
 
+### 2.3.2
+
+**Improvements:**
+
+* Expose the following MQTT options for the MQTT gateway backend:
+  * QoS (quality of service)
+  * Client ID
+  * Clean session on connect
+
+**Bugfixes:**
+
+* Use topic from configuration file on re-connect (this was still hardcoded).
+
 ### 2.3.1
 
 **Improvements:**

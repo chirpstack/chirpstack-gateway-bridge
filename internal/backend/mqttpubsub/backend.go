@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"sync"
 	"text/template"
@@ -18,12 +17,30 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// BackendConfig holds the MQTT pub-sub backend configuration.
+type BackendConfig struct {
+	Server                string
+	Username              string
+	Password              string
+	QOS                   uint8  `mapstructure:"qos"`
+	CleanSession          bool   `mapstructure:"clean_session"`
+	ClientID              string `mapstructure:"client_id"`
+	CACert                string `mapstructure:"ca_cert"`
+	TLSCert               string `mapstructure:"tls_cert"`
+	TLSKey                string `mapstructure:"tls_key"`
+	UplinkTopicTemplate   string `mapstructure:"uplink_topic_template"`
+	DownlinkTopicTemplate string `mapstructure:"downlink_topic_template"`
+	StatsTopicTemplate    string `mapstructure:"stats_topic_template"`
+	AckTopicTemplate      string `mapstructure:"ack_topic_template"`
+}
+
 // Backend implements a MQTT pub-sub backend.
 type Backend struct {
 	conn         mqtt.Client
 	txPacketChan chan gw.TXPacketBytes
 	gateways     map[lorawan.EUI64]struct{}
 	mutex        sync.RWMutex
+	config       BackendConfig
 
 	UplinkTemplate   *template.Template
 	DownlinkTemplate *template.Template
@@ -32,54 +49,57 @@ type Backend struct {
 }
 
 // NewBackend creates a new Backend.
-func NewBackend(server, username, password, cafile, certFile, certKeyFile, uplinkTopic, downlinkTopic, statsTopic, ackTopic string) (*Backend, error) {
+func NewBackend(c BackendConfig) (*Backend, error) {
 	var err error
 
 	b := Backend{
 		txPacketChan: make(chan gw.TXPacketBytes),
 		gateways:     make(map[lorawan.EUI64]struct{}),
+		config:       c,
 	}
 
-	b.UplinkTemplate, err = template.New("uplink").Parse(uplinkTopic)
+	b.UplinkTemplate, err = template.New("uplink").Parse(b.config.UplinkTopicTemplate)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse uplink template error")
 	}
 
-	b.DownlinkTemplate, err = template.New("downlink").Parse(downlinkTopic)
+	b.DownlinkTemplate, err = template.New("downlink").Parse(b.config.DownlinkTopicTemplate)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse downlink template error")
 	}
 
-	b.StatsTemplate, err = template.New("stats").Parse(statsTopic)
+	b.StatsTemplate, err = template.New("stats").Parse(b.config.StatsTopicTemplate)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse stats template error")
 	}
 
-	b.AckTemplate, err = template.New("ack").Parse(ackTopic)
+	b.AckTemplate, err = template.New("ack").Parse(b.config.AckTopicTemplate)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse ack template error")
 	}
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(server)
-	opts.SetUsername(username)
-	opts.SetPassword(password)
+	opts.AddBroker(b.config.Server)
+	opts.SetUsername(b.config.Username)
+	opts.SetPassword(b.config.Password)
+	opts.SetCleanSession(b.config.CleanSession)
+	opts.SetClientID(b.config.ClientID)
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 
-	tlsconfig, err := NewTLSConfig(cafile, certFile, certKeyFile)
+	tlsconfig, err := NewTLSConfig(b.config.CACert, b.config.TLSCert, b.config.TLSKey)
 	if err != nil {
 		log.WithError(err).WithFields(log.Fields{
-			"ca_cert":  cafile,
-			"tls_cert": certFile,
-			"tls_key":  certKeyFile,
+			"ca_cert":  b.config.CACert,
+			"tls_cert": b.config.TLSCert,
+			"tls_key":  b.config.TLSKey,
 		}).Fatal("error loading mqtt certificate files")
 	}
 	if tlsconfig != nil {
 		opts.SetTLSConfig(tlsconfig)
 	}
 
-	log.WithField("server", server).Info("backend: connecting to mqtt broker")
+	log.WithField("server", b.config.Server).Info("backend: connecting to mqtt broker")
 	b.conn = mqtt.NewClient(opts)
 	if token := b.conn.Connect(); token.Wait() && token.Error() != nil {
 		return nil, token.Error()
@@ -146,11 +166,14 @@ func (b *Backend) SubscribeGatewayTX(mac lorawan.EUI64) error {
 
 	topic := bytes.NewBuffer(nil)
 	if err := b.DownlinkTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{mac}); err != nil {
-		return errors.Wrap(err, "execute uplink template error")
+		return errors.Wrap(err, "execute downlink template error")
 	}
 
-	log.WithField("topic", topic.String()).Info("backend: subscribing to topic")
-	if token := b.conn.Subscribe(topic.String(), 0, b.txPacketHandler); token.Wait() && token.Error() != nil {
+	log.WithFields(log.Fields{
+		"topic": topic.String(),
+		"qos":   b.config.QOS,
+	}).Info("backend: subscribing to topic")
+	if token := b.conn.Subscribe(topic.String(), b.config.QOS, b.txPacketHandler); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 	b.gateways[mac] = struct{}{}
@@ -165,7 +188,7 @@ func (b *Backend) UnSubscribeGatewayTX(mac lorawan.EUI64) error {
 
 	topic := bytes.NewBuffer(nil)
 	if err := b.DownlinkTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{mac}); err != nil {
-		return errors.Wrap(err, "execute uplink template error")
+		return errors.Wrap(err, "execute downlink template error")
 	}
 
 	log.WithField("topic", topic.String()).Info("backend: unsubscribing from topic")
@@ -201,8 +224,11 @@ func (b *Backend) publish(mac lorawan.EUI64, topicTemplate *template.Template, v
 	if err != nil {
 		return err
 	}
-	log.WithField("topic", topic.String()).Info("backend: publishing packet")
-	if token := b.conn.Publish(topic.String(), 0, false, bytes); token.Wait() && token.Error() != nil {
+	log.WithFields(log.Fields{
+		"topic": topic.String(),
+		"qos":   b.config.QOS,
+	}).Info("backend: publishing packet")
+	if token := b.conn.Publish(topic.String(), b.config.QOS, false, bytes); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 	return nil
@@ -228,7 +254,13 @@ func (b *Backend) onConnected(c mqtt.Client) {
 			log.WithField("topic_count", len(b.gateways)).Info("backend: re-registering to gateway topics")
 			topics := make(map[string]byte)
 			for k := range b.gateways {
-				topics[fmt.Sprintf("gateway/%s/tx", k)] = 0
+				topic := bytes.NewBuffer(nil)
+				if err := b.DownlinkTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{k}); err != nil {
+					log.WithError(err).Error("backend: execute downlink template error")
+					time.Sleep(time.Second)
+					continue
+				}
+				topics[topic.String()] = b.config.QOS
 			}
 			if token := b.conn.SubscribeMultiple(topics, b.txPacketHandler); token.Wait() && token.Error() != nil {
 				log.WithField("topic_count", len(topics)).Errorf("backend: subscribe multiple failed: %s", token.Error())

@@ -1,5 +1,7 @@
 package config
 
+import "github.com/brocaar/lora-gateway-bridge/internal/backend/mqttpubsub"
+
 // Config defines the configuration structure.
 type Config struct {
 	General struct {
@@ -12,18 +14,7 @@ type Config struct {
 	} `mapstructure:"packet_forwarder"`
 
 	Backend struct {
-		MQTT struct {
-			Server                string
-			Username              string
-			Password              string
-			CACert                string `mapstructure:"ca_cert"`
-			TLSCert               string `mapstructure:"tls_cert"`
-			TLSKey                string `mapstructure:"tls_key"`
-			UplinkTopicTemplate   string `mapstructure:"uplink_topic_template"`
-			DownlinkTopicTemplate string `mapstructure:"downlink_topic_template"`
-			StatsTopicTemplate    string `mapstructure:"stats_topic_template"`
-			AckTopicTemplate      string `mapstructure:"ack_topic_template"`
-		}
+		MQTT mqttpubsub.BackendConfig
 	}
 }
 

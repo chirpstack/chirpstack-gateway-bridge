@@ -84,6 +84,7 @@ func init() {
 	viper.SetDefault("backend.mqtt.stats_topic_template", "gateway/{{ .MAC }}/stats")
 	viper.SetDefault("backend.mqtt.ack_topic_template", "gateway/{{ .MAC }}/ack")
 	viper.SetDefault("backend.mqtt.server", "tcp://127.0.0.1:1883")
+	viper.SetDefault("backend.mqtt.clean_session", true)
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
@@ -108,18 +109,7 @@ func run(cmd *cobra.Command, args []string) error {
 	var pubsub *mqttpubsub.Backend
 	for {
 		var err error
-		pubsub, err = mqttpubsub.NewBackend(
-			config.C.Backend.MQTT.Server,
-			config.C.Backend.MQTT.Username,
-			config.C.Backend.MQTT.Password,
-			config.C.Backend.MQTT.CACert,
-			config.C.Backend.MQTT.TLSCert,
-			config.C.Backend.MQTT.TLSKey,
-			config.C.Backend.MQTT.UplinkTopicTemplate,
-			config.C.Backend.MQTT.DownlinkTopicTemplate,
-			config.C.Backend.MQTT.StatsTopicTemplate,
-			config.C.Backend.MQTT.AckTopicTemplate,
-		)
+		pubsub, err = mqttpubsub.NewBackend(config.C.Backend.MQTT)
 		if err == nil {
 			break
 		}

@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/eclipse/paho.mqtt.golang"
 	. "github.com/smartystreets/goconvey/convey"
@@ -24,14 +23,16 @@ func TestBackend(t *testing.T) {
 
 		Convey("Given a new Backend", func() {
 			backend, err := NewBackend(
-				conf.Server,
-				conf.Username,
-				conf.Password,
-				"", "", "",
-				config.C.Backend.MQTT.UplinkTopicTemplate,
-				config.C.Backend.MQTT.DownlinkTopicTemplate,
-				config.C.Backend.MQTT.StatsTopicTemplate,
-				config.C.Backend.MQTT.AckTopicTemplate,
+				BackendConfig{
+					Server:                conf.Server,
+					Username:              conf.Username,
+					Password:              conf.Password,
+					CleanSession:          true,
+					UplinkTopicTemplate:   "gateway/{{ .MAC }}/rx",
+					DownlinkTopicTemplate: "gateway/{{ .MAC }}/tx",
+					StatsTopicTemplate:    "gateway/{{ .MAC }}/stats",
+					AckTopicTemplate:      "gateway/{{ .MAC }}/ack",
+				},
 			)
 			So(err, ShouldBeNil)
 			defer backend.Close()
