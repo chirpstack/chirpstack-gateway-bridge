@@ -43,10 +43,10 @@ skip_crc_check = {{ .PacketForwarder.SkipCRCCheck }}
 # LoRa Server MQTT backend. Therefore only change these values when
 # absolutely needed.
 # Use "{{ "{{ .MAC }}" }}" as an substitution for the LoRa gateway MAC. 
-uplink_topic_template="gateway/{{ "{{ .MAC }}" }}/rx"
-downlink_topic_template="gateway/{{ "{{ .MAC }}" }}/tx"
-stats_topic_template="gateway/{{ "{{ .MAC }}" }}/stats"
-ack_topic_template="gateway/{{ "{{ .MAC }}" }}/ack"
+uplink_topic_template="{{ .Backend.MQTT.UplinkTopicTemplate }}"
+downlink_topic_template="{{ .Backend.MQTT.DownlinkTopicTemplate }}"
+stats_topic_template="{{ .Backend.MQTT.StatsTopicTemplate }}"
+ack_topic_template="{{ .Backend.MQTT.AckTopicTemplate }}"
 
 # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
 server="{{ .Backend.MQTT.Server }}"
