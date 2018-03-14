@@ -6,7 +6,7 @@ menu:
         weight: 1
 ---
 
-## MQTT topics
+# MQTT topics
 
 To receive data from your gateways, you need to subscribe to its MQTT topic(s).
 For debugging, you can use a (command-line) tool like ``mosquitto_sub``
@@ -22,7 +22,7 @@ mosquitto_sub -t "gateway/0101010101010101/+" -v  # show all data for the given 
 
 **Note that the MQTT topics are lowercase.**
 
-### gateway/[mac]/stats
+## gateway/[mac]/stats
 
 Topic for gateway statistics. Example payload:
 
@@ -40,7 +40,7 @@ Topic for gateway statistics. Example payload:
 }
 ```
 
-### gateway/[mac]/rx
+## gateway/[mac]/rx
 
 Topic for received packets (from nodes). Example payload:
 
@@ -71,7 +71,7 @@ Topic for received packets (from nodes). Example payload:
 }
 ```
 
-### gateway/[mac]/tx
+## gateway/[mac]/tx
 
 Topic for publishing packets to be transmitted by the given gateway.
 Example payload:
@@ -107,7 +107,7 @@ Optionally, the field `iPol` (type `bool`) can be used to control the
 LoRa modulation polarization inversion. When left blank (`null`), the default
 will be used (which is `true` for downlink LoRa modulation.
 
-### gateway/[mac]/ack
+## gateway/[mac]/ack
 
 Topic for received TX acknowledgements (or TX errors). Example payload:
 

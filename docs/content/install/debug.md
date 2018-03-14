@@ -6,11 +6,11 @@ menu:
         weight: 6
 ---
 
-## Debugging
+# Debugging
 
 The follwing steps can be used to debug any LoRa Gateway Bridge related issues.
 
-### Receiving MQTT messages
+## Receiving MQTT messages
 
 To validate that the LoRa Gateway Bridge is publishing LoRa frames to the
 MQTT broker, you can subscribe to the `gateway/+/rx` MQTT topic. When using
@@ -29,7 +29,7 @@ When you don't see any frames appearing, this could be caused by the following i
 * The MQTT credentials / authorizations are invalid (the user is not authorized
   to subscribe to the MQTT topic)
 
-### Is LoRa Gateway Bridge receiving data
+## Is LoRa Gateway Bridge receiving data
 
 To validate that the LoRa Gateway Bridge is receiving, you can take a look
 at the LoRa Gateway Bridge logs. How to retrieve the logs depends on how you
@@ -67,7 +67,7 @@ be caused by:
 * The node is sending on a frequency that the packet-forwarder is not
   configured for.
 
-### Is the packet-forwarder running
+## Is the packet-forwarder running
 
 To validate that the packet-forwarder is running, you could execute the
 following command on your gateway:
@@ -129,7 +129,7 @@ When you don't see any of these, this could be caused by the following issues:
 * The packet-forwarder is not running
 * The packet-forwarder is forwarding to a different host / port
 
-### Where is the packet-forwarder sending data to
+## Where is the packet-forwarder sending data to
 
 Inspect the `local_conf.json` of the packet-forwarder running on your gateway.
 You might need to refer to your gateway manual to find out where you can locate

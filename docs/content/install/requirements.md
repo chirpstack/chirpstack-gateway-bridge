@@ -6,18 +6,18 @@ menu:
         weight: 1
 ---
 
-## Requirements
+# Requirements
 
-### MQTT broker
+## MQTT broker
 
 LoRa Gateway Bridge makes use of MQTT for publishing and receivng application
 payloads. [Mosquitto](http://mosquitto.org/) is a popular open-source MQTT
 server, but any MQTT broker implementing MQTT 3.1.1 should work. 
 In case you install Mosquitto, make sure you install a **recent** version.
 
-#### Install
+### Install
 
-##### Debian / Ubuntu
+#### Debian / Ubuntu
 
 For Ubuntu Trusty (14.04), execute the following command in order to add the
 Mosquitto Apt repository, for Ubuntu Xenial and Debian Jessie you can skip
@@ -34,7 +34,7 @@ In order to install Mosquitto, execute the following command:
 sudo apt-get install mosquitto
 ```
 
-##### Other platforms
+#### Other platforms
 
 Please refer to the [Mosquitto download](https://mosquitto.org/download/) page
 for information about how to setup Mosquitto for your platform.

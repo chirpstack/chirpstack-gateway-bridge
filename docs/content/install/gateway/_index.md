@@ -7,9 +7,9 @@ menu:
         identifier: gateway
 ---
 
-## Install on the gateway
+# Install on the gateway
 
-### Vendors
+## Vendors
 
 Instructions are available for the following vendors:
 
@@ -21,7 +21,7 @@ Instructions are available for the following vendors:
 For Raspberry Pi / Rasbian based gateways, please refer the
 [Debian / Ubuntu]({{< ref "install/debian.md" >}}) installation instructions.
 
-### Contribute
+## Contribute
 
 Help us making the above list complete! Is the gateway that you are using not
 listed in the above vendors list? Or are the steps described outdated?

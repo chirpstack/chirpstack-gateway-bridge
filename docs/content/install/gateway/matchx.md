@@ -5,9 +5,9 @@ menu:
         parent: gateway
 ---
 
-## MatchX
+# MatchX
 
-### Matchbox gateway
+## Matchbox gateway
 
 The [MatchX Matchbox](https://matchx.io/hardware#matchboxs) is an OpenWRT / Lede
 base gateway, which by default sends its data to the MatchX hosted network-server

@@ -6,9 +6,9 @@ menu:
         weight: 5
 ---
 
-## Configuration
+# Configuration
 
-### Gateway
+## Gateway
 
 Modify the [packet-forwarder](https://github.com/lora-net/packet_forwarder)
 of your gateway so that it will send its data to the LoRa Gateway Bridge.
@@ -18,7 +18,7 @@ You will need to change the following configuration keys:
 * `serv_port_up` to `1700` (the default port that LoRa Gateway Bridge is using)
 * `serv_port_down` to `1700` (same)
 
-### LoRa Gateway Bridge
+## LoRa Gateway Bridge
 
 The `lora-gateway-bridge` has the following command-line flags:
 
@@ -44,7 +44,7 @@ Flags:
 Use "lora-gateway-bridge [command] --help" for more information about a command.
 ```
 
-#### Configuration file
+### Configuration file
 
 By default `lora-gateway-bridge` will look in the following order for a
 configuration at the following paths when `--config` / `-c` is not set:
@@ -158,7 +158,7 @@ tls_cert=""
 tls_key=""
 ```
 
-#### Warning: deprecation warning! update your configuration
+### Warning: deprecation warning! update your configuration
 
 When you see this warning, you need to update your configuration!
 Before LoRa Gateway Bridge 2.3.0 environment variables were used for setting

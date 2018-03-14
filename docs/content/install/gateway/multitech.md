@@ -5,9 +5,9 @@ menu:
         parent: gateway
 ---
 
-## Multitech
+# Multitech
 
-### Multitech Conduit
+## Multitech Conduit
 
 After completing this steps, you have a Multitech Conduit running both the
 packet-forwarder and LoRa Gateway bridge. The packet-forwarder will forwards
@@ -37,7 +37,7 @@ for more documentation on on the Multitech Conduit.
 steps below. This is recommended when you don't rely on any software provided by
 the AEP firmware.
 
-#### Getting the IP address
+### Getting the IP address
 
 Before continuing, you'll want to obtain the IP address of the Conduit.  This can 
 be done using a serial connection from a computer using a USB-to-microUSB cable,
@@ -59,7 +59,7 @@ netmask by adding a `#` at the beginning of each line:
 Then execute `/etc/init.d/networking restart`, and obtain the issued IP address
 as outlined above.
 
-#### Upgrading / migrating from AEP to the latest mLinux
+### Upgrading / migrating from AEP to the latest mLinux
 
 The suggested way to setup the packet-forwarder and LoRa Gateway Bridge on a
 Multitech Conduit is by using the base mLinux firmware image
@@ -74,7 +74,7 @@ AEP model into a mLinux model. In both the AEP migrate and mLinux upgrade you
 can use the **Using Auto-Flash During Reboot** steps. **Again, make sure to
 use the `mlinux-base*.jffs2` image!**
 
-#### mLinux: Setting up the packet-forwarder (MTAC-LORA-H)
+### mLinux: Setting up the packet-forwarder (MTAC-LORA-H)
 
 1. Log in using SSH or use the USB to serial interface.
 
@@ -114,7 +114,7 @@ use the `mlinux-base*.jffs2` image!**
    The build recipe of the `.ipk` package can be found at:
    [https://github.com/brocaar/loraserver-yocto](https://github.com/brocaar/loraserver-yocto).
 
-#### mLinux / AEP: Setting up the LoRa Gateway Bridge
+### mLinux / AEP: Setting up the LoRa Gateway Bridge
 
 1. Log in using SSH or use the USB to serial interface.
 
@@ -146,7 +146,7 @@ use the `mlinux-base*.jffs2` image!**
 6. Be sure to add the gateway to the lora-app-server.
    See [Gateways](/lora-app-server/use/gateways/).
 
-#### AEP: Setting up the packet-forwarder
+### AEP: Setting up the packet-forwarder
 
 Use the web interface to set up the Conduit's packet forwarder.  By default, 
 the connection will not be “secure” over https because the device uses a self-
@@ -207,7 +207,7 @@ signed certificate.  Accept the certificate to proceed.
 
 6. Finally, restart the system to get everything running.
 
-#### Troubleshooting
+### Troubleshooting
 
 Be sure to check log files to see what is happening.  Logs can be found on the 
 gateway in the directory `/var/log/`. 

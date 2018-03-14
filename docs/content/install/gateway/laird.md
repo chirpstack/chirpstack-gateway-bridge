@@ -5,9 +5,9 @@ menu:
       parent: gateway
 ---
 
-## Laird
+# Laird
 
-### Sentrius RG1XX LoRa gateway
+## Sentrius RG1XX LoRa gateway
 
 **Note:** The LoRa Gateway Bridge component comes pre-installed since firmware version
 [93.7.2.9](https://assets.lairdtech.com/home/brandworld/files/CONN-RN-RG1xx-laird-93_7_2_9.pdf).

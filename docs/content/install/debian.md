@@ -6,7 +6,7 @@ menu:
         weight: 4
 ---
 
-## Debian / Ubuntu
+# Debian / Ubuntu
 
 These steps have been tested using:
 
@@ -14,7 +14,7 @@ These steps have been tested using:
 * Ubuntu Trusty (14.04)
 * Ubuntu Xenial (16.04)
 
-### LoRa Server Debian repository
+## LoRa Server Debian repository
 
 The LoRa Server project provides pre-compiled binaries packaged as Debian (.deb)
 packages. In order to activate this repository, execute the following
@@ -29,7 +29,7 @@ sudo echo "deb https://repos.loraserver.io/${DISTRIB_ID,,} ${DISTRIB_CODENAME} t
 sudo apt-get update
 ```
 
-### Install LoRa Gateway Bridge
+## Install LoRa Gateway Bridge
 
 In order to install LoRa Gateway Bridge, execute the following command:
 
@@ -41,24 +41,24 @@ This will setup an user and group, create start scripts for systemd or init.d
 (this depends on your version of Debian / Ubuntu). The configuration file is
 located at `/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
 
-### Starting LoRa Gateway Bridge
+## Starting LoRa Gateway Bridge
 
 How you need to (re)start and stop LoRa Gateway Bridge depends on if your
 platform uses systemd or init.d.
 
-#### systemd
+### systemd
 
 ```bash
 sudo systemctl [start|stop|restart|status] lora-gateway-bridge
 ```
 
-#### init.d
+### init.d
 
 ```bash
 sudo /etc/init.d/lora-gateway-bridge [start|stop|restart|status]
 ```
 
-### LoRa Gateway log output
+## LoRa Gateway log output
 
 Now you've setup LoRa Gateway Bridge and your gateway is configured to forward
 it's data to it, it is a good time to verify that data is actually comming in.
@@ -67,7 +67,7 @@ This can be done by looking at the LoRa Gateway Bridge log output.
 Like the previous step, which command you need to use for viewing the
 log output depends on if your distribution uses init.d or systemd.
 
-#### init.d
+### init.d
 
 All logs are written to `/var/log/lora-gateway-bridge/lora-gateway-bridge.log`.
 To view and follow this logfile:
@@ -76,7 +76,7 @@ To view and follow this logfile:
 tail -f /var/log/lora-gateway-bridge/lora-gateway-bridge.log
 ```
 
-#### systemd
+### systemd
 
 ```bash
 journalctl -u lora-gateway-bridge -f -n 50
@@ -103,7 +103,7 @@ lora-gateway-bridge[9714]: time="2016-08-19T09:05:34+02:00" level=info msg="gate
 For an explanation of the different types of data you can receive from and
 send to the LoRa Gateway Bridge see [send / receive data]({{< ref "use/data.md" >}}).
 
-### Install other components
+## Install other components
 
 A complete LoRa Server setup, requires the setup of the following components:
 

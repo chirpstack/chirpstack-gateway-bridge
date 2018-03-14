@@ -5,8 +5,9 @@ menu:
         parent: gateway
 ---
 
+# Kerlink
 
-### Kerlink IOT station
+## Kerlink IOT station
 
 The Kerlink IOT station has a meganism to start "custom" application on boot.
 These steps will install the LoRa Gateway Bridge ARM build on the Kerlink.
