@@ -74,7 +74,49 @@ AEP model into a mLinux model. In both the AEP migrate and mLinux upgrade you
 can use the **Using Auto-Flash During Reboot** steps. **Again, make sure to
 use the `mlinux-base*.jffs2` image!**
 
-### mLinux: Setting up the packet-forwarder (MTAC-LORA-H)
+### Setting up the LoRa Gateway Bridge
+
+1. Log in using SSH or use the USB to serial interface.
+
+2. Download the latest `lora-gateway-bridge` `.ipk` package from:
+   [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
+   Example (assuming you want to install `lora-gateway-bridge_2.3.2-r1.0_arm926ejste.ipk`):
+   ```text
+   admin@mtcdt:~# wget https://dl.loraserver.io/multitech/conduit/lora-gateway-bridge_2.3.2-r1.0_arm926ejste.ipk
+   ```
+
+3. Now this `.ipk` package is stored on the Conduit, you can install it
+   using the `opkg` package-manager utility. Example (assuming the same
+   `.ipk` file):
+   ```text
+   admin@mtcdt:~# opkg install lora-gateway-bridge_2.3.2-r1.0_arm926ejste.ipk
+   ```
+
+4. Update the MQTT connection details so that LoRa Gateway Bridge is able to
+   connect to your MQTT broker. You will find the configuration file in the
+   `/var/config/lora-gateway-bridge` directory.
+
+5. Start LoRa Gateway Bridge and ensure it will be started on boot.
+   Example:
+   ```text
+   admin@mtcdt:~# /etc/init.d/lora-gateway-bridge start
+   admin@mtcdt:~# update-rc.d lora-gateway-bridge defaults
+   ```
+
+6. Be sure to add the gateway to the lora-app-server.
+   See [Gateways](/lora-app-server/use/gateways/).
+
+### Setting up the packet-forwarder
+
+The packages installed with the commands below will by default choose the US
+or EU band configuration, based on the used hardware. Please refer to the
+[Multitech documentation](http://www.multitech.net/developer/software/lora/aep-lora-packet-forwarder/)
+for alternative configurations.
+
+#### mLinux with MTAC-LORA-H-915 or MTAC-LORA-H-868
+
+**Important:** Follow these steps only when you have a `MTAC-LORA-H` (v1.5)
+card which uses the SPI interface.
 
 1. Log in using SSH or use the USB to serial interface.
 
@@ -114,39 +156,45 @@ use the `mlinux-base*.jffs2` image!**
    The build recipe of the `.ipk` package can be found at:
    [https://github.com/brocaar/loraserver-yocto](https://github.com/brocaar/loraserver-yocto).
 
-### mLinux / AEP: Setting up the LoRa Gateway Bridge
+#### mLinux with MTAC-LORA-915 or MTAC-LORA-868
+
+**Important:** Follow these steps only when you have a `MTAC-LORA` (v1.0)
+card which uses the FTDI interface.
 
 1. Log in using SSH or use the USB to serial interface.
 
-2. Download the latest `lora-gateway-bridge` `.ipk` package from:
-   [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
-   Example (assuming you want to install `lora-gateway-bridge_2.2.0-r2.0_arm926ejste.ipk`):
+2. Download the latest `lora-packet-forwarder-usb` `*.ipk` package
+   from [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
+   Example:
    ```text
-   admin@mtcdt:~# wget https://dl.loraserver.io/multitech/conduit/lora-gateway-bridge_2.2.0-r2.0_arm926ejste.ipk
+   root@mtcdt:~# wget https://dl.loraserver.io/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
    ```
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
    ```text
-   admin@mtcdt:~# opkg install lora-gateway-bridge_2.2.0-r2.0_arm926ejste.ipk
+   root@mtcdt:~# opkg install lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
    ```
 
-4. Update the MQTT connection details so that LoRa Gateway Bridge is able to
-   connect to your MQTT broker. You will find the configuration file in the
-   `/var/config/lora-gateway-bridge` directory.
-
-5. Start LoRa Gateway Bridge and ensure it will be started on boot.
+4. Start the packet-forwarder and enable it to start on boot. 
    Example:
    ```text
-   uadmin@mtcdt:~# /etc/init.d/lora-gateway-bridge start
-   uadmin@mtcdt:~# update-rc.d lora-gateway-bridge defaults
+   root@mtcdt:~# /etc/init.d/lora-packet-forwarder-usb start
+   root@mtcdt:~# /update-rc.d lora-packet-forwarder-usb defaults
    ```
 
-6. Be sure to add the gateway to the lora-app-server.
-   See [Gateways](/lora-app-server/use/gateways/).
+   **Note:** on the first start of the packet-forwarder it will detect for you
+   the version of your `MTAC-LORA` cards (868 or 915). It will then automatically
+   generate the correct configuration for you.
 
-### AEP: Setting up the packet-forwarder
+   Configuration is stored in `/var/config/lora-packet-forwarder-usb` directory
+   and can be modified after the first start.
+
+   The build recipe of the `.ipk` package can be found at:
+   [https://github.com/brocaar/loraserver-yocto](https://github.com/brocaar/loraserver-yocto).
+
+#### AEP: Setting up the packet-forwarder
 
 Use the web interface to set up the Conduit's packet forwarder.  By default, 
 the connection will not be “secure” over https because the device uses a self-
