@@ -113,6 +113,20 @@ or EU band configuration, based on the used hardware. Please refer to the
 [Multitech documentation](http://www.multitech.net/developer/software/lora/aep-lora-packet-forwarder/)
 for alternative configurations.
 
+To find out if you should follow the `MTAC-LORA-H` or `MTAC-LORA`
+instructions, you could use the following commands:
+
+```bash
+# mCard in ap1 slot
+$ mts-io-sysfs show ap1/product-id
+
+# mCard in ap2 slot
+$ mts-io-sysfs show ap2/product-id
+
+# detect first mCard
+$ mts-io-sysfs show lora/product-id
+```
+
 #### mLinux with MTAC-LORA-H-915 or MTAC-LORA-H-868
 
 **Important:** Follow these steps only when you have a `MTAC-LORA-H` (v1.5)
@@ -141,7 +155,7 @@ card which uses the SPI interface.
    Example:
    ```text
    root@mtcdt:~# /etc/init.d/lora-packet-forwarder-ap1 start
-   root@mtcdt:~# /update-rc.d lora-packet-forwarder-ap1 defaults
+   root@mtcdt:~# update-rc.d lora-packet-forwarder-ap1 defaults
    ```
 
    **Note:** on the first start of the packet-forwarder it will detect for you
@@ -181,7 +195,7 @@ card which uses the FTDI interface.
    Example:
    ```text
    root@mtcdt:~# /etc/init.d/lora-packet-forwarder-usb start
-   root@mtcdt:~# /update-rc.d lora-packet-forwarder-usb defaults
+   root@mtcdt:~# update-rc.d lora-packet-forwarder-usb defaults
    ```
 
    **Note:** on the first start of the packet-forwarder it will detect for you
