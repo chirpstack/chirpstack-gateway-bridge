@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brocaar/lorawan"
+
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/eclipse/paho.mqtt.golang"
 	. "github.com/smartystreets/goconvey/convey"
@@ -32,6 +34,7 @@ func TestBackend(t *testing.T) {
 					DownlinkTopicTemplate: "gateway/{{ .MAC }}/tx",
 					StatsTopicTemplate:    "gateway/{{ .MAC }}/stats",
 					AckTopicTemplate:      "gateway/{{ .MAC }}/ack",
+					ConfigTopicTemplate:   "gateway/{{ .MAC }}/config",
 				},
 			)
 			So(err, ShouldBeNil)
@@ -70,7 +73,7 @@ func TestBackend(t *testing.T) {
 			})
 
 			Convey("Given the backend is subscribed to a gateway MAC", func() {
-				err := backend.SubscribeGatewayTX([8]byte{1, 2, 3, 4, 5, 6, 7, 8})
+				err := backend.SubscribeGatewayTopics([8]byte{1, 2, 3, 4, 5, 6, 7, 8})
 				So(err, ShouldBeNil)
 
 				Convey("When publishing a TXPacket from the MQTT client", func() {
@@ -89,6 +92,23 @@ func TestBackend(t *testing.T) {
 					Convey("Then the packet is consumed by the backend", func() {
 						p := <-backend.TXPacketChan()
 						So(p, ShouldResemble, txPacket)
+					})
+				})
+
+				Convey("When publishing a config packet from the MQTT client", func() {
+					configPacket := gw.GatewayConfigPacket{
+						MAC:     lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+						Version: "12345",
+					}
+					b, err := json.Marshal(configPacket)
+					So(err, ShouldBeNil)
+					token := c.Publish("gateway/0102030405060708/config", 0, false, b)
+					token.Wait()
+					So(token.Error(), ShouldBeNil)
+
+					Convey("Then the packet is consumed by the backend", func() {
+						p := <-backend.ConfigPacketChan()
+						So(p, ShouldResemble, configPacket)
 					})
 				})
 			})

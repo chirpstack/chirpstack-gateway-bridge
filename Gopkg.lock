@@ -2,10 +2,10 @@
 
 
 [[projects]]
+  branch = "gw_config"
   name = "github.com/brocaar/loraserver"
   packages = ["api/gw"]
-  revision = "b2873c1be4a6fbbee0a2a66ab9b1777886c821fe"
-  version = "0.23.2"
+  revision = "22c51d95e732c29f5fc1cf8d07b2b5ede5c53deb"
 
 [[projects]]
   branch = "master"
@@ -30,18 +30,6 @@
   packages = ["."]
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   version = "v1.4.7"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/golang/protobuf"
-  packages = [
-    "proto",
-    "ptypes",
-    "ptypes/any",
-    "ptypes/duration",
-    "ptypes/timestamp"
-  ]
-  revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
 
 [[projects]]
   branch = "master"
@@ -183,14 +171,7 @@
 [[projects]]
   name = "golang.org/x/net"
   packages = [
-    "context",
-    "http2",
-    "http2/hpack",
-    "idna",
-    "internal/timeseries",
-    "lex/httplex",
     "proxy",
-    "trace",
     "websocket"
   ]
   revision = "8663ed5da4fd087c3cfb99a996e628b72e2f0948"
@@ -208,57 +189,14 @@
   branch = "master"
   name = "golang.org/x/text"
   packages = [
-    "collate",
-    "collate/build",
-    "internal/colltab",
     "internal/gen",
-    "internal/tag",
     "internal/triegen",
     "internal/ucd",
-    "language",
-    "secure/bidirule",
     "transform",
-    "unicode/bidi",
     "unicode/cldr",
-    "unicode/norm",
-    "unicode/rangetable"
+    "unicode/norm"
   ]
   revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
-
-[[projects]]
-  branch = "master"
-  name = "google.golang.org/genproto"
-  packages = ["googleapis/rpc/status"]
-  revision = "a8101f21cf983e773d0c1133ebc5424792003214"
-
-[[projects]]
-  name = "google.golang.org/grpc"
-  packages = [
-    ".",
-    "balancer",
-    "balancer/base",
-    "balancer/roundrobin",
-    "codes",
-    "connectivity",
-    "credentials",
-    "encoding",
-    "grpclb/grpc_lb_v1/messages",
-    "grpclog",
-    "internal",
-    "keepalive",
-    "metadata",
-    "naming",
-    "peer",
-    "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
-    "stats",
-    "status",
-    "tap",
-    "transport"
-  ]
-  revision = "7cea4cc846bcf00cbb27595b07da5de875ef7de9"
-  version = "v1.9.1"
 
 [[projects]]
   branch = "v2"
@@ -269,6 +207,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fd5f0eabdc0685f9d7ccbd291063410eab55789287300307b378181176ea20fd"
+  inputs-digest = "27e3fca78e86f81bb849a8e18bb9ca45763d7daff990206c813c64f388425367"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -1,6 +1,9 @@
 package config
 
-import "github.com/brocaar/lora-gateway-bridge/internal/backend/mqttpubsub"
+import (
+	"github.com/brocaar/lora-gateway-bridge/internal/backend/mqttpubsub"
+	"github.com/brocaar/lora-gateway-bridge/internal/gateway"
+)
 
 // Config defines the configuration structure.
 type Config struct {
@@ -11,6 +14,8 @@ type Config struct {
 	PacketForwarder struct {
 		UDPBind      string `mapstructure:"udp_bind"`
 		SkipCRCCheck bool   `mapstructure:"skip_crc_check"`
+
+		Configuration []gateway.Configuration `mapstructure:"configuration"`
 	} `mapstructure:"packet_forwarder"`
 
 	Backend struct {

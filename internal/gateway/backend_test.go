@@ -2,7 +2,11 @@ package gateway
 
 import (
 	"encoding/base64"
+	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -14,7 +18,19 @@ import (
 
 func TestBackend(t *testing.T) {
 	Convey("Given a new Backend binding at a random port", t, func() {
-		backend, err := NewBackend("127.0.0.1:0", nil, nil, false)
+		tempDir, err := ioutil.TempDir("", "test")
+		So(err, ShouldBeNil)
+		defer os.RemoveAll(tempDir)
+
+		backend, err := NewBackend("127.0.0.1:0", nil, nil, false, []Configuration{
+			{
+				MAC:            lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+				BaseFile:       filepath.Join("test/test.json"),
+				OutputFile:     filepath.Join(tempDir, "out.json"),
+				RestartCommand: "touch " + filepath.Join(tempDir, "restart"),
+				version:        "12345",
+			},
+		})
 		So(err, ShouldBeNil)
 
 		backendAddr, err := net.ResolveUDPAddr("udp", backend.conn.LocalAddr().String())
@@ -152,6 +168,7 @@ func TestBackend(t *testing.T) {
 					Convey("Then the gateway stats are returned by the stats channel", func() {
 						stats := <-backend.StatsChan()
 						So([8]byte(stats.MAC), ShouldEqual, [8]byte{1, 2, 3, 4, 5, 6, 7, 8})
+						So(stats.ConfigVersion, ShouldEqual, "12345")
 					})
 				})
 			})
@@ -445,342 +462,393 @@ func TestBackend(t *testing.T) {
 				})
 			})
 		})
-	})
-}
 
-func TestNewGatewayStatPacket(t *testing.T) {
-	Convey("Given a (Semtech) Stat struct and gateway MAC with GPS data", t, func() {
-		latitude := float64(1.234)
-		longitude := float64(2.123)
-		altitude := int32(123)
-
-		now := time.Now().UTC()
-		stat := Stat{
-			Time: ExpandedTime(now),
-			Lati: &latitude,
-			Long: &longitude,
-			Alti: &altitude,
-			RXNb: 1,
-			RXOK: 2,
-			RXFW: 3,
-			ACKR: 33.3,
-			DWNb: 4,
-			TXNb: 3,
-		}
-		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
-
-		Convey("When calling newGatewayStatsPacket", func() {
-			latitude := float64(1.234)
-			longitude := float64(2.123)
-			altitude := float64(123)
-
-			gwStats := newGatewayStatsPacket(mac, stat)
-			Convey("Then all fields are set correctly", func() {
-				So(gwStats, ShouldResemble, gw.GatewayStatsPacket{
-					Time:                now,
-					MAC:                 mac,
-					Latitude:            &latitude,
-					Longitude:           &longitude,
-					Altitude:            &altitude,
-					RXPacketsReceived:   1,
-					RXPacketsReceivedOK: 2,
-					TXPacketsReceived:   4,
-					TXPacketsEmitted:    3,
-				})
-			})
-		})
-	})
-
-	Convey("Given a (Semtech) Stat struct and gateway MAC without GPS data", t, func() {
-		now := time.Now().UTC()
-		stat := Stat{
-			Time: ExpandedTime(now),
-			RXNb: 1,
-			RXOK: 2,
-			RXFW: 3,
-			ACKR: 33.3,
-			DWNb: 4,
-			TXNb: 3,
-		}
-		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
-
-		Convey("When calling newGatewayStatsPacket", func() {
-			gwStats := newGatewayStatsPacket(mac, stat)
-			Convey("Then all fields are set correctly", func() {
-				So(gwStats, ShouldResemble, gw.GatewayStatsPacket{
-					Time:                now,
-					MAC:                 mac,
-					RXPacketsReceived:   1,
-					RXPacketsReceivedOK: 2,
-					TXPacketsReceived:   4,
-					TXPacketsEmitted:    3,
-				})
-			})
-		})
-	})
-}
-
-func TestNewTXPKFromTXPacket(t *testing.T) {
-	internalTS := uint32(12345)
-
-	Convey("Given a TXPacket", t, func() {
-		timeSinceGPSEpoch := gw.Duration(time.Second)
-
-		txPacket := gw.TXPacketBytes{
-			TXInfo: gw.TXInfo{
-				Timestamp:         &internalTS,
-				TimeSinceGPSEpoch: &timeSinceGPSEpoch,
-				Frequency:         868100000,
-				Power:             14,
-				CodeRate:          "4/5",
-				DataRate: band.DataRate{
-					Modulation:   band.LoRaModulation,
-					SpreadFactor: 9,
-					Bandwidth:    250,
-				},
-				Board:   1,
-				Antenna: 2,
-			},
-			PHYPayload: []byte{1, 2, 3, 4},
-		}
-
-		Convey("Then te expected TXPK is returned (with default IPol", func() {
-			tmms := int64(time.Second / time.Millisecond)
-			txpk, err := newTXPKFromTXPacket(txPacket)
-			So(err, ShouldBeNil)
-			So(txpk, ShouldResemble, TXPK{
-				Imme: false,
-				Tmst: &internalTS,
-				Tmms: &tmms,
-				Freq: 868.1,
-				Powe: 14,
-				Modu: "LORA",
-				DatR: DatR{
-					LoRa: "SF9BW250",
-				},
-				CodR: "4/5",
-				Size: 4,
-				Data: "AQIDBA==",
-				IPol: true,
-				Brd:  1,
-				Ant:  2,
-			})
-		})
-
-		Convey("Given IPol is requested to false", func() {
-			f := false
-			txPacket.TXInfo.IPol = &f
-
-			Convey("Then the TXPK IPol is set to false", func() {
-				txpk, err := newTXPKFromTXPacket(txPacket)
-				So(err, ShouldBeNil)
-				So(txpk.IPol, ShouldBeFalse)
-			})
-		})
-	})
-}
-
-func TestNewRXPacketFromRXPK(t *testing.T) {
-	Convey("Given a RXPK and gateway MAC", t, func() {
-		now := time.Now().UTC()
-		nowCompact := CompactTime(now)
-		tmms := int64(time.Second / time.Millisecond)
-		timeSinceGPSEpoch := gw.Duration(time.Second)
-
-		rxpk := RXPK{
-			Time: &nowCompact,
-			Tmms: &tmms,
-			Tmst: 708016819,
-			Freq: 868.5,
-			Chan: 2,
-			RFCh: 1,
-			Stat: 1,
-			Modu: "LORA",
-			DatR: DatR{LoRa: "SF7BW125"},
-			CodR: "4/5",
-			RSSI: -51,
-			LSNR: 7,
-			Size: 16,
-			Data: base64.StdEncoding.EncodeToString([]byte{1, 2, 3, 4}),
-		}
-		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
-
-		Convey("When calling newRXPacketsFromRXPK without RSig field", func() {
-			rxPackets, err := newRXPacketsFromRXPK(mac, rxpk)
-			So(err, ShouldBeNil)
-			So(rxPackets, ShouldHaveLength, 1)
-
-			Convey("Then all fields are set correctly", func() {
-				So(rxPackets[0].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
-
-				So(rxPackets[0].RXInfo, ShouldResemble, gw.RXInfo{
-					MAC:               mac,
-					Time:              &now,
-					TimeSinceGPSEpoch: &timeSinceGPSEpoch,
-					Timestamp:         708016819,
-					Frequency:         868500000,
-					Channel:           2,
-					RFChain:           1,
-					CRCStatus:         1,
-					DataRate: band.DataRate{
-						Modulation:   band.LoRaModulation,
-						SpreadFactor: 7,
-						Bandwidth:    125,
-					},
-					CodeRate: "4/5",
-					RSSI:     -51,
-					LoRaSNR:  7,
-					Size:     16,
-				})
-			})
-		})
-
-		Convey("When calling newRXPacketsFromRXPK with multiple RSig elements", func() {
-			rxpk.Brd = 2
-			rxpk.RSig = []RSig{
+		Convey("Given a set of configuration tests", func() {
+			testTable := []struct {
+				Name                    string
+				ConfigurationPacket     gw.GatewayConfigPacket
+				ExpectedRadios          [2]map[string]interface{}
+				ExpectedLoRaStd         map[string]interface{}
+				ExpectedFSK             map[string]interface{}
+				ExpectedMultiSFChannels []map[string]interface{}
+			}{
 				{
-					Ant:   1,
-					Chan:  3,
-					LSNR:  1.5,
-					RSSIC: -50,
+					Name: "EU 868 band config (minimal configuration)",
+					ConfigurationPacket: gw.GatewayConfigPacket{
+						MAC: lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+						Channels: []gw.Channel{
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        868100000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        868300000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        868500000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+						},
+					},
+					ExpectedRadios: [2]map[string]interface{}{
+						{
+							"enable": true,
+							"freq":   868500000,
+						},
+						{
+							"enable": false,
+						},
+					},
+					ExpectedLoRaStd: map[string]interface{}{
+						"enable": false,
+					},
+					ExpectedFSK: map[string]interface{}{
+						"enable": false,
+					},
+					ExpectedMultiSFChannels: []map[string]interface{}{
+						{
+							"enable": true,
+							"if":     -400000,
+							"radio":  0,
+						},
+						{
+							"enable": true,
+							"if":     -200000,
+							"radio":  0,
+						},
+						{
+							"enable": true,
+							"if":     0,
+							"radio":  0,
+						},
+						{
+							"enable": false,
+						},
+					},
 				},
 				{
-					Ant:   2,
-					Chan:  3,
-					LSNR:  2,
-					RSSIC: -30,
+					Name: "EU 868 band config + CFList + LoRa single-SF + FSK",
+					ConfigurationPacket: gw.GatewayConfigPacket{
+						MAC: lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+						Channels: []gw.Channel{
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        868100000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        868300000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        868500000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        867100000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        867300000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        867500000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        867700000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        867900000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10, 11, 12},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        868300000,
+								Bandwidth:        250,
+								SpreadingFactors: []int{7},
+							},
+							{
+								Modulation: band.FSKModulation,
+								Frequency:  868800000,
+								Bandwidth:  125,
+								Bitrate:    50000,
+							},
+						},
+					},
+					ExpectedRadios: [2]map[string]interface{}{
+						{
+							"enable": true,
+							"freq":   867500000,
+						},
+						{
+							"enable": true,
+							"freq":   868500000,
+						},
+					},
+					ExpectedLoRaStd: map[string]interface{}{
+						"bandwidth":     250000,
+						"enable":        true,
+						"if":            -200000,
+						"radio":         1,
+						"spread_factor": 7,
+					},
+					ExpectedFSK: map[string]interface{}{
+						"bandwidth": 125,
+						"datarate":  50000,
+						"enable":    true,
+						"if":        300000,
+						"radio":     1,
+					},
+					ExpectedMultiSFChannels: []map[string]interface{}{
+						{
+							"enable": true,
+							"if":     -400000,
+							"radio":  0,
+						},
+						{
+							"enable": true,
+							"if":     -200000,
+							"radio":  0,
+						},
+						{
+							"enable": true,
+							"if":     0,
+							"radio":  0,
+						},
+						{
+							"enable": true,
+							"if":     200000,
+							"radio":  0,
+						},
+						{
+							"enable": true,
+							"if":     400000,
+							"radio":  0,
+						},
+						{
+							"enable": true,
+							"if":     -400000,
+							"radio":  1,
+						},
+						{
+							"enable": true,
+							"if":     -200000,
+							"radio":  1,
+						},
+						{
+							"enable": true,
+							"if":     0,
+							"radio":  1,
+						},
+					},
+				},
+				{
+					Name: "US band (0-7 + 64)",
+					ConfigurationPacket: gw.GatewayConfigPacket{
+						MAC: lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+						Channels: []gw.Channel{
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        902300000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        902500000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        902700000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        902900000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        903100000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        903300000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        903500000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        903700000,
+								Bandwidth:        125,
+								SpreadingFactors: []int{7, 8, 9, 10},
+							},
+							{
+								Modulation:       band.LoRaModulation,
+								Frequency:        903000000,
+								Bandwidth:        500,
+								SpreadingFactors: []int{8},
+							},
+						},
+					},
+					ExpectedRadios: [2]map[string]interface{}{
+						{
+							"enable": true,
+							"freq":   902700000,
+						},
+						{
+							"enable": true,
+							"freq":   903700000,
+						},
+					},
+					ExpectedLoRaStd: map[string]interface{}{
+						"enable":        true,
+						"radio":         0,
+						"if":            300000,
+						"bandwidth":     500000,
+						"spread_factor": 8,
+					},
+					ExpectedFSK: map[string]interface{}{
+						"enable": false,
+					},
+					ExpectedMultiSFChannels: []map[string]interface{}{
+						{
+							"enable": true,
+							"radio":  0,
+							"if":     -400000,
+						},
+						{
+							"enable": true,
+							"radio":  0,
+							"if":     -200000,
+						},
+						{
+							"enable": true,
+							"radio":  0,
+							"if":     0,
+						},
+						{
+							"enable": true,
+							"radio":  0,
+							"if":     200000,
+						},
+						{
+							"enable": true,
+							"radio":  0,
+							"if":     400000,
+						},
+						{
+							"enable": true,
+							"radio":  1,
+							"if":     -400000,
+						},
+						{
+							"enable": true,
+							"radio":  1,
+							"if":     -200000,
+						},
+						{
+							"enable": true,
+							"radio":  1,
+							"if":     0,
+						},
+					},
 				},
 			}
-			rxPackets, err := newRXPacketsFromRXPK(mac, rxpk)
-			So(err, ShouldBeNil)
-			So(rxPackets, ShouldHaveLength, 2)
 
-			Convey("Then all fields are set correctly", func() {
-				So(rxPackets[0].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
-				So(rxPackets[0].RXInfo, ShouldResemble, gw.RXInfo{
-					MAC:               mac,
-					Time:              &now,
-					TimeSinceGPSEpoch: &timeSinceGPSEpoch,
-					Timestamp:         708016819,
-					Frequency:         868500000,
-					Channel:           3,
-					RFChain:           1,
-					CRCStatus:         1,
-					DataRate: band.DataRate{
-						Modulation:   band.LoRaModulation,
-						SpreadFactor: 7,
-						Bandwidth:    125,
-					},
-					CodeRate: "4/5",
-					RSSI:     -50,
-					LoRaSNR:  1.5,
-					Size:     16,
-					Antenna:  1,
-					Board:    2,
-				})
+			for i, test := range testTable {
+				Convey(fmt.Sprintf("Testing: %s [%d]", test.Name, i), func() {
+					So(backend.ApplyConfiguration(test.ConfigurationPacket), ShouldBeNil)
 
-				So(rxPackets[1].PHYPayload, ShouldResemble, []byte{1, 2, 3, 4})
-				So(rxPackets[1].RXInfo, ShouldResemble, gw.RXInfo{
-					MAC:               mac,
-					Time:              &now,
-					TimeSinceGPSEpoch: &timeSinceGPSEpoch,
-					Timestamp:         708016819,
-					Frequency:         868500000,
-					Channel:           3,
-					RFChain:           1,
-					CRCStatus:         1,
-					DataRate: band.DataRate{
-						Modulation:   band.LoRaModulation,
-						SpreadFactor: 7,
-						Bandwidth:    125,
-					},
-					CodeRate: "4/5",
-					RSSI:     -30,
-					LoRaSNR:  2,
-					Size:     16,
-					Antenna:  2,
-					Board:    2,
-				})
-			})
-		})
-	})
-}
+					if len(test.ExpectedRadios) == 0 {
+						Convey("Then the packet-forwarder restart command has not been invoked", func() {
+							_, err := os.Stat(filepath.Join(tempDir, "restart"))
+							So(err, ShouldNotBeNil)
+						})
+						return
+					}
 
-func TestGatewaysCallbacks(t *testing.T) {
-	Convey("Given a new gateways registry", t, func() {
-		gw := gateways{
-			gateways: make(map[lorawan.EUI64]gateway),
-		}
+					Convey("Then the packet-forwarder restart command has been invokend", func() {
+						_, err := os.Stat(filepath.Join(tempDir, "restart"))
+						So(err, ShouldBeNil)
+					})
 
-		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
+					Convey("Then the new configuration has been written", func() {
+						pfConfig, err := loadConfigFile(filepath.Join(tempDir, "out.json"))
+						So(err, ShouldBeNil)
 
-		Convey("Given a onNew and onDelete callback", func() {
-			var onNewCalls int
-			var onDeleteCalls int
+						Convey("Then the radios are configured as expected", func() {
+							for i, expectedConfig := range test.ExpectedRadios {
+								radio := pfConfig.SX1301Conf[fmt.Sprintf("radio_%d", i)].(map[string]interface{})
+								for k, v := range expectedConfig {
+									So(radio[k], ShouldEqual, v)
+								}
+							}
+						})
 
-			gw.onNew = func(mac lorawan.EUI64) error {
-				onNewCalls = onNewCalls + 1
-				return nil
-			}
+						Convey("Then the LoRa Std channel is configured as expected", func() {
+							channel := pfConfig.SX1301Conf["chan_Lora_std"].(map[string]interface{})
+							for k, v := range test.ExpectedLoRaStd {
+								So(channel[k], ShouldEqual, v)
+							}
+						})
 
-			gw.onDelete = func(mac lorawan.EUI64) error {
-				onDeleteCalls = onDeleteCalls + 1
-				return nil
-			}
+						Convey("Then the FSK channel is configured as expected", func() {
+							channel := pfConfig.SX1301Conf["chan_FSK"].(map[string]interface{})
+							for k, v := range test.ExpectedFSK {
+								So(channel[k], ShouldEqual, v)
+							}
+						})
 
-			Convey("When adding a new gateway", func() {
-				So(gw.set(mac, gateway{}), ShouldBeNil)
-
-				Convey("Then onNew callback is called once", func() {
-					So(onNewCalls, ShouldEqual, 1)
-				})
-
-				Convey("When updating the same gateway", func() {
-					So(gw.set(mac, gateway{}), ShouldBeNil)
-
-					Convey("Then onNew has not been called", func() {
-						So(onNewCalls, ShouldEqual, 1)
+						Convey("Then the multi-sf LoRa channels are configured as expected", func() {
+							for i, expectedConfig := range test.ExpectedMultiSFChannels {
+								channel, ok := pfConfig.SX1301Conf[fmt.Sprintf("chan_multiSF_%d", i)].(map[string]interface{})
+								So(ok, ShouldBeTrue)
+								for k, v := range expectedConfig {
+									So(channel[k], ShouldEqual, v)
+								}
+							}
+						})
 					})
 				})
-
-				Convey("When cleaning up the gateways", func() {
-					So(gw.cleanup(), ShouldBeNil)
-
-					Convey("Then onDelete has been called once", func() {
-						So(onDeleteCalls, ShouldEqual, 1)
-					})
-				})
-			})
-		})
-	})
-}
-
-func TestNewTXAckFromTXPKACK(t *testing.T) {
-	Convey("Given a TXPKACK with error and a gateway mac", t, func() {
-		mac := lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8}
-		ack := TXPKACK{
-			Error: gw.ErrTooEarly,
-		}
-
-		Convey("Then newTXAckFromTXPKACK returns the expected value", func() {
-			txAck := newTXAckFromTXPKACK(mac, 12345, ack)
-			So(txAck, ShouldResemble, gw.TXAck{
-				MAC:   mac,
-				Token: 12345,
-				Error: gw.ErrTooEarly,
-			})
-		})
-
-		Convey("Given the TXPKACK does not contain an error", func() {
-			ack.Error = "NONE"
-
-			Convey("Then newTXAckFromTXPKACK returns the expected value", func() {
-				txAck := newTXAckFromTXPKACK(mac, 12345, ack)
-				So(txAck, ShouldResemble, gw.TXAck{
-					MAC:   mac,
-					Token: 12345,
-				})
-			})
+			}
 		})
 	})
 }

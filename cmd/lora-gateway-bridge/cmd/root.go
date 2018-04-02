@@ -3,19 +3,12 @@ package cmd
 import (
 	"bytes"
 	"io/ioutil"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/brocaar/lora-gateway-bridge/internal/backend/mqttpubsub"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
-	"github.com/brocaar/lora-gateway-bridge/internal/gateway"
-	"github.com/brocaar/lorawan"
 )
 
 var cfgFile string // config file
@@ -25,7 +18,7 @@ var rootCmd = &cobra.Command{
 	Use:   "lora-gateway-bridge",
 	Short: "abstracts the packet_forwarder protocol into JSON over MQTT",
 	Long: `LoRa Gateway Bridge abstracts the packet_forwarder protocol into JSON over MQTT
-	> documentation & support: https://docs.loraserver.io/lora-gateway-bridge
+	> documentation & support: https://www.loraserver.io/lora-gateway-bridge
 	> source & copyright information: https://github.com/brocaar/lora-gateway-bridge`,
 	RunE: run,
 }
@@ -83,6 +76,7 @@ func init() {
 	viper.SetDefault("backend.mqtt.downlink_topic_template", "gateway/{{ .MAC }}/tx")
 	viper.SetDefault("backend.mqtt.stats_topic_template", "gateway/{{ .MAC }}/stats")
 	viper.SetDefault("backend.mqtt.ack_topic_template", "gateway/{{ .MAC }}/ack")
+	viper.SetDefault("backend.mqtt.config_topic_template", "gateway/{{ .MAC }}/config")
 	viper.SetDefault("backend.mqtt.server", "tcp://127.0.0.1:1883")
 	viper.SetDefault("backend.mqtt.clean_session", true)
 
@@ -96,80 +90,6 @@ func Execute(v string) {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func run(cmd *cobra.Command, args []string) error {
-	log.SetLevel(log.Level(uint8(config.C.General.LogLevel)))
-
-	log.WithFields(log.Fields{
-		"version": version,
-		"docs":    "https://docs.loraserver.io/lora-gateway-bridge/",
-	}).Info("starting LoRa Gateway Bridge")
-
-	var pubsub *mqttpubsub.Backend
-	for {
-		var err error
-		pubsub, err = mqttpubsub.NewBackend(config.C.Backend.MQTT)
-		if err == nil {
-			break
-		}
-
-		log.Errorf("could not setup mqtt backend, retry in 2 seconds: %s", err)
-		time.Sleep(2 * time.Second)
-	}
-	defer pubsub.Close()
-
-	onNew := func(mac lorawan.EUI64) error {
-		return pubsub.SubscribeGatewayTX(mac)
-	}
-
-	onDelete := func(mac lorawan.EUI64) error {
-		return pubsub.UnSubscribeGatewayTX(mac)
-	}
-
-	gw, err := gateway.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.SkipCRCCheck)
-	if err != nil {
-		log.Fatalf("could not setup gateway backend: %s", err)
-	}
-	defer gw.Close()
-
-	go func() {
-		for rxPacket := range gw.RXPacketChan() {
-			if err := pubsub.PublishGatewayRX(rxPacket.RXInfo.MAC, rxPacket); err != nil {
-				log.Errorf("could not publish RXPacket: %s", err)
-			}
-		}
-	}()
-
-	go func() {
-		for stats := range gw.StatsChan() {
-			if err := pubsub.PublishGatewayStats(stats.MAC, stats); err != nil {
-				log.Errorf("could not publish GatewayStatsPacket: %s", err)
-			}
-		}
-	}()
-
-	go func() {
-		for txPacket := range pubsub.TXPacketChan() {
-			if err := gw.Send(txPacket); err != nil {
-				log.Errorf("could not send TXPacket: %s", err)
-			}
-		}
-	}()
-
-	go func() {
-		for txAck := range gw.TXAckChan() {
-			if err := pubsub.PublishGatewayTXAck(txAck.MAC, txAck); err != nil {
-				log.Errorf("could not publish TXAck: %s", err)
-			}
-		}
-	}()
-
-	sigChan := make(chan os.Signal)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	log.WithField("signal", <-sigChan).Info("signal received")
-	log.Warning("shutting down server")
-	return nil
 }
 
 func initConfig() {
@@ -199,5 +119,11 @@ func initConfig() {
 
 	if err := viper.Unmarshal(&config.C); err != nil {
 		log.WithError(err).Fatal("unmarshal config error")
+	}
+
+	for i := range config.C.PacketForwarder.Configuration {
+		if err := config.C.PacketForwarder.Configuration[i].MAC.UnmarshalText([]byte(config.C.PacketForwarder.Configuration[i].MACString)); err != nil {
+			log.WithError(err).Fatal("unmarshal config error")
+		}
 	}
 }

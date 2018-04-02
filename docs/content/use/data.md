@@ -130,3 +130,85 @@ Possible error values are:
 * `TX_FREQ`: Rejected because requested frequency is not supported by TX RF chain
 * `TX_POWER`: Rejected because requested power is not supported by gateway
 * `GPS_UNLOCKED`: Rejected because GPS is unlocked, so GPS timestamp cannot be used
+
+
+## gateway/[mac]/config
+
+Topic for publishing configuration to the gateway. Example payload:
+
+```json
+{
+    "mac": "1dee08d0b691d149",
+    "version": "1.2.3",
+    "channels": [
+        {
+            "modulation": "LORA",
+            "frequency": 868100000,
+            "bandwidth": 125,
+            "spreadingfactors": [7, 8, 9, 10, 11, 12]
+        },
+        {
+            "modulation": "LORA",
+            "frequency": 868300000,
+            "bandwidth": 125,
+            "spreadingfactors": [7, 8, 9, 10, 11, 12]
+        },
+        {
+            "modulation": "LORA",
+            "frequency": 868500000,
+            "bandwidth": 125,
+            "spreadingfactors": [7, 8, 9, 10, 11, 12]
+        },
+        {
+            "modulation": "LORA",
+            "frequency": 867100000,
+            "bandwidth": 125,
+            "spreadingfactors": [7, 8, 9, 10, 11, 12]
+        },
+        {
+            "modulation": "LORA",
+            "frequency": 867300000,
+            "bandwidth": 125,
+            "spreadingfactors": [7, 8, 9, 10, 11, 12]
+        },
+        {
+            "modulation": "LORA",
+            "frequency": 867500000,
+            "bandwidth": 125,
+            "spreadingfactors": [7, 8, 9, 10, 11, 12]
+        },
+        {
+            "modulation": "LORA",
+            "frequency": 867700000,
+            "bandwidth": 125,
+            "spreadingfactors": [7, 8, 9, 10, 11, 12]
+        },
+        {
+            "modulation": "LORA",
+            "frequency": 867900000,
+            "bandwidth": 125,
+            "spreadingfactors": [7, 8, 9, 10, 11, 12]
+        },
+        {
+            "modulation": "LORA",
+            "frequency": 868300000,
+            "bandwidth": 250,
+            "spreadingfactors": [7]
+        },
+        {
+            "modulation": "FSK",
+            "frequency": 868800000,
+            "bandwidth": 125,
+            "bitrate": 50000
+        }
+    ]
+}
+```
+
+The LoRa Gateway Bridge assumes this configuation will be applied to an 8-channel
+gateway (+ 1 single-SF LoRa and 1 FSK channel). Make sure that the channel-plan
+fits within the bandwidth of both radios of the gateway.
+
+**Note:** in order to configure the packet-forwarder over MQTT, don't forget
+to configure at least one `[[packet_forwarder.configuration]]` section in the
+[configuration]({{<ref "install/config.md">}}) file.

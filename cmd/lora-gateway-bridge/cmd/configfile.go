@@ -32,6 +32,41 @@ udp_bind = "{{ .PacketForwarder.UDPBind }}"
 skip_crc_check = {{ .PacketForwarder.SkipCRCCheck }}
 
 
+  # # Managed packet-forwarder configuration.
+  # #
+  # # By configuring one or multiple managed packet-forwarder sections, the
+  # # LoRa Gateway Bridge updates the configuration when the backend receives
+  # # a configuration change, after which it will restart the packet-forwarder.
+  # [[packet_forwarder.configuration]]
+  # # Gateway MAC.
+  # #
+  # # The LoRa Gateway Bridge will only apply the configuration updates for this
+  # # gateway MAC.
+  # mac="0102030405060708"
+
+  # # Base configuration file.
+  # #
+  # # This file will be used as base-configuration and will not be overwritten on
+  # # a configuration update. This file needs to exist and contains the base
+  # # configuration and vendor specific
+  # base_file="/etc/lora-packet-forwarder/global_conf.json"
+
+  # # Output configuration file.
+  # #
+  # # This will be the final configuration for the packet-forwarder, containing
+  # # a merged version of the base configuration + the requested configuration
+  # # update.
+  # # Warning: this file will be overwritten on a configuration update!
+  # output_file="/etc/lora-packet-forwarder/local_conf.json"
+
+  # # Restart command.
+  # #
+  # # This command is issued by the LoRa Gateway Bridge on a configuration
+  # # change. Make sure the LoRa Gateway Bridge process has sufficient
+  # # permissions to execute this command.
+  # restart_command="/etc/init.d/lora-packet-forwarder restart"
+
+
 # Configuration for the MQTT backend.
 [backend.mqtt]
 # MQTT topic templates for the different MQTT topics.
@@ -47,6 +82,7 @@ uplink_topic_template="{{ .Backend.MQTT.UplinkTopicTemplate }}"
 downlink_topic_template="{{ .Backend.MQTT.DownlinkTopicTemplate }}"
 stats_topic_template="{{ .Backend.MQTT.StatsTopicTemplate }}"
 ack_topic_template="{{ .Backend.MQTT.AckTopicTemplate }}"
+config_topic_template="{{ .Backend.MQTT.ConfigTopicTemplate }}"
 
 # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
 server="{{ .Backend.MQTT.Server }}"

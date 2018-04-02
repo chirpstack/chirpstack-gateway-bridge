@@ -3,14 +3,18 @@
 package gateway
 
 import (
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/band"
 )
 
 // PacketType defines the packet type.
@@ -456,4 +460,184 @@ func GetPacketType(data []byte) (PacketType, error) {
 	}
 
 	return PacketType(data[3]), nil
+}
+
+// newGatewayStatsPacket from Stat transforms a Semtech Stat packet into a
+// gw.GatewayStatsPacket.
+func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) gw.GatewayStatsPacket {
+	gwStat := gw.GatewayStatsPacket{
+		Time:                time.Time(stat.Time),
+		MAC:                 mac,
+		Latitude:            stat.Lati,
+		Longitude:           stat.Long,
+		RXPacketsReceived:   int(stat.RXNb),
+		RXPacketsReceivedOK: int(stat.RXOK),
+		TXPacketsReceived:   int(stat.DWNb),
+		TXPacketsEmitted:    int(stat.TXNb),
+	}
+
+	if stat.Alti != nil {
+		alt := float64(*stat.Alti)
+		gwStat.Altitude = &alt
+	}
+
+	return gwStat
+}
+
+// newRXPacketsFromRXPK transforms a Semtech packet into a slice of
+// gw.RXPacketBytes.
+func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, error) {
+	dataRate, err := newDataRateFromDatR(rxpk.DatR)
+	if err != nil {
+		return nil, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)
+	}
+
+	b, err := base64.StdEncoding.DecodeString(rxpk.Data)
+	if err != nil {
+		return nil, fmt.Errorf("gateway: could not base64 decode data: %s", err)
+	}
+
+	var rxPackets []gw.RXPacketBytes
+
+	rxPacket := gw.RXPacketBytes{
+		PHYPayload: b,
+		RXInfo: gw.RXInfo{
+			MAC:       mac,
+			Timestamp: rxpk.Tmst,
+			Frequency: int(rxpk.Freq * 1000000),
+			Channel:   int(rxpk.Chan),
+			RFChain:   int(rxpk.RFCh),
+			CRCStatus: int(rxpk.Stat),
+			DataRate:  dataRate,
+			CodeRate:  rxpk.CodR,
+			RSSI:      int(rxpk.RSSI),
+			LoRaSNR:   rxpk.LSNR,
+			Size:      int(rxpk.Size),
+			Board:     int(rxpk.Brd),
+		},
+	}
+
+	if rxpk.Time != nil {
+		ts := time.Time(*rxpk.Time)
+		if !ts.IsZero() {
+			rxPacket.RXInfo.Time = &ts
+		}
+	}
+
+	if rxpk.Tmms != nil {
+		d := gw.Duration(time.Duration(*rxpk.Tmms) * time.Millisecond)
+		rxPacket.RXInfo.TimeSinceGPSEpoch = &d
+	}
+
+	if len(rxpk.RSig) == 0 {
+		rxPackets = append(rxPackets, rxPacket)
+	}
+
+	for _, s := range rxpk.RSig {
+		rxPacket.RXInfo.Antenna = int(s.Ant)
+		rxPacket.RXInfo.Channel = int(s.Chan)
+		rxPacket.RXInfo.LoRaSNR = s.LSNR
+		rxPacket.RXInfo.RSSI = int(s.RSSIC)
+
+		rxPackets = append(rxPackets, rxPacket)
+	}
+
+	return rxPackets, nil
+}
+
+// newTXPKFromTXPacket transforms a gw.TXPacketBytes into a Semtech
+// compatible packet.
+func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
+	txpk := TXPK{
+		Imme: txPacket.TXInfo.Immediately,
+		Tmst: txPacket.TXInfo.Timestamp,
+		Freq: float64(txPacket.TXInfo.Frequency) / 1000000,
+		Powe: uint8(txPacket.TXInfo.Power),
+		Modu: string(txPacket.TXInfo.DataRate.Modulation),
+		DatR: newDatRfromDataRate(txPacket.TXInfo.DataRate),
+		CodR: txPacket.TXInfo.CodeRate,
+		Size: uint16(len(txPacket.PHYPayload)),
+		Data: base64.StdEncoding.EncodeToString(txPacket.PHYPayload),
+		Ant:  uint8(txPacket.TXInfo.Antenna),
+		Brd:  uint8(txPacket.TXInfo.Board),
+	}
+
+	if txPacket.TXInfo.TimeSinceGPSEpoch != nil {
+		tmms := int64(time.Duration(*txPacket.TXInfo.TimeSinceGPSEpoch) / time.Millisecond)
+		txpk.Tmms = &tmms
+	}
+
+	if txPacket.TXInfo.DataRate.Modulation == band.FSKModulation {
+		txpk.FDev = uint16(txPacket.TXInfo.DataRate.BitRate / 2)
+	}
+
+	// by default IPol=true is used for downlink LoRa modulation, however in
+	// some cases one might want to override this.
+	if txPacket.TXInfo.IPol != nil {
+		txpk.IPol = *txPacket.TXInfo.IPol
+	} else if txPacket.TXInfo.DataRate.Modulation == band.LoRaModulation {
+		txpk.IPol = true
+	}
+
+	return txpk, nil
+}
+
+func newTXAckFromTXPKACK(mac lorawan.EUI64, token uint16, ack TXPKACK) gw.TXAck {
+	var err string
+	if ack.Error != "NONE" {
+		err = ack.Error
+	}
+
+	return gw.TXAck{
+		MAC:   mac,
+		Token: token,
+		Error: err,
+	}
+}
+
+func newDataRateFromDatR(d DatR) (band.DataRate, error) {
+	var dr band.DataRate
+
+	if d.LoRa != "" {
+		// parse e.g. SF12BW250 into separate variables
+		match := loRaDataRateRegex.FindStringSubmatch(d.LoRa)
+		if len(match) != 3 {
+			return dr, errors.New("gateway: could not parse LoRa data rate")
+		}
+
+		// cast variables to ints
+		sf, err := strconv.Atoi(match[1])
+		if err != nil {
+			return dr, fmt.Errorf("gateway: could not convert spread factor to int: %s", err)
+		}
+		bw, err := strconv.Atoi(match[2])
+		if err != nil {
+			return dr, fmt.Errorf("gateway: could not convert bandwith to int: %s", err)
+		}
+
+		dr.Modulation = band.LoRaModulation
+		dr.SpreadFactor = sf
+		dr.Bandwidth = bw
+		return dr, nil
+	}
+
+	if d.FSK != 0 {
+		dr.Modulation = band.FSKModulation
+		dr.BitRate = int(d.FSK)
+		return dr, nil
+	}
+
+	return dr, errors.New("gateway: could not convert DatR to DataRate, DatR is empty / modulation unknown")
+}
+
+func newDatRfromDataRate(d band.DataRate) DatR {
+	if d.Modulation == band.LoRaModulation {
+		return DatR{
+			LoRa: fmt.Sprintf("SF%dBW%d", d.SpreadFactor, d.Bandwidth),
+		}
+	}
+
+	return DatR{
+		FSK: uint32(d.BitRate),
+	}
 }

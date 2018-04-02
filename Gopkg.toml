@@ -3,7 +3,7 @@
 
 [[constraint]]
   name = "github.com/brocaar/loraserver"
-  version = "0.23.2"
+  branch = "gw_config"
 
 [[constraint]]
   branch = "master"

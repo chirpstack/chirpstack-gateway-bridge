@@ -2,36 +2,47 @@ package gateway
 
 import (
 	"encoding/base64"
-	"errors"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"regexp"
-	"strconv"
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
-	"github.com/brocaar/lorawan/band"
-
-	log "github.com/sirupsen/logrus"
 )
 
-var errGatewayDoesNotExist = errors.New("gateway does not exist")
+// errors
+var (
+	errGatewayDoesNotExist = errors.New("gateway does not exist")
+)
+
+// gatewayCleanupDuration contains the duration after which the gateway is
+// cleaned up from the registry after no activity
 var gatewayCleanupDuration = -1 * time.Minute
+
+// loRaDataRateRegex contains a regexp for parsing the data-rate string.
 var loRaDataRateRegex = regexp.MustCompile(`SF(\d+)BW(\d+)`)
 
+// udpPacket represents a raw UDP packet.
 type udpPacket struct {
 	addr *net.UDPAddr
 	data []byte
 }
 
+// gateway contains a connection and meta-data for a gateway connection.
 type gateway struct {
 	addr            *net.UDPAddr
 	lastSeen        time.Time
 	protocolVersion uint8
 }
 
+// gateways contains the gateways registry.
 type gateways struct {
 	sync.RWMutex
 	gateways map[lorawan.EUI64]gateway
@@ -39,6 +50,7 @@ type gateways struct {
 	onDelete func(lorawan.EUI64) error
 }
 
+// get returns the gateway object for the given MAC.
 func (c *gateways) get(mac lorawan.EUI64) (gateway, error) {
 	defer c.RUnlock()
 	c.RLock()
@@ -49,6 +61,7 @@ func (c *gateways) get(mac lorawan.EUI64) (gateway, error) {
 	return gw, nil
 }
 
+// set creates or updates the gateway for the given MAC.
 func (c *gateways) set(mac lorawan.EUI64, gw gateway) error {
 	defer c.Unlock()
 	c.Lock()
@@ -62,6 +75,7 @@ func (c *gateways) set(mac lorawan.EUI64, gw gateway) error {
 	return nil
 }
 
+// cleanup removes inactive gateways from the registry.
 func (c *gateways) cleanup() error {
 	defer c.Unlock()
 	c.Lock()
@@ -78,21 +92,32 @@ func (c *gateways) cleanup() error {
 	return nil
 }
 
-// Backend implements a Semtech gateway backend.
+// Configuration holds the packet-forwarder configuration.
+type Configuration struct {
+	MAC            lorawan.EUI64 `mapstructure:"-"`
+	MACString      string        `mapstructure:"mac"`
+	BaseFile       string        `mapstructure:"base_file"`
+	OutputFile     string        `mapstructure:"output_file"`
+	RestartCommand string        `mapstructure:"restart_command"`
+	version        string
+}
+
+// Backend implements a Semtech packet-forwarder gateway backend.
 type Backend struct {
-	conn         *net.UDPConn
-	txAckChan    chan gw.TXAck
-	rxChan       chan gw.RXPacketBytes
-	statsChan    chan gw.GatewayStatsPacket
-	udpSendChan  chan udpPacket
-	closed       bool
-	gateways     gateways
-	wg           sync.WaitGroup
-	skipCRCCheck bool
+	conn           *net.UDPConn
+	txAckChan      chan gw.TXAck              // received TX ACKs
+	rxChan         chan gw.RXPacketBytes      // received uplink frames
+	statsChan      chan gw.GatewayStatsPacket // received gateway stats
+	udpSendChan    chan udpPacket
+	closed         bool
+	gateways       gateways
+	configurations []Configuration
+	wg             sync.WaitGroup
+	skipCRCCheck   bool
 }
 
 // NewBackend creates a new backend.
-func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lorawan.EUI64) error, skipCRCCheck bool) (*Backend, error) {
+func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lorawan.EUI64) error, skipCRCCheck bool, configurations []Configuration) (*Backend, error) {
 	addr, err := net.ResolveUDPAddr("udp", bind)
 	if err != nil {
 		return nil, err
@@ -115,6 +140,7 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 			onNew:    onNew,
 			onDelete: onDelete,
 		},
+		configurations: configurations,
 	}
 
 	go func() {
@@ -157,6 +183,64 @@ func (b *Backend) Close() error {
 	}
 	log.Info("gateway: handling last packets")
 	b.wg.Wait()
+	return nil
+}
+
+// ApplyConfiguration applies the given configuration.
+func (b *Backend) ApplyConfiguration(config gw.GatewayConfigPacket) error {
+	var found bool
+	for i, c := range b.configurations {
+		if c.MAC != config.MAC {
+			continue
+		}
+
+		found = true
+
+		gwConfig, err := getGatewayConfig(config)
+		if err != nil {
+			return errors.Wrap(err, "get gateway config error")
+		}
+
+		baseConfig, err := loadConfigFile(c.BaseFile)
+		if err != nil {
+			return errors.Wrap(err, "load config file error")
+		}
+
+		if err = mergeConfig(c.MAC, baseConfig, gwConfig); err != nil {
+			return errors.Wrap(err, "merge config error")
+		}
+
+		// generate config json
+		bb, err := json.Marshal(baseConfig)
+		if err != nil {
+			return errors.Wrap(err, "marshal json error")
+		}
+
+		// write new config file to disk
+		if err = ioutil.WriteFile(c.OutputFile, bb, 0644); err != nil {
+			return errors.Wrap(err, "write config file errror")
+		}
+		log.WithFields(log.Fields{
+			"mac":  config.MAC,
+			"file": c.OutputFile,
+		}).Info("gateway: new configuration file written")
+
+		// invoke restart command
+		if err = invokePFRestart(c.RestartCommand); err != nil {
+			return errors.Wrap(err, "invoke packet-forwarder restart error")
+		}
+		log.WithFields(log.Fields{
+			"mac": config.MAC,
+			"cmd": c.RestartCommand,
+		}).Info("gateway: packet-forwarder restart command invoked")
+
+		b.configurations[i].version = config.Version
+	}
+
+	if !found {
+		log.WithField("mac", config.MAC).Warning("gateway: configuration was not applied, gateway is not configured for managed configuration")
+	}
+
 	return nil
 }
 
@@ -340,6 +424,14 @@ func (b *Backend) handleStat(addr *net.UDPAddr, mac lorawan.EUI64, stat Stat) {
 		"addr": addr,
 		"mac":  mac,
 	}).Info("gateway: stat packet received")
+
+	// set configuration version, if available
+	for _, c := range b.configurations {
+		if gwStats.MAC == c.MAC {
+			gwStats.ConfigVersion = c.version
+		}
+	}
+
 	b.statsChan <- gwStats
 }
 
@@ -386,184 +478,4 @@ func (b *Backend) handleTXACK(addr *net.UDPAddr, data []byte) error {
 	}
 
 	return nil
-}
-
-// newGatewayStatsPacket from Stat transforms a Semtech Stat packet into a
-// gw.GatewayStatsPacket.
-func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) gw.GatewayStatsPacket {
-	gwStat := gw.GatewayStatsPacket{
-		Time:                time.Time(stat.Time),
-		MAC:                 mac,
-		Latitude:            stat.Lati,
-		Longitude:           stat.Long,
-		RXPacketsReceived:   int(stat.RXNb),
-		RXPacketsReceivedOK: int(stat.RXOK),
-		TXPacketsReceived:   int(stat.DWNb),
-		TXPacketsEmitted:    int(stat.TXNb),
-	}
-
-	if stat.Alti != nil {
-		alt := float64(*stat.Alti)
-		gwStat.Altitude = &alt
-	}
-
-	return gwStat
-}
-
-// newRXPacketsFromRXPK transforms a Semtech packet into a slice of
-// gw.RXPacketBytes.
-func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, error) {
-	dataRate, err := newDataRateFromDatR(rxpk.DatR)
-	if err != nil {
-		return nil, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)
-	}
-
-	b, err := base64.StdEncoding.DecodeString(rxpk.Data)
-	if err != nil {
-		return nil, fmt.Errorf("gateway: could not base64 decode data: %s", err)
-	}
-
-	var rxPackets []gw.RXPacketBytes
-
-	rxPacket := gw.RXPacketBytes{
-		PHYPayload: b,
-		RXInfo: gw.RXInfo{
-			MAC:       mac,
-			Timestamp: rxpk.Tmst,
-			Frequency: int(rxpk.Freq * 1000000),
-			Channel:   int(rxpk.Chan),
-			RFChain:   int(rxpk.RFCh),
-			CRCStatus: int(rxpk.Stat),
-			DataRate:  dataRate,
-			CodeRate:  rxpk.CodR,
-			RSSI:      int(rxpk.RSSI),
-			LoRaSNR:   rxpk.LSNR,
-			Size:      int(rxpk.Size),
-			Board:     int(rxpk.Brd),
-		},
-	}
-
-	if rxpk.Time != nil {
-		ts := time.Time(*rxpk.Time)
-		if !ts.IsZero() {
-			rxPacket.RXInfo.Time = &ts
-		}
-	}
-
-	if rxpk.Tmms != nil {
-		d := gw.Duration(time.Duration(*rxpk.Tmms) * time.Millisecond)
-		rxPacket.RXInfo.TimeSinceGPSEpoch = &d
-	}
-
-	if len(rxpk.RSig) == 0 {
-		rxPackets = append(rxPackets, rxPacket)
-	}
-
-	for _, s := range rxpk.RSig {
-		rxPacket.RXInfo.Antenna = int(s.Ant)
-		rxPacket.RXInfo.Channel = int(s.Chan)
-		rxPacket.RXInfo.LoRaSNR = s.LSNR
-		rxPacket.RXInfo.RSSI = int(s.RSSIC)
-
-		rxPackets = append(rxPackets, rxPacket)
-	}
-
-	return rxPackets, nil
-}
-
-// newTXPKFromTXPacket transforms a gw.TXPacketBytes into a Semtech
-// compatible packet.
-func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
-	txpk := TXPK{
-		Imme: txPacket.TXInfo.Immediately,
-		Tmst: txPacket.TXInfo.Timestamp,
-		Freq: float64(txPacket.TXInfo.Frequency) / 1000000,
-		Powe: uint8(txPacket.TXInfo.Power),
-		Modu: string(txPacket.TXInfo.DataRate.Modulation),
-		DatR: newDatRfromDataRate(txPacket.TXInfo.DataRate),
-		CodR: txPacket.TXInfo.CodeRate,
-		Size: uint16(len(txPacket.PHYPayload)),
-		Data: base64.StdEncoding.EncodeToString(txPacket.PHYPayload),
-		Ant:  uint8(txPacket.TXInfo.Antenna),
-		Brd:  uint8(txPacket.TXInfo.Board),
-	}
-
-	if txPacket.TXInfo.TimeSinceGPSEpoch != nil {
-		tmms := int64(time.Duration(*txPacket.TXInfo.TimeSinceGPSEpoch) / time.Millisecond)
-		txpk.Tmms = &tmms
-	}
-
-	if txPacket.TXInfo.DataRate.Modulation == band.FSKModulation {
-		txpk.FDev = uint16(txPacket.TXInfo.DataRate.BitRate / 2)
-	}
-
-	// by default IPol=true is used for downlink LoRa modulation, however in
-	// some cases one might want to override this.
-	if txPacket.TXInfo.IPol != nil {
-		txpk.IPol = *txPacket.TXInfo.IPol
-	} else if txPacket.TXInfo.DataRate.Modulation == band.LoRaModulation {
-		txpk.IPol = true
-	}
-
-	return txpk, nil
-}
-
-func newTXAckFromTXPKACK(mac lorawan.EUI64, token uint16, ack TXPKACK) gw.TXAck {
-	var err string
-	if ack.Error != "NONE" {
-		err = ack.Error
-	}
-
-	return gw.TXAck{
-		MAC:   mac,
-		Token: token,
-		Error: err,
-	}
-}
-
-func newDataRateFromDatR(d DatR) (band.DataRate, error) {
-	var dr band.DataRate
-
-	if d.LoRa != "" {
-		// parse e.g. SF12BW250 into separate variables
-		match := loRaDataRateRegex.FindStringSubmatch(d.LoRa)
-		if len(match) != 3 {
-			return dr, errors.New("gateway: could not parse LoRa data rate")
-		}
-
-		// cast variables to ints
-		sf, err := strconv.Atoi(match[1])
-		if err != nil {
-			return dr, fmt.Errorf("gateway: could not convert spread factor to int: %s", err)
-		}
-		bw, err := strconv.Atoi(match[2])
-		if err != nil {
-			return dr, fmt.Errorf("gateway: could not convert bandwith to int: %s", err)
-		}
-
-		dr.Modulation = band.LoRaModulation
-		dr.SpreadFactor = sf
-		dr.Bandwidth = bw
-		return dr, nil
-	}
-
-	if d.FSK != 0 {
-		dr.Modulation = band.FSKModulation
-		dr.BitRate = int(d.FSK)
-		return dr, nil
-	}
-
-	return dr, errors.New("gateway: could not convert DatR to DataRate, DatR is empty / modulation unknown")
-}
-
-func newDatRfromDataRate(d band.DataRate) DatR {
-	if d.Modulation == band.LoRaModulation {
-		return DatR{
-			LoRa: fmt.Sprintf("SF%dBW%d", d.SpreadFactor, d.Bandwidth),
-		}
-	}
-
-	return DatR{
-		FSK: uint32(d.BitRate),
-	}
 }
