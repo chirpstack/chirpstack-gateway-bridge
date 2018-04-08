@@ -4,7 +4,7 @@
 case $PACKAGE_ARCH in
 	'x86_64') ARCH="amd64"
 		;;
-	'i368') ARCH="386"
+	'i386') ARCH="386"
 		;;
 	'armhf') ARCH="armv6"
 		;;
