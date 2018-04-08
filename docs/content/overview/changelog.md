@@ -8,6 +8,13 @@ menu:
 
 # Changelog
 
+## 2.4.0
+
+**Features:**
+
+* LoRa Gateway Bridge can now manage the packet-configuration (channels).
+  See [Send / receive data](https://www.loraserver.io/lora-gateway-bridge/use/data/) for more information.
+
 ## 2.3.2
 
 **Improvements:**
