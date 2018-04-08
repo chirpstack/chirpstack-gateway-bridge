@@ -2,10 +2,10 @@
 
 
 [[projects]]
-  branch = "gw_config"
+  branch = "master"
   name = "github.com/brocaar/loraserver"
   packages = ["api/gw"]
-  revision = "22c51d95e732c29f5fc1cf8d07b2b5ede5c53deb"
+  revision = "c6acbf409a30373b4b8ad98bf9512cbffb0b4444"
 
 [[projects]]
   branch = "master"
@@ -207,6 +207,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "27e3fca78e86f81bb849a8e18bb9ca45763d7daff990206c813c64f388425367"
+  inputs-digest = "19ea1ba38aee096168607cb229f83dfbb8c53e9c6c6b1fc9f7756a6be190410a"
   solver-name = "gps-cdcl"
   solver-version = 1
