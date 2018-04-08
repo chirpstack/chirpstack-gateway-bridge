@@ -12,7 +12,7 @@ menu:
 
 **Features:**
 
-* LoRa Gateway Bridge can now manage the packet-configuration (channels).
+* LoRa Gateway Bridge can now manage the packet-forwarder configuration (channels).
   See [Send / receive data](https://www.loraserver.io/lora-gateway-bridge/use/data/) for more information.
 
 ## 2.3.2
