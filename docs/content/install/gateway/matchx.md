@@ -9,7 +9,9 @@ menu:
 
 ## Matchbox gateway
 
-The [MatchX Matchbox](https://matchx.io/hardware#matchboxs) is an OpenWRT / Lede
+* [Product detail page](https://www.lairdtech.com/products/rg1xx-lora-gateway)
+
+The MatchX Matchbox is an OpenWRT / Lede
 base gateway, which by default sends its data to the MatchX hosted network-server
 (which is based on the LoRa Server software). By default it connects to the MatchX
 backend over a VPN connection.

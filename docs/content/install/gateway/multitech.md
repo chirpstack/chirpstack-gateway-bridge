@@ -9,6 +9,9 @@ menu:
 
 ## Multitech Conduit
 
+* [Product detail page](https://www.multitech.com/brands/multiconnect-conduit)
+* [Product documentation page](http://www.multitech.net/developer/products/multiconnect-conduit-platform/)
+
 After completing this steps, you have a Multitech Conduit running both the
 packet-forwarder and LoRa Gateway bridge. The packet-forwarder will forwards
 the UDP data to `localhost:1700` and the LoRa Gateway Bridge will forward

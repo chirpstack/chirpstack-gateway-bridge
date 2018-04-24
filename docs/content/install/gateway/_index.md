@@ -17,6 +17,7 @@ Instructions are available for the following vendors:
 * [Laird]({{<relref "laird.md">}})
 * [MatchX]({{<relref "matchx.md">}})
 * [Multitech]({{<relref "multitech.md">}})
+* [Tektelic]({{<relref "tektelic.md">}})
 
 For Raspberry Pi / Rasbian based gateways, please refer the
 [Debian / Ubuntu]({{< ref "install/debian.md" >}}) installation instructions.
