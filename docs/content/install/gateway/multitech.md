@@ -29,7 +29,6 @@ them apart:
 
 1. When logging in via the serial port behind the Multitech logo cover, they
    display the type of box they are.
-
 2. The AEP model ships with the default login/password as admin/admin.  The 
    mLinux version uses root/root.
 
@@ -46,15 +45,15 @@ Before continuing, you'll want to obtain the IP address of the Conduit.  This ca
 be done using a serial connection from a computer using a USB-to-microUSB cable,
 connecting to the plug behind the Multitech logo placard.  Plug the device into 
 your network, provide power, and let it boot until the "STATUS" light is 
-blinking in aheartbeat pattern.  Connect to the device via a serial terminal 
+blinking in a heartbeat pattern.  Connect to the device via a serial terminal 
 program.  Once logged in, issue the command "ifconfig" to get the IP address of 
 the eth0 connection.  Note that if the IP address is `192.168.2.1`, the device is
-likely configured to be a DHCP server.  In this case, edit the file 
+likely configured with a static IP.  In this case, edit the file 
 `/etc/network/interfaces`, change the line that says, `iface eth0 inet static` to 
 `iface eth0 inet dhcp`, and comment out the lines specifying the IP Address and 
 netmask by adding a `#` at the beginning of each line:
 
-```text
+```
 # address 192.168.2.1
 # netmask 255.255.255.0
 ```
@@ -77,22 +76,41 @@ AEP model into a mLinux model. In both the AEP migrate and mLinux upgrade you
 can use the **Using Auto-Flash During Reboot** steps. **Again, make sure to
 use the `mlinux-base*.jffs2` image!**
 
+**Important:** after flashing the device, you need to update the `opkg` cache
+which can be done with the command: `opkg update`.
+
+Example commands for upgrading / migrating:
+
+```bash
+$ mkdir /var/volatile/flash-upgrade
+$ cd /var/volatile/flash-upgrade
+$ wget -O uImage.bin http://www.multitech.net/mlinux/images/mtcdt/3.3.24/uImage--3.12.27-r15.2-mtcdt-20180327203057.bin
+$ wget -O rootfs.jffs2 http://www.multitech.net/mlinux/images/mtcdt/3.3.24/mlinux-base-image-mtcdt-20180327203057.rootfs.jffs2
+$ reboot
+```
+
+Then after the reboot update the `opkg` cache:
+
+```bash
+$ opkg update
+```
+
 ### Setting up the LoRa Gateway Bridge
 
 1. Log in using SSH or use the USB to serial interface.
 
 2. Download the latest `lora-gateway-bridge` `.ipk` package from:
    [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
-   Example (assuming you want to install `lora-gateway-bridge_2.3.2-r1.0_arm926ejste.ipk`):
-   ```text
-   admin@mtcdt:~# wget https://dl.loraserver.io/multitech/conduit/lora-gateway-bridge_2.3.2-r1.0_arm926ejste.ipk
+   Example (assuming you want to install `lora-gateway-bridge_2.4.0-r1.0_arm926ejste.ipk`):
+   ```bash
+   $ wget https://dl.loraserver.io/multitech/conduit/lora-gateway-bridge_2.4.0-r1.0_arm926ejste.ipk
    ```
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
-   ```text
-   admin@mtcdt:~# opkg install lora-gateway-bridge_2.3.2-r1.0_arm926ejste.ipk
+   ```bash
+   $ opkg install lora-gateway-bridge_2.4.0-r1.0_arm926ejste.ipk
    ```
 
 4. Update the MQTT connection details so that LoRa Gateway Bridge is able to
@@ -101,9 +119,9 @@ use the `mlinux-base*.jffs2` image!**
 
 5. Start LoRa Gateway Bridge and ensure it will be started on boot.
    Example:
-   ```text
-   admin@mtcdt:~# /etc/init.d/lora-gateway-bridge start
-   admin@mtcdt:~# update-rc.d lora-gateway-bridge defaults
+   ```bash
+   $ /etc/init.d/lora-gateway-bridge start
+   $ update-rc.d lora-gateway-bridge defaults
    ```
 
 6. Be sure to add the gateway to the lora-app-server.
@@ -140,25 +158,32 @@ card which uses the SPI interface.
 2. Download the latest `lora-packet-forwarder` `*.ipk` package
    from [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
    Example:
-   ```text
-   root@mtcdt:~# wget https://dl.loraserver.io/multitech/conduit/lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
+   ```bash
+   $ wget https://dl.loraserver.io/multitech/conduit/lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
    ```
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
-   ```text
-   root@mtcdt:~# opkg install lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
+   ```bash
+   $ opkg install lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
    ```
 
-4. Start the packet-forwarder and enable it to start on boot. Note that the
+4. As the package has the same name as the default package provided by Multitech
+   you need to 'flag' the package with the status `hold` to make sure an
+   `opkg upgrade` does not overwrite it:
+   ```bash
+   $ opkg flag hold lora-packet-forwarder
+   ```
+
+5. Start the packet-forwarder and enable it to start on boot. Note that the
    `-ap1` or `-ap2` suffix refers to the slot in which your `MTAC-LORA-H` card
    is present. In case you have two `MTAC-LORA-H` cards, this allows you to start
    two packet-forwarder instances with each using their own configuration.
    Example:
-   ```text
-   root@mtcdt:~# /etc/init.d/lora-packet-forwarder-ap1 start
-   root@mtcdt:~# update-rc.d lora-packet-forwarder-ap1 defaults
+   ```bash
+   $ /etc/init.d/lora-packet-forwarder-ap1 start
+   $ update-rc.d lora-packet-forwarder-ap1 defaults
    ```
 
    **Note:** on the first start of the packet-forwarder it will detect for you
@@ -175,7 +200,7 @@ card which uses the SPI interface.
 
 #### mLinux with MTAC-LORA-915 or MTAC-LORA-868
 
-**Important:** Follow these steps only when you have a `MTAC-LORA` (v1.0)
+**Important:** Follow these steps only when you have a `MTAC-LORA` (v1.0
 card which uses the FTDI interface.
 
 1. Log in using SSH or use the USB to serial interface.
@@ -183,22 +208,29 @@ card which uses the FTDI interface.
 2. Download the latest `lora-packet-forwarder-usb` `*.ipk` package
    from [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
    Example:
-   ```text
-   root@mtcdt:~# wget https://dl.loraserver.io/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
+   ```bash
+   $ wget https://dl.loraserver.io/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
    ```
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
-   ```text
-   root@mtcdt:~# opkg install lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
+   ```bash
+   $ opkg install lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
    ```
 
-4. Start the packet-forwarder and enable it to start on boot. 
+4. As the package has the same name as the default package provided by Multitech
+   you need to 'flag' the package with the status `hold` to make sure an
+   `opkg upgrade` does not overwrite it:
+   ```bash
+   $ opkg flag hold lora-packet-forwarder-usb
+   ```
+
+5. Start the packet-forwarder and enable it to start on boot. 
    Example:
-   ```text
-   root@mtcdt:~# /etc/init.d/lora-packet-forwarder-usb start
-   root@mtcdt:~# update-rc.d lora-packet-forwarder-usb defaults
+   ```bash
+   $ /etc/init.d/lora-packet-forwarder-usb start
+   $ update-rc.d lora-packet-forwarder-usb defaults
    ```
 
    **Note:** on the first start of the packet-forwarder it will detect for you
@@ -282,11 +314,10 @@ appearing in LoRa App Server, you may be experiencing a known bug with the
 Multitech packet forwarding code.  On these systems, we need to swap out the 
 application that runs for packet formwarding. The following should resolve the issue:
 
-```
-    $ cd /opt/lora
-    $ mv basic_pkt_fwd-usb basic_pkt_fwd-usb.orig
-    $ ln -s gps_pkt_fwd-usb basic_pkt_fwd-usb
-
+```bash
+$ cd /opt/lora
+$ mv basic_pkt_fwd-usb basic_pkt_fwd-usb.orig
+$ ln -s gps_pkt_fwd-usb basic_pkt_fwd-usb
 ```
 
 Also see [debugging]({{<ref "install/debug.md">}}).
