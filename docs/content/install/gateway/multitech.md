@@ -86,6 +86,7 @@ $ mkdir /var/volatile/flash-upgrade
 $ cd /var/volatile/flash-upgrade
 $ wget -O uImage.bin http://www.multitech.net/mlinux/images/mtcdt/3.3.24/uImage--3.12.27-r15.2-mtcdt-20180327203057.bin
 $ wget -O rootfs.jffs2 http://www.multitech.net/mlinux/images/mtcdt/3.3.24/mlinux-base-image-mtcdt-20180327203057.rootfs.jffs2
+$ touch /var/volatile/do_flash_upgrade
 $ reboot
 ```
 
