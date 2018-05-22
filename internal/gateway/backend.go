@@ -293,7 +293,12 @@ func (b *Backend) readPackets() error {
 	for {
 		i, addr, err := b.conn.ReadFromUDP(buf)
 		if err != nil {
-			return fmt.Errorf("gateway: read from udp error: %s", err)
+			if b.closed {
+				return nil
+			}
+
+			log.WithError(err).Error("gateway: read from udp error")
+			continue
 		}
 		data := make([]byte, i)
 		copy(data, buf[:i])
@@ -325,7 +330,11 @@ func (b *Backend) sendPackets() error {
 		}).Info("gateway: sending udp packet to gateway")
 
 		if _, err := b.conn.WriteToUDP(p.data, p.addr); err != nil {
-			return err
+			log.WithFields(log.Fields{
+				"addr":             p.addr,
+				"type":             pt,
+				"protocol_version": p.data[0],
+			}).WithError(err).Error("gateway: write to udp error")
 		}
 	}
 	return nil

@@ -8,6 +8,12 @@ menu:
 
 # Changelog
 
+## 2.4.1
+
+**Bugfixes:**
+
+* Only log in case of UDP read / write errors (instead of breaking out of loop).
+
 ## 2.4.0
 
 **Features:**
