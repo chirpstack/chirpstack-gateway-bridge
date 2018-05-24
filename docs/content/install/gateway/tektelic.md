@@ -14,7 +14,7 @@ menu:
 The KONA Pico IoT Gateway is able to run different firmwares, each using a
 different protocol. In order to work together with the LoRa Gateway Brige,
 you must install the `semtech-vx.xx.bin` firmware. These steps have been tested
-with version 1.2.1. The latest firmware can be [downloaded here](https://dl.loraserver.io/tektelic/konapico/).
+with version 1.2.1. The latest firmware can be [downloaded here](https://artifacts.loraserver.io/vendor/tektelic/kona-pico/).
 
 1. After turning on the gateway, find the IP that has been assigned to it
    (eg. by listing the devices connected to your router). In the examples below

@@ -101,10 +101,10 @@ $ opkg update
 1. Log in using SSH or use the USB to serial interface.
 
 2. Download the latest `lora-gateway-bridge` `.ipk` package from:
-   [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
+   [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
    Example (assuming you want to install `lora-gateway-bridge_2.4.0-r1.0_arm926ejste.ipk`):
    ```bash
-   $ wget https://dl.loraserver.io/multitech/conduit/lora-gateway-bridge_2.4.0-r1.0_arm926ejste.ipk
+   $ wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_2.4.0-r1.0_arm926ejste.ipk
    ```
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
@@ -157,10 +157,10 @@ card which uses the SPI interface.
 1. Log in using SSH or use the USB to serial interface.
 
 2. Download the latest `lora-packet-forwarder` `*.ipk` package
-   from [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
+   from [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
    Example:
    ```bash
-   $ wget https://dl.loraserver.io/multitech/conduit/lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
+   $ wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
    ```
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
@@ -207,10 +207,10 @@ card which uses the FTDI interface.
 1. Log in using SSH or use the USB to serial interface.
 
 2. Download the latest `lora-packet-forwarder-usb` `*.ipk` package
-   from [https://dl.loraserver.io/multitech/conduit/](https://dl.loraserver.io/multitech/conduit/).
+   from [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
    Example:
    ```bash
-   $ wget https://dl.loraserver.io/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
+   $ wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
    ```
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
