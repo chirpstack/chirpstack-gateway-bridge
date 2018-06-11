@@ -192,6 +192,9 @@ tls_cert=""
 
 # mqtt TLS key file (optional)
 tls_key=""
+
+# maximum seconds that will be waited between reconnection attempts when connection is lost
+max_reconnect_interval_seconds=600
 ```
 
 ### Warning: deprecation warning! update your configuration

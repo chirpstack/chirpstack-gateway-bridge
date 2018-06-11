@@ -19,21 +19,22 @@ import (
 
 // BackendConfig holds the MQTT pub-sub backend configuration.
 type BackendConfig struct {
-	Server                string
-	Username              string
-	Password              string
-	QOS                   uint8           `mapstructure:"qos"`
-	CleanSession          bool            `mapstructure:"clean_session"`
-	ClientID              string          `mapstructure:"client_id"`
-	CACert                string          `mapstructure:"ca_cert"`
-	TLSCert               string          `mapstructure:"tls_cert"`
-	TLSKey                string          `mapstructure:"tls_key"`
-	UplinkTopicTemplate   string          `mapstructure:"uplink_topic_template"`
-	DownlinkTopicTemplate string          `mapstructure:"downlink_topic_template"`
-	StatsTopicTemplate    string          `mapstructure:"stats_topic_template"`
-	AckTopicTemplate      string          `mapstructure:"ack_topic_template"`
-	ConfigTopicTemplate   string          `mapstructure:"config_topic_template"`
-	AlwaysSubscribeMACs   []lorawan.EUI64 `mapstructure:"-"`
+	Server                      string
+	Username                    string
+	Password                    string
+	QOS                         uint8           `mapstructure:"qos"`
+	CleanSession                bool            `mapstructure:"clean_session"`
+	ClientID                    string          `mapstructure:"client_id"`
+	CACert                      string          `mapstructure:"ca_cert"`
+	TLSCert                     string          `mapstructure:"tls_cert"`
+	TLSKey                      string          `mapstructure:"tls_key"`
+	UplinkTopicTemplate         string          `mapstructure:"uplink_topic_template"`
+	DownlinkTopicTemplate       string          `mapstructure:"downlink_topic_template"`
+	StatsTopicTemplate          string          `mapstructure:"stats_topic_template"`
+	AckTopicTemplate            string          `mapstructure:"ack_topic_template"`
+	ConfigTopicTemplate         string          `mapstructure:"config_topic_template"`
+	AlwaysSubscribeMACs         []lorawan.EUI64 `mapstructure:"-"`
+	MaxReconnectIntervalSeconds time.Duration   `mapstructure:"max_reconnect_interval_seconds"`
 }
 
 // Backend implements a MQTT pub-sub backend.
@@ -100,6 +101,7 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 	opts.SetClientID(b.config.ClientID)
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
+	opts.SetMaxReconnectInterval(b.config.MaxReconnectIntervalSeconds * time.Second)
 
 	tlsconfig, err := newTLSConfig(b.config.CACert, b.config.TLSCert, b.config.TLSKey)
 	if err != nil {

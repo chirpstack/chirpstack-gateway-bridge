@@ -129,6 +129,9 @@ tls_cert="{{ .Backend.MQTT.TLSCert }}"
 
 # mqtt TLS key file (optional)
 tls_key="{{ .Backend.MQTT.TLSKey }}"
+
+# maximum seconds that will be waited between reconnection attempts when connection is lost
+max_reconnect_interval_seconds="{{ .Backend.MQTT.MaxReconnectIntervalSeconds }}"
 `
 
 var configCmd = &cobra.Command{
