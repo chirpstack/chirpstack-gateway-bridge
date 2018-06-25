@@ -117,6 +117,26 @@ clean_session={{ .Backend.MQTT.CleanSession }}
 # a random id will be generated. This requires clean_session=true.
 client_id="{{ .Backend.MQTT.ClientID }}"
 
+# Last Will topic
+#
+# Set Last Will topic, where Last Will message will be published
+last_will_topic="{{ .Backend.MQTT.LastWillTopic }}"
+
+# Last Will payload
+#
+# Set Last Will payload to be publish on disconnect
+last_will_payload="{{ .Backend.MQTT.LastWillPayload }}"
+
+# Last Will QoS
+#
+# Set Last Will payload QoS
+last_will_qos="{{ .Backend.MQTT.LastWillQoS }}"
+
+# Last Will retain
+#
+# Set Last Will retain option
+last_will_retain="{{ .Backend.MQTT.LastWillRetain }}"
+
 # CA certificate file (optional)
 #
 # Use this when setting up a secure connection (when server uses ssl://...)

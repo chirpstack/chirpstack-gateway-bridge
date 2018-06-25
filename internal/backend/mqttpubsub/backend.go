@@ -25,6 +25,10 @@ type BackendConfig struct {
 	QOS                   uint8           `mapstructure:"qos"`
 	CleanSession          bool            `mapstructure:"clean_session"`
 	ClientID              string          `mapstructure:"client_id"`
+	LastWillTopic         string          `mapstructure:"last_will_topic"`
+	LastWillPayload       string          `mapstructure:"last_will_payload"`
+	LastWillQoS           uint8           `mapstructure:"last_will_qos"`
+	LastWillRetain        bool            `mapstructure:"last_will_retain"`
 	CACert                string          `mapstructure:"ca_cert"`
 	TLSCert               string          `mapstructure:"tls_cert"`
 	TLSKey                string          `mapstructure:"tls_key"`
@@ -100,6 +104,11 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 	opts.SetClientID(b.config.ClientID)
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
+
+	if b.config.LastWillPayload != "" {
+		log.WithField("topic", b.config.LastWillTopic).Info("backend: setting last will message to mqtt broker")
+		opts.SetWill(b.config.LastWillTopic, b.config.LastWillPayload, b.config.LastWillQoS, b.config.LastWillRetain)
+	}
 
 	tlsconfig, err := newTLSConfig(b.config.CACert, b.config.TLSCert, b.config.TLSKey)
 	if err != nil {
