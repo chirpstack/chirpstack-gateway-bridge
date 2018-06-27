@@ -34,7 +34,7 @@ type BackendConfig struct {
 	AckTopicTemplate      string          `mapstructure:"ack_topic_template"`
 	ConfigTopicTemplate   string          `mapstructure:"config_topic_template"`
 	AlwaysSubscribeMACs   []lorawan.EUI64 `mapstructure:"-"`
-	MaxReconnectInterval  string          `mapstructure:"max_reconnect_interval"`
+	MaxReconnectInterval  time.Duration   `mapstructure:"max_reconnect_interval"`
 }
 
 // Backend implements a MQTT pub-sub backend.
@@ -102,15 +102,7 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 
-	maxReconnectInterval, err := time.ParseDuration(b.config.MaxReconnectInterval)
-	if err != nil {
-		if b.config.MaxReconnectInterval != "" { // empty string is passed as default value, so suppress warnings
-			log.Warnf("backend: invalid max reconnect interval is specified (given=%s)", b.config.MaxReconnectInterval)
-		}
-		const defaultMaxReconnectInterval = "10m"
-		log.Infof("backend: use default max reconnect interval: %s", defaultMaxReconnectInterval)
-		maxReconnectInterval, _ = time.ParseDuration(defaultMaxReconnectInterval)
-	}
+	maxReconnectInterval := b.config.MaxReconnectInterval
 	log.Infof("backend: set max reconnect interval: %s", maxReconnectInterval)
 	opts.SetMaxReconnectInterval(maxReconnectInterval)
 
