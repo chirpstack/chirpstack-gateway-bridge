@@ -192,6 +192,10 @@ tls_cert=""
 
 # mqtt TLS key file (optional)
 tls_key=""
+
+# Maximum interval that will be waited between reconnection attempts when connection is lost.
+# Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
+max_reconnect_interval="10m"
 ```
 
 ### Warning: deprecation warning! update your configuration
