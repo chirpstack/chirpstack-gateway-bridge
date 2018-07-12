@@ -11,24 +11,24 @@
 
 [[constraint]]
   name = "github.com/eclipse/paho.mqtt.golang"
-  branch = "master"
+  version = "v1.1.1"
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "1.0.4"
+  version = "v1.0.5"
 
 [[constraint]]
   name = "github.com/smartystreets/goconvey"
   version = "1.6.3"
 
 [[constraint]]
-  branch = "master"
+  version = "v0.0.3"
   name = "github.com/spf13/cobra"
 
 [[constraint]]
-  branch = "master"
+  version = "v1.0.2"
   name = "github.com/spf13/viper"
 
 [[constraint]]
   name = "github.com/pkg/errors"
-  version = "0.8.0"
+  version = "v0.8.0"

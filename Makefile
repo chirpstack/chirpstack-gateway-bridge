@@ -5,7 +5,7 @@ VERSION := $(shell git describe --always)
 build:
 	@echo "Compiling source"
 	@mkdir -p build
-	@go build $(GO_EXTRA_BUILD_ARGS) -ldflags "-s -w -X main.version=$(VERSION)" -o build/lora-gateway-bridge cmd/lora-gateway-bridge/main.go
+	go build $(GO_EXTRA_BUILD_ARGS) -ldflags "-s -w -X main.version=$(VERSION)" -o build/lora-gateway-bridge cmd/lora-gateway-bridge/main.go
 
 clean:
 	@echo "Cleaning up workspace"
@@ -37,11 +37,11 @@ package-deb: dist
 	@cd packaging && TARGET=deb ./package.sh
 
 requirements:
-	@go get -u github.com/golang/lint/golint
-	@go get -u github.com/kisielk/errcheck
-	@go get -u github.com/golang/dep/cmd/dep
-	@go get -u github.com/goreleaser/goreleaser
-	@dep ensure -v
+	go get -u github.com/golang/lint/golint
+	go get -u github.com/kisielk/errcheck
+	go get -u github.com/golang/dep/cmd/dep
+	go get -u github.com/goreleaser/goreleaser
+	dep ensure -v
 
 # shortcuts for development
 
