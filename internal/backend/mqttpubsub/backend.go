@@ -116,8 +116,8 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 	//	b.config.LastWillPayload = mac
 	//}
 
-	log.WithField("lastwill", b.config.LastWillTopicTemplate).Info("backend: setting last will message to MQTT broker")
-	opts.SetWill(b.config.LastWillTopicTemplate, b.config.LastWillPayload, b.config.QOS, b.config.LastWillRetain)
+	//log.WithField("lastwill", b.config.LastWillTopicTemplate).Info("backend: setting last will message to MQTT broker")
+	//opts.SetWill(b.config.LastWillTopicTemplate, b.config.LastWillPayload, b.config.QOS, b.config.LastWillRetain)
 
 	maxReconnectInterval := b.config.MaxReconnectInterval
 	log.Infof("backend: set max reconnect interval: %s", maxReconnectInterval)
