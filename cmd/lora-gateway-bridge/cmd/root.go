@@ -81,6 +81,9 @@ func init() {
 	viper.SetDefault("backend.mqtt.server", "tcp://127.0.0.1:1883")
 	viper.SetDefault("backend.mqtt.clean_session", true)
 	viper.SetDefault("backend.mqtt.max_reconnect_interval", 10*time.Minute)
+	viper.SetDefault("backend.mqtt.last_will_topic_template", "gateway/{{ .MAC }}/lastwill")
+	viper.SetDefault("backend.mqtt.last_will_payload", "")
+	viper.SetDefault("backend.mqtt.last_will_retain", false)
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)

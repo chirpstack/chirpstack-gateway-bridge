@@ -83,6 +83,8 @@ downlink_topic_template="{{ .Backend.MQTT.DownlinkTopicTemplate }}"
 stats_topic_template="{{ .Backend.MQTT.StatsTopicTemplate }}"
 ack_topic_template="{{ .Backend.MQTT.AckTopicTemplate }}"
 config_topic_template="{{ .Backend.MQTT.ConfigTopicTemplate }}"
+last_will_topic_template="{{ .Backend.MQTT.LastWillTopicTemplate }}"
+
 
 # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
 server="{{ .Backend.MQTT.Server }}"
@@ -116,6 +118,16 @@ clean_session={{ .Backend.MQTT.CleanSession }}
 # broker. A client id must be no longer than 23 characters. When left blank,
 # a random id will be generated. This requires clean_session=true.
 client_id="{{ .Backend.MQTT.ClientID }}"
+
+# Last Will payload
+#
+# Set Last Will payload to be publish on disconnect
+last_will_payload="{{ .Backend.MQTT.LastWillPayload }}"
+
+# Last Will retain
+#
+# Set Last Will retain option
+last_will_retain="{{ .Backend.MQTT.LastWillRetain }}"
 
 # CA certificate file (optional)
 #
