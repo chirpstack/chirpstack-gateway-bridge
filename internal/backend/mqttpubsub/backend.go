@@ -25,9 +25,7 @@ type BackendConfig struct {
 	QOS                   uint8           `mapstructure:"qos"`
 	CleanSession          bool            `mapstructure:"clean_session"`
 	ClientID              string          `mapstructure:"client_id"`
-	LastWillTopic         string          `mapstructure:"last_will_topic"`
 	LastWillPayload       string          `mapstructure:"last_will_payload"`
-	LastWillQoS           uint8           `mapstructure:"last_will_qos"`
 	LastWillRetain        bool            `mapstructure:"last_will_retain"`
 	CACert                string          `mapstructure:"ca_cert"`
 	TLSCert               string          `mapstructure:"tls_cert"`
@@ -37,6 +35,7 @@ type BackendConfig struct {
 	StatsTopicTemplate    string          `mapstructure:"stats_topic_template"`
 	AckTopicTemplate      string          `mapstructure:"ack_topic_template"`
 	ConfigTopicTemplate   string          `mapstructure:"config_topic_template"`
+	LastWillTopicTemplate string          `mapstructure:"last_will_topic_template"`
 	AlwaysSubscribeMACs   []lorawan.EUI64 `mapstructure:"-"`
 	MaxReconnectInterval  time.Duration   `mapstructure:"max_reconnect_interval"`
 }
@@ -55,6 +54,7 @@ type Backend struct {
 	StatsTemplate    *template.Template
 	AckTemplate      *template.Template
 	ConfigTemplate   *template.Template
+	LastWillTemplate *template.Template
 }
 
 // NewBackend creates a new Backend.
@@ -97,6 +97,11 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 		return nil, errors.Wrap(err, "parse config template error")
 	}
 
+	b.LastWillTemplate, err = template.New("lastwill").Parse(b.config.LastWillTopicTemplate)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse last will template error")
+	}
+
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(b.config.Server)
 	opts.SetUsername(b.config.Username)
@@ -106,10 +111,12 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 
-	if b.config.LastWillPayload != "" {
-		log.WithField("topic", b.config.LastWillTopic).Info("backend: setting last will message to mqtt broker")
-		opts.SetWill(b.config.LastWillTopic, b.config.LastWillPayload, b.config.LastWillQoS, b.config.LastWillRetain)
+	if b.config.LastWillPayload == "" {
+		b.config.LastWillPayload = lorawan.EUI64
 	}
+
+	log.WithField("lastwill", b.config.LastWillTopicTemplate).Info("backend: setting last will message to MQTT broker")
+	opts.SetWill(b.config.LastWillTopicTemplate, b.config.LastWillPayload, b.config.QOS, b.config.LastWillRetain)
 
 	maxReconnectInterval := b.config.MaxReconnectInterval
 	log.Infof("backend: set max reconnect interval: %s", maxReconnectInterval)

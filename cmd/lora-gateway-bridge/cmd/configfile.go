@@ -83,6 +83,8 @@ downlink_topic_template="{{ .Backend.MQTT.DownlinkTopicTemplate }}"
 stats_topic_template="{{ .Backend.MQTT.StatsTopicTemplate }}"
 ack_topic_template="{{ .Backend.MQTT.AckTopicTemplate }}"
 config_topic_template="{{ .Backend.MQTT.ConfigTopicTemplate }}"
+last_will_topic_template="{{ .Backend.MQTT.LastWillTopicTemplate }}"
+
 
 # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
 server="{{ .Backend.MQTT.Server }}"
@@ -117,20 +119,10 @@ clean_session={{ .Backend.MQTT.CleanSession }}
 # a random id will be generated. This requires clean_session=true.
 client_id="{{ .Backend.MQTT.ClientID }}"
 
-# Last Will topic
-#
-# Set Last Will topic, where Last Will message will be published
-last_will_topic="{{ .Backend.MQTT.LastWillTopic }}"
-
 # Last Will payload
 #
 # Set Last Will payload to be publish on disconnect
 last_will_payload="{{ .Backend.MQTT.LastWillPayload }}"
-
-# Last Will QoS
-#
-# Set Last Will payload QoS
-last_will_qos="{{ .Backend.MQTT.LastWillQoS }}"
 
 # Last Will retain
 #

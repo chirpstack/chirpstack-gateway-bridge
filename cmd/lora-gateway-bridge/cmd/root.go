@@ -38,10 +38,6 @@ func init() {
 	rootCmd.PersistentFlags().String("mqtt-ca-cert", "", "")
 	rootCmd.PersistentFlags().String("mqtt-tls-cert", "", "")
 	rootCmd.PersistentFlags().String("mqtt-tls-key", "", "")
-	rootCmd.PersistentFlags().String("last-will-payload", "", "")
-	rootCmd.PersistentFlags().String("last-will-topic", "", "")
-	rootCmd.PersistentFlags().Int("last-will-qos", 0, "")
-	rootCmd.PersistentFlags().Bool("last-will-retain", false, "")
 	rootCmd.PersistentFlags().Bool("skip-crc-check", false, "")
 	rootCmd.PersistentFlags().MarkHidden("udp-bind")
 	rootCmd.PersistentFlags().MarkHidden("mqtt-server")
@@ -50,10 +46,6 @@ func init() {
 	rootCmd.PersistentFlags().MarkHidden("mqtt-ca-cert")
 	rootCmd.PersistentFlags().MarkHidden("mqtt-tls-cert")
 	rootCmd.PersistentFlags().MarkHidden("mqtt-tls-key")
-	rootCmd.PersistentFlags().MarkHidden("last-will-payload")
-	rootCmd.PersistentFlags().MarkHidden("last-will-topic")
-	rootCmd.PersistentFlags().MarkHidden("last-will-qos")
-	rootCmd.PersistentFlags().MarkHidden("last-will-retain")
 	rootCmd.PersistentFlags().MarkHidden("skip-crc-check")
 
 	// for backwards compatibility
@@ -77,10 +69,6 @@ func init() {
 	viper.BindPFlag("backend.mqtt.ca_cert", rootCmd.PersistentFlags().Lookup("mqtt-ca-cert"))
 	viper.BindPFlag("backend.mqtt.tls_cert", rootCmd.PersistentFlags().Lookup("mqtt-tls-cert"))
 	viper.BindPFlag("backend.mqtt.tls_key", rootCmd.PersistentFlags().Lookup("mqtt-tls-key"))
-	viper.BindPFlag("backend.mqtt.last_will_payload", rootCmd.PersistentFlags().Lookup("last-will-payload"))
-	viper.BindPFlag("backend.mqtt.last_will_topic", rootCmd.PersistentFlags().Lookup("last-will-topic"))
-	viper.BindPFlag("backend.mqtt.last_will_qos", rootCmd.PersistentFlags().Lookup("last-will-qos"))
-	viper.BindPFlag("backend.mqtt.last_will_retain", rootCmd.PersistentFlags().Lookup("last-will-retain"))
 
 	// default values
 	viper.SetDefault("packet_forwarder.udp_bind", "0.0.0.0:1700")
@@ -93,9 +81,8 @@ func init() {
 	viper.SetDefault("backend.mqtt.server", "tcp://127.0.0.1:1883")
 	viper.SetDefault("backend.mqtt.clean_session", true)
 	viper.SetDefault("backend.mqtt.max_reconnect_interval", 10*time.Minute)
+	viper.SetDefault("backend.mqtt.last_will_topic_template", "gateway/{{ .MAC }}/lastwill")
 	viper.SetDefault("backend.mqtt.last_will_payload", "")
-	viper.SetDefault("backend.mqtt.last_will_topic", "gateway/{{ .MAC }}/last_will")
-	viper.SetDefault("backend.mqtt.last_will_qos", 0)
 	viper.SetDefault("backend.mqtt.last_will_retain", false)
 
 	rootCmd.AddCommand(versionCmd)
