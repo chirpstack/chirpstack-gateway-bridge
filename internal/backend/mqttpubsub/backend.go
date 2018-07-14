@@ -111,9 +111,10 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 
-	if b.config.LastWillPayload == "" {
-		b.config.LastWillPayload = lorawan.EUI64
-	}
+	//if b.config.LastWillPayload == "" {
+	//	mac := lorawan.EUI64
+	//	b.config.LastWillPayload = mac
+	//}
 
 	log.WithField("lastwill", b.config.LastWillTopicTemplate).Info("backend: setting last will message to MQTT broker")
 	opts.SetWill(b.config.LastWillTopicTemplate, b.config.LastWillPayload, b.config.QOS, b.config.LastWillRetain)
