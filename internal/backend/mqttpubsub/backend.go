@@ -38,6 +38,7 @@ type BackendConfig struct {
 	AckTopicTemplate      string          `mapstructure:"ack_topic_template"`
 	ConfigTopicTemplate   string          `mapstructure:"config_topic_template"`
 	AlwaysSubscribeMACs   []lorawan.EUI64 `mapstructure:"-"`
+	MaxReconnectInterval  time.Duration   `mapstructure:"max_reconnect_interval"`
 }
 
 // Backend implements a MQTT pub-sub backend.
@@ -109,6 +110,10 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 		log.WithField("topic", b.config.LastWillTopic).Info("backend: setting last will message to mqtt broker")
 		opts.SetWill(b.config.LastWillTopic, b.config.LastWillPayload, b.config.LastWillQoS, b.config.LastWillRetain)
 	}
+
+	maxReconnectInterval := b.config.MaxReconnectInterval
+	log.Infof("backend: set max reconnect interval: %s", maxReconnectInterval)
+	opts.SetMaxReconnectInterval(maxReconnectInterval)
 
 	tlsconfig, err := newTLSConfig(b.config.CACert, b.config.TLSCert, b.config.TLSKey)
 	if err != nil {

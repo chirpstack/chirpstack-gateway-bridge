@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"io/ioutil"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -91,6 +92,7 @@ func init() {
 	viper.SetDefault("backend.mqtt.config_topic_template", "gateway/{{ .MAC }}/config")
 	viper.SetDefault("backend.mqtt.server", "tcp://127.0.0.1:1883")
 	viper.SetDefault("backend.mqtt.clean_session", true)
+	viper.SetDefault("backend.mqtt.max_reconnect_interval", 10*time.Minute)
 	viper.SetDefault("backend.mqtt.last_will_payload", "")
 	viper.SetDefault("backend.mqtt.last_will_topic", "gateway/{{ .MAC }}/last_will")
 	viper.SetDefault("backend.mqtt.last_will_qos", 0)
