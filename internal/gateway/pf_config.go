@@ -28,12 +28,6 @@ var radioBandwidthPerChannelBandwidth = map[int]int{
 // bandwidth does not match any of the above values.
 const defaultRadioBandwidth = 925000
 
-// radioCount defines the number of radios available
-const radioCount = 2
-
-// channelCount defines the number of available channels
-const channelCount = 8
-
 // jsonCommentRegexp matches json comments
 var jsonCommentRegexp = regexp.MustCompile(`/\*.*\*/`)
 
@@ -81,8 +75,8 @@ type configFile struct {
 
 // gatewayConfiguration contains the radio configuration for a gateway.
 type gatewayConfiguration struct {
-	Radios               [radioCount]radioConfig
-	MultiSFChannels      [channelCount]multiSFChannelConfig
+	Radios               []radioConfig
+	MultiSFChannels      []multiSFChannelConfig
 	LoRaSTDChannelConfig loRaSTDChannelConfig
 	FSKChannelConfig     fskChannelConfig
 }
@@ -111,7 +105,6 @@ func (c channelByMinRadioCenterFrequency) minRadioCenterFreq(i int) int {
 // radios and their center frequencies and the channels assigned to each radio.
 func getGatewayConfig(conf gw.GatewayConfigPacket) (gatewayConfiguration, error) {
 	var gc gatewayConfiguration
-	var multiSFCounter int
 
 	// make sure the channels are sorted by the minimum radio center frequency
 	sort.Sort(channelByMinRadioCenterFrequency(conf.Channels))
@@ -119,32 +112,6 @@ func getGatewayConfig(conf gw.GatewayConfigPacket) (gatewayConfiguration, error)
 	// define the radios and their center frequency
 	for _, c := range conf.Channels {
 		channelBandwidth := c.Bandwidth * 1000
-		channelMax := c.Frequency + (channelBandwidth / 2)
-		radioBandwidth, ok := radioBandwidthPerChannelBandwidth[channelBandwidth]
-		if !ok {
-			radioBandwidth = defaultRadioBandwidth
-		}
-		minRadioCenterFreq := c.Frequency - (channelBandwidth / 2) + (radioBandwidth / 2)
-
-		for i, r := range gc.Radios {
-			// the radio is not defined yet, use it
-			if !r.Enable {
-				gc.Radios[i].Enable = true
-				gc.Radios[i].Freq = minRadioCenterFreq
-				break
-			}
-
-			if channelMax <= r.Freq+(radioBandwidth/2) {
-				break
-			}
-		}
-	}
-
-	// assign channels
-	for _, c := range conf.Channels {
-		var radio int
-
-		channelBandwidth := int(c.Bandwidth * 1000)
 		channelMin := c.Frequency - (channelBandwidth / 2)
 		channelMax := c.Frequency + (channelBandwidth / 2)
 		radioBandwidth, ok := radioBandwidthPerChannelBandwidth[channelBandwidth]
@@ -152,12 +119,25 @@ func getGatewayConfig(conf gw.GatewayConfigPacket) (gatewayConfiguration, error)
 			radioBandwidth = defaultRadioBandwidth
 		}
 
-		// get the radio covering the channel frequency
+		var found bool
+		var radio int
+
 		for i, r := range gc.Radios {
 			if channelMin >= r.Freq-(radioBandwidth/2) && channelMax <= r.Freq+(radioBandwidth/2) {
+				found = true
 				radio = i
 				break
 			}
+		}
+
+		if !found {
+			// No sutiable radio found, add a new one
+			newRadio := radioConfig{
+				Enable: true,
+				Freq:   c.Frequency - (channelBandwidth / 2) + (radioBandwidth / 2),
+			}
+			gc.Radios = append(gc.Radios, newRadio)
+			radio = len(gc.Radios) - 1
 		}
 
 		if c.Modulation == band.FSKModulation {
@@ -192,18 +172,13 @@ func getGatewayConfig(conf gw.GatewayConfigPacket) (gatewayConfiguration, error)
 
 		} else if c.Modulation == band.LoRaModulation {
 			// LoRa multi-SF channels
-			if multiSFCounter > channelCount {
-				return gc, errors.New("gateway: exceeded maximum number of multi-sf channels")
-			}
-
-			gc.MultiSFChannels[multiSFCounter] = multiSFChannelConfig{
+			multiSFChannel := multiSFChannelConfig{
 				Enable: true,
 				Radio:  radio,
 				IF:     c.Frequency - gc.Radios[radio].Freq,
 				Freq:   c.Frequency,
 			}
-
-			multiSFCounter++
+			gc.MultiSFChannels = append(gc.MultiSFChannels, multiSFChannel)
 
 		} else {
 			return gc, fmt.Errorf("gateway: invalid modulation: %s", c.Modulation)
