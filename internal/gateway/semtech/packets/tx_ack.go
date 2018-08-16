@@ -54,7 +54,7 @@ func (p *TXACKPacket) UnmarshalBinary(data []byte) error {
 	for i := 0; i < 8; i++ {
 		p.GatewayMAC[i] = data[4+i]
 	}
-	if len(data) > 12 {
+	if len(data) > 13 { // the min payload + the length of at least "{}"
 		p.Payload = &TXACKPayload{}
 		return json.Unmarshal(data[12:], p.Payload)
 	}
