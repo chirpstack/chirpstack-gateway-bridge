@@ -15,7 +15,7 @@
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "v1.0.5"
+  version = "v1.0.6"
 
 [[constraint]]
   name = "github.com/smartystreets/goconvey"
@@ -26,9 +26,21 @@
   name = "github.com/spf13/cobra"
 
 [[constraint]]
-  version = "v1.0.2"
+  version = "v1.1.0"
   name = "github.com/spf13/viper"
 
 [[constraint]]
   name = "github.com/pkg/errors"
   version = "v0.8.0"
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  version = "0.8.0"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.2.2"
+
+[[override]]
+  version = "v1.1.0"
+  name = "github.com/golang/protobuf"

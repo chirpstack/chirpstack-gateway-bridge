@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 )
@@ -67,6 +68,7 @@ func (c *gateways) set(mac lorawan.EUI64, gw gateway) error {
 	c.Lock()
 	_, ok := c.gateways[mac]
 	if !ok && c.onNew != nil {
+		gatewayEventCounter("register_gateway")
 		if err := c.onNew(mac); err != nil {
 			return err
 		}
@@ -82,6 +84,7 @@ func (c *gateways) cleanup() error {
 	for mac := range c.gateways {
 		if c.gateways[mac].lastSeen.Before(time.Now().Add(gatewayCleanupDuration)) {
 			if c.onDelete != nil {
+				gatewayEventCounter("unregister_gateway")
 				if err := c.onDelete(mac); err != nil {
 					return err
 				}
@@ -90,16 +93,6 @@ func (c *gateways) cleanup() error {
 		}
 	}
 	return nil
-}
-
-// Configuration holds the packet-forwarder configuration.
-type Configuration struct {
-	MAC            lorawan.EUI64 `mapstructure:"-"`
-	MACString      string        `mapstructure:"mac"`
-	BaseFile       string        `mapstructure:"base_file"`
-	OutputFile     string        `mapstructure:"output_file"`
-	RestartCommand string        `mapstructure:"restart_command"`
-	version        string
 }
 
 // Backend implements a Semtech packet-forwarder gateway backend.
@@ -111,13 +104,13 @@ type Backend struct {
 	udpSendChan    chan udpPacket
 	closed         bool
 	gateways       gateways
-	configurations []Configuration
+	configurations []semtech.PFConfiguration
 	wg             sync.WaitGroup
 	skipCRCCheck   bool
 }
 
 // NewBackend creates a new backend.
-func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lorawan.EUI64) error, skipCRCCheck bool, configurations []Configuration) (*Backend, error) {
+func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lorawan.EUI64) error, skipCRCCheck bool, configurations []semtech.PFConfiguration) (*Backend, error) {
 	addr, err := net.ResolveUDPAddr("udp", bind)
 	if err != nil {
 		return nil, err
@@ -188,60 +181,62 @@ func (b *Backend) Close() error {
 
 // ApplyConfiguration applies the given configuration.
 func (b *Backend) ApplyConfiguration(config gw.GatewayConfigPacket) error {
-	var found bool
-	for i, c := range b.configurations {
-		if c.MAC != config.MAC {
-			continue
+	return gatewayConfigHandleTimer(func() error {
+		var found bool
+		for i, c := range b.configurations {
+			if c.MAC != config.MAC {
+				continue
+			}
+
+			found = true
+
+			gwConfig, err := getGatewayConfig(config)
+			if err != nil {
+				return errors.Wrap(err, "get gateway config error")
+			}
+
+			baseConfig, err := loadConfigFile(c.BaseFile)
+			if err != nil {
+				return errors.Wrap(err, "load config file error")
+			}
+
+			if err = mergeConfig(c.MAC, baseConfig, gwConfig); err != nil {
+				return errors.Wrap(err, "merge config error")
+			}
+
+			// generate config json
+			bb, err := json.Marshal(baseConfig)
+			if err != nil {
+				return errors.Wrap(err, "marshal json error")
+			}
+
+			// write new config file to disk
+			if err = ioutil.WriteFile(c.OutputFile, bb, 0644); err != nil {
+				return errors.Wrap(err, "write config file errror")
+			}
+			log.WithFields(log.Fields{
+				"mac":  config.MAC,
+				"file": c.OutputFile,
+			}).Info("gateway: new configuration file written")
+
+			// invoke restart command
+			if err = invokePFRestart(c.RestartCommand); err != nil {
+				return errors.Wrap(err, "invoke packet-forwarder restart error")
+			}
+			log.WithFields(log.Fields{
+				"mac": config.MAC,
+				"cmd": c.RestartCommand,
+			}).Info("gateway: packet-forwarder restart command invoked")
+
+			b.configurations[i].Version = config.Version
 		}
 
-		found = true
-
-		gwConfig, err := getGatewayConfig(config)
-		if err != nil {
-			return errors.Wrap(err, "get gateway config error")
+		if !found {
+			log.WithField("mac", config.MAC).Warning("gateway: configuration was not applied, gateway is not configured for managed configuration")
 		}
 
-		baseConfig, err := loadConfigFile(c.BaseFile)
-		if err != nil {
-			return errors.Wrap(err, "load config file error")
-		}
-
-		if err = mergeConfig(c.MAC, baseConfig, gwConfig); err != nil {
-			return errors.Wrap(err, "merge config error")
-		}
-
-		// generate config json
-		bb, err := json.Marshal(baseConfig)
-		if err != nil {
-			return errors.Wrap(err, "marshal json error")
-		}
-
-		// write new config file to disk
-		if err = ioutil.WriteFile(c.OutputFile, bb, 0644); err != nil {
-			return errors.Wrap(err, "write config file errror")
-		}
-		log.WithFields(log.Fields{
-			"mac":  config.MAC,
-			"file": c.OutputFile,
-		}).Info("gateway: new configuration file written")
-
-		// invoke restart command
-		if err = invokePFRestart(c.RestartCommand); err != nil {
-			return errors.Wrap(err, "invoke packet-forwarder restart error")
-		}
-		log.WithFields(log.Fields{
-			"mac": config.MAC,
-			"cmd": c.RestartCommand,
-		}).Info("gateway: packet-forwarder restart command invoked")
-
-		b.configurations[i].version = config.Version
-	}
-
-	if !found {
-		log.WithField("mac", config.MAC).Warning("gateway: configuration was not applied, gateway is not configured for managed configuration")
-	}
-
-	return nil
+		return nil
+	})
 }
 
 // RXPacketChan returns the channel containing the received RX packets.
@@ -329,7 +324,11 @@ func (b *Backend) sendPackets() error {
 			"protocol_version": p.data[0],
 		}).Info("gateway: sending udp packet to gateway")
 
-		if _, err := b.conn.WriteToUDP(p.data, p.addr); err != nil {
+		err = gatewayWriteUDPTimer(pt.String(), func() error {
+			_, err := b.conn.WriteToUDP(p.data, p.addr)
+			return err
+		})
+		if err != nil {
 			log.WithFields(log.Fields{
 				"addr":             p.addr,
 				"type":             pt,
@@ -351,16 +350,18 @@ func (b *Backend) handlePacket(addr *net.UDPAddr, data []byte) error {
 		"protocol_version": data[0],
 	}).Info("gateway: received udp packet from gateway")
 
-	switch pt {
-	case PushData:
-		return b.handlePushData(addr, data)
-	case PullData:
-		return b.handlePullData(addr, data)
-	case TXACK:
-		return b.handleTXACK(addr, data)
-	default:
-		return fmt.Errorf("gateway: unknown packet type: %s", pt)
-	}
+	return gatewayHandleTimer(pt.String(), func() error {
+		switch pt {
+		case PushData:
+			return b.handlePushData(addr, data)
+		case PullData:
+			return b.handlePullData(addr, data)
+		case TXACK:
+			return b.handleTXACK(addr, data)
+		default:
+			return fmt.Errorf("gateway: unknown packet type: %s", pt)
+		}
+	})
 }
 
 func (b *Backend) handlePullData(addr *net.UDPAddr, data []byte) error {
@@ -437,7 +438,7 @@ func (b *Backend) handleStat(addr *net.UDPAddr, mac lorawan.EUI64, stat Stat) {
 	// set configuration version, if available
 	for _, c := range b.configurations {
 		if gwStats.MAC == c.MAC {
-			gwStats.ConfigVersion = c.version
+			gwStats.ConfigVersion = c.Version
 		}
 	}
 

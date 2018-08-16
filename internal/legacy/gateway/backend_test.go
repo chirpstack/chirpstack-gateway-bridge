@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech"
+
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
@@ -22,13 +24,13 @@ func TestBackend(t *testing.T) {
 		So(err, ShouldBeNil)
 		defer os.RemoveAll(tempDir)
 
-		backend, err := NewBackend("127.0.0.1:0", nil, nil, false, []Configuration{
+		backend, err := NewBackend("127.0.0.1:0", nil, nil, false, []semtech.PFConfiguration{
 			{
 				MAC:            lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
 				BaseFile:       filepath.Join("test/test.json"),
 				OutputFile:     filepath.Join(tempDir, "out.json"),
 				RestartCommand: "touch " + filepath.Join(tempDir, "restart"),
-				version:        "12345",
+				Version:        "12345",
 			},
 		})
 		So(err, ShouldBeNil)

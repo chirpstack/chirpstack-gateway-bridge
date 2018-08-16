@@ -8,6 +8,44 @@ menu:
 
 # Changelog
 
+## v2.5.0 (in development)
+
+### Features
+
+#### Protocol Buffer data serialization
+
+To save on bandwith between the gateway and the MQTT broker (e.g. when the
+gateway uses a cellular connection), this update adds makes it possible to
+configure the `marshaler` for encoding / decoding the data (in
+`lora-gateway-bridge.toml`) using [Protocol Buffers](https://developers.google.com/protocol-buffers/).
+
+This will become the default option in LoRa Gateway Bridge v3.
+
+#### New JSON format
+
+The new JSON structure re-uses the messages defined for
+[Protocol Buffers](https://developers.google.com/protocol-buffers/docs/proto3#json)
+based serialization. For backwards compatibility, the default `marshaler` for
+LoRa Gateway Bridge v2.x will be `v2_json`. 
+
+#### Kerlink iBTS fine-timestamp
+
+When using the `protobuf` or `json` `marshaler`, LoRa Gateway Bridge will
+expose the fine-timestamp fields when using Kerlink iBTS gateways.
+
+#### Prometheus metrics
+
+For monitoring the health and throughput of each LoRa Gateway Bridge instance,
+LoRa Gateway Bridge is able to expose various metrics that can be scraped by
+[Prometheus](https://prometheus.io/).
+
+### Changes
+
+#### Configuration structure of MQTT backend
+
+The structure of the `[backend.mqtt]` configuration section has been updated.
+These changes are fully backwards compatible.
+
 ## 2.4.1
 
 **Bugfixes:**

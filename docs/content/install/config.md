@@ -147,55 +147,90 @@ stats_topic_template="gateway/{{ .MAC }}/stats"
 ack_topic_template="gateway/{{ .MAC }}/ack"
 config_topic_template="gateway/{{ .MAC }}/config"
 
-# MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
-server="tcp://127.0.0.1:1883"
-
-# Connect with the given username (optional)
-username=""
-
-# Connect with the given password (optional)
-password=""
-
-# Quality of service level
+# Payload marshaler.
 #
-# 0: at most once
-# 1: at least once
-# 2: exactly once
-#
-# Note: an increase of this value will decrease the performance.
-# For more information: https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels
-qos=0
+# This defines how the MQTT payloads are encoded. Valid options are:
+# * v2_json:   The default LoRa Gateway Bridge v2 encoding (will be deprecated and removed in LoRa Gateway Bridge v3)
+# * protobuf:  Protobuf encoding (this will become the LoRa Gateway Bridge v3 default)
+# * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
+marshaler="v2_json"
 
-# Clean session
-#
-# Set the "clean session" flag in the connect message when this client
-# connects to an MQTT broker. By setting this flag you are indicating
-# that no messages saved by the broker for this client should be delivered.
-clean_session=true
+  # MQTT authentication.
+  [backend.mqtt.auth]
+  # Type defines the MQTT authentication type to use.
+  #
+  # Set this to the name of one of the sections below.
+  # Note: when the 'v2_json marhaler' is configured, the generic backend will
+  # always be used.
+  type="generic"
 
-# Client ID
-#
-# Set the client id to be used by this client when connecting to the MQTT
-# broker. A client id must be no longer than 23 characters. When left blank,
-# a random id will be generated. This requires clean_session=true.
-client_id=""
+    # Generic MQTT authentication.
+    [backend.mqtt.auth.generic]
+    # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
+    server="tcp://127.0.0.1:1883"
 
-# CA certificate file (optional)
-#
-# Use this when setting up a secure connection (when server uses ssl://...)
-# but the certificate used by the server is not trusted by any CA certificate
-# on the server (e.g. when self generated).
-ca_cert=""
+    # Connect with the given username (optional)
+    username=""
 
-# mqtt TLS certificate file (optional)
-tls_cert=""
+    # Connect with the given password (optional)
+    password=""
 
-# mqtt TLS key file (optional)
-tls_key=""
+    # Quality of service level
+    #
+    # 0: at most once
+    # 1: at least once
+    # 2: exactly once
+    #
+    # Note: an increase of this value will decrease the performance.
+    # For more information: https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels
+    qos=0
 
-# Maximum interval that will be waited between reconnection attempts when connection is lost.
-# Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
-max_reconnect_interval="10m"
+    # Clean session
+    #
+    # Set the "clean session" flag in the connect message when this client
+    # connects to an MQTT broker. By setting this flag you are indicating
+    # that no messages saved by the broker for this client should be delivered.
+    clean_session=true
+
+    # Client ID
+    #
+    # Set the client id to be used by this client when connecting to the MQTT
+    # broker. A client id must be no longer than 23 characters. When left blank,
+    # a random id will be generated. This requires clean_session=true.
+    client_id=""
+
+    # CA certificate file (optional)
+    #
+    # Use this when setting up a secure connection (when server uses ssl://...)
+    # but the certificate used by the server is not trusted by any CA certificate
+    # on the server (e.g. when self generated).
+    ca_cert=""
+
+    # mqtt TLS certificate file (optional)
+    tls_cert=""
+
+    # mqtt TLS key file (optional)
+    tls_key=""
+
+    # Maximum interval that will be waited between reconnection attempts when connection is lost.
+    # Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
+    max_reconnect_interval="10m0s"
+
+
+# Metrics configuration.
+[metrics]
+
+  # Metrics stored in Prometheus.
+  #
+  # These metrics expose information about the state of the LoRa Gateway Bridge
+  # instance like number of messages processed, number of function calls, etc.
+  [metrics.prometheus]
+  # Expose Prometheus metrics endpoint.
+  endpoint_enabled=false
+
+  # The ip:port to bind the Prometheus metrics server to for serving the
+  # metrics endpoint.
+  bind=""
 ```
 
 ### Warning: deprecation warning! update your configuration

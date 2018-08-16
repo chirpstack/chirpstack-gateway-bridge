@@ -70,6 +70,18 @@ func init() {
 	viper.BindPFlag("backend.mqtt.tls_cert", rootCmd.PersistentFlags().Lookup("mqtt-tls-cert"))
 	viper.BindPFlag("backend.mqtt.tls_key", rootCmd.PersistentFlags().Lookup("mqtt-tls-key"))
 
+	// aliases 2.4.x -> 2.5.0
+	viper.RegisterAlias("backend.mqtt.auth.generic.server", "backend.mqtt.server")
+	viper.RegisterAlias("backend.mqtt.auth.generic.username", "backend.mqtt.username")
+	viper.RegisterAlias("backend.mqtt.auth.generic.password", "backend.mqtt.password")
+	viper.RegisterAlias("backend.mqtt.auth.generic.ca_cert", "backend.mqtt.ca_cert")
+	viper.RegisterAlias("backend.mqtt.auth.generic.tls_cert", "backend.mqtt.tls_cert")
+	viper.RegisterAlias("backend.mqtt.auth.generic.tls_key", "backend.mqtt.tls_key")
+	viper.RegisterAlias("backend.mqtt.auth.generic.qos", "backend.mqtt.qos")
+	viper.RegisterAlias("backend.mqtt.auth.generic.clean_session", "backend.mqtt.clean_session")
+	viper.RegisterAlias("backend.mqtt.auth.generic.client_id", "backend.mqtt.client_id")
+	viper.RegisterAlias("backend.mqtt.auth.generic.max_reconnect_interval", "backend.mqtt.max_reconnect_interval")
+
 	// default values
 	viper.SetDefault("packet_forwarder.udp_bind", "0.0.0.0:1700")
 
@@ -78,9 +90,14 @@ func init() {
 	viper.SetDefault("backend.mqtt.stats_topic_template", "gateway/{{ .MAC }}/stats")
 	viper.SetDefault("backend.mqtt.ack_topic_template", "gateway/{{ .MAC }}/ack")
 	viper.SetDefault("backend.mqtt.config_topic_template", "gateway/{{ .MAC }}/config")
-	viper.SetDefault("backend.mqtt.server", "tcp://127.0.0.1:1883")
-	viper.SetDefault("backend.mqtt.clean_session", true)
-	viper.SetDefault("backend.mqtt.max_reconnect_interval", 10*time.Minute)
+
+	viper.SetDefault("backend.mqtt.marshaler", "v2_json")
+	viper.SetDefault("backend.mqtt.auth.type", "generic")
+	viper.SetDefault("backend.mqtt.auth.generic.server", "tcp://127.0.0.1:1883")
+	viper.SetDefault("backend.mqtt.auth.generic.clean_session", true)
+	viper.SetDefault("backend.mqtt.auth.generic.max_reconnect_interval", 10*time.Minute)
+
+	viper.SetDefault("metrics.prometheus.bind", "")
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)

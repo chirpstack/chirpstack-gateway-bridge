@@ -84,55 +84,90 @@ stats_topic_template="{{ .Backend.MQTT.StatsTopicTemplate }}"
 ack_topic_template="{{ .Backend.MQTT.AckTopicTemplate }}"
 config_topic_template="{{ .Backend.MQTT.ConfigTopicTemplate }}"
 
-# MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
-server="{{ .Backend.MQTT.Server }}"
-
-# Connect with the given username (optional)
-username="{{ .Backend.MQTT.Username }}"
-
-# Connect with the given password (optional)
-password="{{ .Backend.MQTT.Password }}"
-
-# Quality of service level
+# Payload marshaler.
 #
-# 0: at most once
-# 1: at least once
-# 2: exactly once
-#
-# Note: an increase of this value will decrease the performance.
-# For more information: https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels
-qos={{ .Backend.MQTT.QOS }}
+# This defines how the MQTT payloads are encoded. Valid options are:
+# * v2_json:   The default LoRa Gateway Bridge v2 encoding (will be deprecated and removed in LoRa Gateway Bridge v3)
+# * protobuf:  Protobuf encoding (this will become the LoRa Gateway Bridge v3 default)
+# * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
+marshaler="{{ .Backend.MQTT.Marshaler }}"
 
-# Clean session
-#
-# Set the "clean session" flag in the connect message when this client
-# connects to an MQTT broker. By setting this flag you are indicating
-# that no messages saved by the broker for this client should be delivered.
-clean_session={{ .Backend.MQTT.CleanSession }}
+  # MQTT authentication.
+  [backend.mqtt.auth]
+  # Type defines the MQTT authentication type to use.
+  #
+  # Set this to the name of one of the sections below.
+  # Note: when the 'v2_json marhaler' is configured, the generic backend will
+  # always be used.
+  type="{{ .Backend.MQTT.Auth.Type }}"
 
-# Client ID
-#
-# Set the client id to be used by this client when connecting to the MQTT
-# broker. A client id must be no longer than 23 characters. When left blank,
-# a random id will be generated. This requires clean_session=true.
-client_id="{{ .Backend.MQTT.ClientID }}"
+    # Generic MQTT authentication.
+    [backend.mqtt.auth.generic]
+    # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
+    server="{{ .Backend.MQTT.Auth.Generic.Server }}"
 
-# CA certificate file (optional)
-#
-# Use this when setting up a secure connection (when server uses ssl://...)
-# but the certificate used by the server is not trusted by any CA certificate
-# on the server (e.g. when self generated).
-ca_cert="{{ .Backend.MQTT.CACert }}"
+    # Connect with the given username (optional)
+    username="{{ .Backend.MQTT.Auth.Generic.Username }}"
 
-# mqtt TLS certificate file (optional)
-tls_cert="{{ .Backend.MQTT.TLSCert }}"
+    # Connect with the given password (optional)
+    password="{{ .Backend.MQTT.Auth.Generic.Password }}"
 
-# mqtt TLS key file (optional)
-tls_key="{{ .Backend.MQTT.TLSKey }}"
+    # Quality of service level
+    #
+    # 0: at most once
+    # 1: at least once
+    # 2: exactly once
+    #
+    # Note: an increase of this value will decrease the performance.
+    # For more information: https://www.hivemq.com/blog/mqtt-essentials-part-6-mqtt-quality-of-service-levels
+    qos={{ .Backend.MQTT.Auth.Generic.QOS }}
 
-# Maximum interval that will be waited between reconnection attempts when connection is lost.
-# Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
-max_reconnect_interval="{{ .Backend.MQTT.MaxReconnectInterval }}"
+    # Clean session
+    #
+    # Set the "clean session" flag in the connect message when this client
+    # connects to an MQTT broker. By setting this flag you are indicating
+    # that no messages saved by the broker for this client should be delivered.
+    clean_session={{ .Backend.MQTT.Auth.Generic.CleanSession }}
+
+    # Client ID
+    #
+    # Set the client id to be used by this client when connecting to the MQTT
+    # broker. A client id must be no longer than 23 characters. When left blank,
+    # a random id will be generated. This requires clean_session=true.
+    client_id="{{ .Backend.MQTT.Auth.Generic.ClientID }}"
+
+    # CA certificate file (optional)
+    #
+    # Use this when setting up a secure connection (when server uses ssl://...)
+    # but the certificate used by the server is not trusted by any CA certificate
+    # on the server (e.g. when self generated).
+    ca_cert="{{ .Backend.MQTT.Auth.Generic.CACert }}"
+
+    # mqtt TLS certificate file (optional)
+    tls_cert="{{ .Backend.MQTT.Auth.Generic.TLSCert }}"
+
+    # mqtt TLS key file (optional)
+    tls_key="{{ .Backend.MQTT.Auth.Generic.TLSKey }}"
+
+    # Maximum interval that will be waited between reconnection attempts when connection is lost.
+    # Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
+    max_reconnect_interval="{{ .Backend.MQTT.Auth.Generic.MaxReconnectInterval }}"
+
+
+# Metrics configuration.
+[metrics]
+
+  # Metrics stored in Prometheus.
+  #
+  # These metrics expose information about the state of the LoRa Gateway Bridge
+  # instance like number of messages processed, number of function calls, etc.
+  [metrics.prometheus]
+  # Expose Prometheus metrics endpoint.
+  endpoint_enabled={{ .Metrics.Prometheus.EndpointEnabled }}
+
+  # The ip:port to bind the Prometheus metrics server to for serving the
+  # metrics endpoint.
+  bind="{{ .Metrics.Prometheus.Bind }}"
 `
 
 var configCmd = &cobra.Command{

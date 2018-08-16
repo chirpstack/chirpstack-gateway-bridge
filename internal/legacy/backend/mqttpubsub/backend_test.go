@@ -7,6 +7,8 @@ import (
 
 	"github.com/brocaar/lorawan"
 
+	newBackend "github.com/brocaar/lora-gateway-bridge/internal/backend/mqtt"
+	"github.com/brocaar/lora-gateway-bridge/internal/backend/mqtt/auth"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/eclipse/paho.mqtt.golang"
 	. "github.com/smartystreets/goconvey/convey"
@@ -25,16 +27,21 @@ func TestBackend(t *testing.T) {
 
 		Convey("Given a new Backend", func() {
 			backend, err := NewBackend(
-				BackendConfig{
-					Server:                conf.Server,
-					Username:              conf.Username,
-					Password:              conf.Password,
-					CleanSession:          true,
+				newBackend.BackendConfig{
 					UplinkTopicTemplate:   "gateway/{{ .MAC }}/rx",
 					DownlinkTopicTemplate: "gateway/{{ .MAC }}/tx",
 					StatsTopicTemplate:    "gateway/{{ .MAC }}/stats",
 					AckTopicTemplate:      "gateway/{{ .MAC }}/ack",
 					ConfigTopicTemplate:   "gateway/{{ .MAC }}/config",
+					Auth: newBackend.BackendAuthConfig{
+						Type: "generic",
+						Generic: auth.GenericConfig{
+							Server:       conf.Server,
+							Username:     conf.Username,
+							Password:     conf.Password,
+							CleanSession: true,
+						},
+					},
 				},
 			)
 			So(err, ShouldBeNil)

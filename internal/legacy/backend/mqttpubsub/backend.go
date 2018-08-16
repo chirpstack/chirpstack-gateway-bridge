@@ -10,32 +10,13 @@ import (
 	"text/template"
 	"time"
 
+	newMQTT "github.com/brocaar/lora-gateway-bridge/internal/backend/mqtt"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
-
-// BackendConfig holds the MQTT pub-sub backend configuration.
-type BackendConfig struct {
-	Server                string
-	Username              string
-	Password              string
-	QOS                   uint8           `mapstructure:"qos"`
-	CleanSession          bool            `mapstructure:"clean_session"`
-	ClientID              string          `mapstructure:"client_id"`
-	CACert                string          `mapstructure:"ca_cert"`
-	TLSCert               string          `mapstructure:"tls_cert"`
-	TLSKey                string          `mapstructure:"tls_key"`
-	UplinkTopicTemplate   string          `mapstructure:"uplink_topic_template"`
-	DownlinkTopicTemplate string          `mapstructure:"downlink_topic_template"`
-	StatsTopicTemplate    string          `mapstructure:"stats_topic_template"`
-	AckTopicTemplate      string          `mapstructure:"ack_topic_template"`
-	ConfigTopicTemplate   string          `mapstructure:"config_topic_template"`
-	AlwaysSubscribeMACs   []lorawan.EUI64 `mapstructure:"-"`
-	MaxReconnectInterval  time.Duration   `mapstructure:"max_reconnect_interval"`
-}
 
 // Backend implements a MQTT pub-sub backend.
 type Backend struct {
@@ -44,7 +25,7 @@ type Backend struct {
 	configPacketChan chan gw.GatewayConfigPacket
 	gateways         map[lorawan.EUI64]bool // the bool indicates if the gateway must always be subscribed
 	mutex            sync.RWMutex
-	config           BackendConfig
+	config           newMQTT.BackendConfig
 
 	UplinkTemplate   *template.Template
 	DownlinkTemplate *template.Template
@@ -54,7 +35,7 @@ type Backend struct {
 }
 
 // NewBackend creates a new Backend.
-func NewBackend(c BackendConfig) (*Backend, error) {
+func NewBackend(c newMQTT.BackendConfig) (*Backend, error) {
 	var err error
 
 	b := Backend{
@@ -94,34 +75,40 @@ func NewBackend(c BackendConfig) (*Backend, error) {
 	}
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(b.config.Server)
-	opts.SetUsername(b.config.Username)
-	opts.SetPassword(b.config.Password)
-	opts.SetCleanSession(b.config.CleanSession)
-	opts.SetClientID(b.config.ClientID)
+	opts.AddBroker(b.config.Auth.Generic.Server)
+	opts.SetUsername(b.config.Auth.Generic.Username)
+	opts.SetPassword(b.config.Auth.Generic.Password)
+	opts.SetCleanSession(b.config.Auth.Generic.CleanSession)
+	opts.SetClientID(b.config.Auth.Generic.ClientID)
 	opts.SetOnConnectHandler(b.onConnected)
 	opts.SetConnectionLostHandler(b.onConnectionLost)
 
-	maxReconnectInterval := b.config.MaxReconnectInterval
+	maxReconnectInterval := b.config.Auth.Generic.MaxReconnectInterval
 	log.Infof("backend: set max reconnect interval: %s", maxReconnectInterval)
 	opts.SetMaxReconnectInterval(maxReconnectInterval)
 
-	tlsconfig, err := newTLSConfig(b.config.CACert, b.config.TLSCert, b.config.TLSKey)
+	tlsconfig, err := newTLSConfig(b.config.Auth.Generic.CACert, b.config.Auth.Generic.TLSCert, b.config.Auth.Generic.TLSKey)
 	if err != nil {
 		log.WithError(err).WithFields(log.Fields{
-			"ca_cert":  b.config.CACert,
-			"tls_cert": b.config.TLSCert,
-			"tls_key":  b.config.TLSKey,
+			"ca_cert":  b.config.Auth.Generic.CACert,
+			"tls_cert": b.config.Auth.Generic.TLSCert,
+			"tls_key":  b.config.Auth.Generic.TLSKey,
 		}).Fatal("error loading mqtt certificate files")
 	}
 	if tlsconfig != nil {
 		opts.SetTLSConfig(tlsconfig)
 	}
 
-	log.WithField("server", b.config.Server).Info("backend: connecting to mqtt broker")
+	log.WithField("server", b.config.Auth.Generic.Server).Info("backend: connecting to mqtt broker")
 	b.conn = mqtt.NewClient(opts)
-	if token := b.conn.Connect(); token.Wait() && token.Error() != nil {
-		return nil, token.Error()
+
+	err = mqttConnectTimer(func() error {
+		token := b.conn.Connect()
+		token.Wait()
+		return token.Error()
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return &b, nil
@@ -145,6 +132,8 @@ func (b *Backend) ConfigPacketChan() chan gw.GatewayConfigPacket {
 // SubscribeGatewayTopics subscribes the backend to the gateway topics.
 // (downlink and configuration).
 func (b *Backend) SubscribeGatewayTopics(mac lorawan.EUI64) error {
+	mqttEventCounter("subscribe_gateway")
+
 	defer b.mutex.Unlock()
 	b.mutex.Lock()
 
@@ -161,8 +150,13 @@ func (b *Backend) SubscribeGatewayTopics(mac lorawan.EUI64) error {
 		"topic": topic.String(),
 		"qos":   b.config.QOS,
 	}).Info("backend: subscribing to topic")
-	if token := b.conn.Subscribe(topic.String(), b.config.QOS, b.txPacketHandler); token.Wait() && token.Error() != nil {
+	err := mqttSubscribeTimer(false, func() error {
+		token := b.conn.Subscribe(topic.String(), b.config.QOS, b.txPacketHandler)
+		token.Wait()
 		return token.Error()
+	})
+	if err != nil {
+		return err
 	}
 
 	topic.Reset()
@@ -173,8 +167,13 @@ func (b *Backend) SubscribeGatewayTopics(mac lorawan.EUI64) error {
 		"topic": topic.String(),
 		"qos":   b.config.QOS,
 	}).Info("backend: subscribing to topic")
-	if token := b.conn.Subscribe(topic.String(), b.config.QOS, b.configPacketHandler); token.Wait() && token.Error() != nil {
+	err = mqttSubscribeTimer(false, func() error {
+		token := b.conn.Subscribe(topic.String(), b.config.QOS, b.configPacketHandler)
+		token.Wait()
 		return token.Error()
+	})
+	if err != nil {
+		return err
 	}
 
 	b.gateways[mac] = false
@@ -184,6 +183,8 @@ func (b *Backend) SubscribeGatewayTopics(mac lorawan.EUI64) error {
 // UnSubscribeGatewayTopics unsubscribes the backend from the gateway topics.
 // (downlink and configuration).
 func (b *Backend) UnSubscribeGatewayTopics(mac lorawan.EUI64) error {
+	mqttEventCounter("unsubscribe_gateway")
+
 	defer b.mutex.Unlock()
 	b.mutex.Lock()
 
@@ -197,8 +198,14 @@ func (b *Backend) UnSubscribeGatewayTopics(mac lorawan.EUI64) error {
 			return errors.Wrap(err, "execute template error")
 		}
 		log.WithField("topic", topic.String()).Info("backend: unsubscribing from topic")
-		if token := b.conn.Unsubscribe(topic.String()); token.Wait() && token.Error() != nil {
+
+		err := mqttUnsubscribeTimer(func() error {
+			token := b.conn.Unsubscribe(topic.String())
+			token.Wait()
 			return token.Error()
+		})
+		if err != nil {
+			return err
 		}
 	}
 
@@ -208,17 +215,23 @@ func (b *Backend) UnSubscribeGatewayTopics(mac lorawan.EUI64) error {
 
 // PublishGatewayRX publishes a RX packet to the MQTT broker.
 func (b *Backend) PublishGatewayRX(mac lorawan.EUI64, rxPacket gw.RXPacketBytes) error {
-	return b.publish(mac, b.UplinkTemplate, rxPacket)
+	return mqttPublishTimer("uplink", func() error {
+		return b.publish(mac, b.UplinkTemplate, rxPacket)
+	})
 }
 
 // PublishGatewayStats publishes a GatewayStatsPacket to the MQTT broker.
 func (b *Backend) PublishGatewayStats(mac lorawan.EUI64, stats gw.GatewayStatsPacket) error {
-	return b.publish(mac, b.StatsTemplate, stats)
+	return mqttPublishTimer("stats", func() error {
+		return b.publish(mac, b.StatsTemplate, stats)
+	})
 }
 
 // PublishGatewayTXAck publishes a TX ack to the MQTT broker.
 func (b *Backend) PublishGatewayTXAck(mac lorawan.EUI64, ack gw.TXAck) error {
-	return b.publish(mac, b.AckTemplate, ack)
+	return mqttPublishTimer("ack", func() error {
+		return b.publish(mac, b.AckTemplate, ack)
+	})
 }
 
 func (b *Backend) publish(mac lorawan.EUI64, topicTemplate *template.Template, v interface{}) error {
@@ -243,25 +256,35 @@ func (b *Backend) publish(mac lorawan.EUI64, topicTemplate *template.Template, v
 
 func (b *Backend) txPacketHandler(c mqtt.Client, msg mqtt.Message) {
 	log.WithField("topic", msg.Topic()).Info("backend: downlink packet received")
-	var txPacket gw.TXPacketBytes
-	if err := json.Unmarshal(msg.Payload(), &txPacket); err != nil {
-		log.WithError(err).Error("backend: decode tx packet error")
-		return
-	}
-	b.txPacketChan <- txPacket
+
+	_ = mqttHandleTimer("downlink", func() error {
+		var txPacket gw.TXPacketBytes
+		if err := json.Unmarshal(msg.Payload(), &txPacket); err != nil {
+			log.WithError(err).Error("backend: decode tx packet error")
+			return err
+		}
+		b.txPacketChan <- txPacket
+		return nil
+	})
 }
 
 func (b *Backend) configPacketHandler(c mqtt.Client, msg mqtt.Message) {
 	log.WithField("topic", msg.Topic()).Info("backend: config packet received")
-	var configPacket gw.GatewayConfigPacket
-	if err := json.Unmarshal(msg.Payload(), &configPacket); err != nil {
-		log.WithError(err).Error("backend: decode config packet error")
-		return
-	}
-	b.configPacketChan <- configPacket
+
+	_ = mqttHandleTimer("config", func() error {
+		var configPacket gw.GatewayConfigPacket
+		if err := json.Unmarshal(msg.Payload(), &configPacket); err != nil {
+			log.WithError(err).Error("backend: decode config packet error")
+			return err
+		}
+		b.configPacketChan <- configPacket
+		return nil
+	})
 }
 
 func (b *Backend) onConnected(c mqtt.Client) {
+	mqttEventCounter("connected")
+
 	defer b.mutex.RUnlock()
 	b.mutex.RLock()
 
@@ -285,11 +308,17 @@ func (b *Backend) onConnected(c mqtt.Client) {
 					"qos":   b.config.QOS,
 				}).Info("backend: subscribing to topic")
 			}
-			if token := b.conn.SubscribeMultiple(topics, b.txPacketHandler); token.Wait() && token.Error() != nil {
-				log.WithField("topic_count", len(topics)).Errorf("backend: subscribe multiple failed: %s", token.Error())
+			err := mqttSubscribeTimer(true, func() error {
+				token := b.conn.SubscribeMultiple(topics, b.txPacketHandler)
+				token.Wait()
+				return token.Error()
+			})
+			if err != nil {
+				log.WithField("topic_count", len(topics)).Errorf("backend: subscribe multiple failed: %s", err)
 				time.Sleep(time.Second)
 				continue
 			}
+
 			break
 		}
 
@@ -310,17 +339,25 @@ func (b *Backend) onConnected(c mqtt.Client) {
 					"qos":   b.config.QOS,
 				}).Info("backend: subscribing to topic")
 			}
-			if token := b.conn.SubscribeMultiple(topics, b.configPacketHandler); token.Wait() && token.Error() != nil {
-				log.WithField("topic_count", len(topics)).Errorf("backend: subscribe multiple failed: %s", token.Error())
+			err := mqttSubscribeTimer(true, func() error {
+
+				token := b.conn.SubscribeMultiple(topics, b.configPacketHandler)
+				token.Wait()
+				return token.Error()
+			})
+			if err != nil {
+				log.WithField("topic_count", len(topics)).Errorf("backend: subscribe multiple failed: %s", err)
 				time.Sleep(time.Second)
 				continue
 			}
+
 			break
 		}
 	}
 }
 
 func (b *Backend) onConnectionLost(c mqtt.Client, reason error) {
+	mqttEventCounter("connection_lost")
 	log.WithError(reason).Error("backend: mqtt connection error")
 }
 
