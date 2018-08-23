@@ -322,7 +322,7 @@ func (b *Backend) sendPackets() error {
 			"addr":             p.addr,
 			"type":             pt,
 			"protocol_version": p.data[0],
-		}).Info("gateway: sending udp packet to gateway")
+		}).Debug("gateway: sending udp packet to gateway")
 
 		err = gatewayWriteUDPTimer(pt.String(), func() error {
 			_, err := b.conn.WriteToUDP(p.data, p.addr)
@@ -348,7 +348,7 @@ func (b *Backend) handlePacket(addr *net.UDPAddr, data []byte) error {
 		"addr":             addr,
 		"type":             pt,
 		"protocol_version": data[0],
-	}).Info("gateway: received udp packet from gateway")
+	}).Debug("gateway: received udp packet from gateway")
 
 	return gatewayHandleTimer(pt.String(), func() error {
 		switch pt {
