@@ -244,7 +244,7 @@ func getGatewayConfig(conf gw.GatewayConfiguration) (gatewayConfiguration, error
 				}
 			} else {
 				// LoRa multi-SF channels
-				if multiSFCounter > channelCount {
+				if multiSFCounter >= channelCount {
 					return gc, errors.New("gateway: exceeded maximum number of multi-sf channels")
 				}
 
