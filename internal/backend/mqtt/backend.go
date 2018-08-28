@@ -110,6 +110,8 @@ func NewBackend(config BackendConfig) (*Backend, error) {
 		b.unmarshal = func(b []byte, msg proto.Message) error {
 			return proto.Unmarshal(b, msg)
 		}
+	default:
+		return nil, fmt.Errorf("mqtt: unkown marshaler: %s", config.Marshaler)
 	}
 
 	b.uplinkTemplate, err = template.New("uplink").Parse(config.UplinkTopicTemplate)
