@@ -192,7 +192,7 @@ func getGatewayConfig(conf gw.GatewayConfigPacket) (gatewayConfiguration, error)
 
 		} else if c.Modulation == band.LoRaModulation {
 			// LoRa multi-SF channels
-			if multiSFCounter > channelCount {
+			if multiSFCounter >= channelCount {
 				return gc, errors.New("gateway: exceeded maximum number of multi-sf channels")
 			}
 
