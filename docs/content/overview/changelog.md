@@ -8,14 +8,22 @@ menu:
 
 # Changelog
 
-## v2.5.0 (in development)
+## v2.5.0
+
+### Upgrade notes
+
+When using the `v2_json` marshaler (default), this version is fully compatible
+with previous versions of LoRa Server. When changing the marshaler to `protobuf`
+or `json`, you first need to upgrade to LoRa Server v2.1.0. When
+LoRa Server v2.1.0 is installed, it is recommended to use either the `protobuf`
+or `json` marshaler as it provides better compatibility (e.g. with the iBTS gateway).
 
 ### Features
 
 #### Protocol Buffer data serialization
 
 To save on bandwith between the gateway and the MQTT broker (e.g. when the
-gateway uses a cellular connection), this update adds makes it possible to
+gateway uses a cellular connection), this update makes it possible to
 configure the `marshaler` for encoding / decoding the data (in
 `lora-gateway-bridge.toml`) using [Protocol Buffers](https://developers.google.com/protocol-buffers/).
 
@@ -45,6 +53,10 @@ LoRa Gateway Bridge is able to expose various metrics that can be scraped by
 
 The structure of the `[backend.mqtt]` configuration section has been updated.
 These changes are fully backwards compatible.
+
+### Improvements
+
+All vendored dependencies have been updated.
 
 ## 2.4.1
 

@@ -55,6 +55,7 @@ the LoRa Gateway Bridge must respond (`PullACK`).
 
 When you don't see these logs, this could be caused by the following issues:
 
+* The LoRa Gateway Bridge is not configured with `log_level=5` (debug)
 * The packet-forwarder is not running
 * The packet-forwarder is forwarding to a different host / port
 * Firewall / NAT issue (in case the packet-forwarder and LoRa Gateway Bridge are not installed on the same device)
