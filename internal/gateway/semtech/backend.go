@@ -110,17 +110,16 @@ func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configur
 // Close closes the backend.
 func (b *Backend) Close() error {
 	b.Lock()
+	b.closed = true
 
 	log.Info("gateway: closing gateway backend")
-	b.closed = true
-	close(b.udpSendChan)
 
 	if err := b.conn.Close(); err != nil {
 		return errors.Wrap(err, "close udp listener error")
 	}
 
 	log.Info("gateway: handling last packets")
-
+	close(b.udpSendChan)
 	b.Unlock()
 	b.wg.Wait()
 	return nil
@@ -311,6 +310,13 @@ func (b *Backend) sendPackets() error {
 }
 
 func (b *Backend) handlePacket(up udpPacket) error {
+	b.RLock()
+	defer b.RUnlock()
+
+	if b.closed {
+		return nil
+	}
+
 	pt, err := packets.GetPacketType(up.data)
 	if err != nil {
 		return err
