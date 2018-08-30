@@ -8,6 +8,12 @@ menu:
 
 # Changelog
 
+## v2.5.1
+
+### Bugfixes
+
+Fix configuration parse error (some keys were not loaded because of configuration alias).
+
 ## v2.5.0
 
 ### Upgrade notes

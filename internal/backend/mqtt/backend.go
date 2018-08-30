@@ -31,9 +31,20 @@ type BackendConfig struct {
 	StatsTopicTemplate    string `mapstructure:"stats_topic_template"`
 	AckTopicTemplate      string `mapstructure:"ack_topic_template"`
 	ConfigTopicTemplate   string `mapstructure:"config_topic_template"`
-	QOS                   uint8  `mapstructure:"qos"`
 	Marshaler             string `mapstructure:"marshaler"`
 	Auth                  BackendAuthConfig
+
+	// for backwards compatibility
+	Server               string
+	Username             string
+	Password             string
+	CACert               string        `mapstructure:"ca_cert"`
+	TLSCert              string        `mapstructure:"tls_cert"`
+	TLSKey               string        `mapstructure:"tls_key"`
+	QOS                  uint8         `mapstructure:"qos"`
+	CleanSession         bool          `mapstructure:"clean_session"`
+	ClientID             string        `mapstructure:"client_id"`
+	MaxReconnectInterval time.Duration `mapstructure:"max_reconnect_interval"`
 
 	AlwaysSubscribeMACs []lorawan.EUI64 `mapstructure:"-"`
 }

@@ -52,35 +52,23 @@ func init() {
 	viper.BindEnv("general.log_level", "LOG_LEVEL")
 	viper.BindEnv("packet_forwarder.udp_bind", "UDP_BIND")
 	viper.BindEnv("packet_forwarder.skip_crc_check", "SKIP_CRC_CHECK")
-	viper.BindEnv("backend.mqtt.server", "MQTT_SERVER")
-	viper.BindEnv("backend.mqtt.username", "MQTT_USERNAME")
-	viper.BindEnv("backend.mqtt.password", "MQTT_PASSWORD")
-	viper.BindEnv("backend.mqtt.ca_cert", "MQTT_CA_CERT")
-	viper.BindEnv("backend.mqtt.tls_cert", "MQTT_TLS_CERT")
-	viper.BindEnv("backend.mqtt.tls_key", "MQTT_TLS_KEY")
+	viper.BindEnv("backend.mqtt.auth.generic.server", "MQTT_SERVER")
+	viper.BindEnv("backend.mqtt.auth.generic.username", "MQTT_USERNAME")
+	viper.BindEnv("backend.mqtt.auth.generic.password", "MQTT_PASSWORD")
+	viper.BindEnv("backend.mqtt.auth.generic.ca_cert", "MQTT_CA_CERT")
+	viper.BindEnv("backend.mqtt.auth.generic.tls_cert", "MQTT_TLS_CERT")
+	viper.BindEnv("backend.mqtt.auth.generic.tls_key", "MQTT_TLS_KEY")
 
 	// for backwards compatibility
 	viper.BindPFlag("general.log_level", rootCmd.PersistentFlags().Lookup("log-level"))
 	viper.BindPFlag("packet_forwarder.udp_bind", rootCmd.PersistentFlags().Lookup("udp-bind"))
 	viper.BindPFlag("packet_forwarder.skip_crc_check", rootCmd.PersistentFlags().Lookup("skip-crc-check"))
-	viper.BindPFlag("backend.mqtt.server", rootCmd.PersistentFlags().Lookup("mqtt-server"))
-	viper.BindPFlag("backend.mqtt.username", rootCmd.PersistentFlags().Lookup("mqtt-username"))
-	viper.BindPFlag("backend.mqtt.password", rootCmd.PersistentFlags().Lookup("mqtt-password"))
-	viper.BindPFlag("backend.mqtt.ca_cert", rootCmd.PersistentFlags().Lookup("mqtt-ca-cert"))
-	viper.BindPFlag("backend.mqtt.tls_cert", rootCmd.PersistentFlags().Lookup("mqtt-tls-cert"))
-	viper.BindPFlag("backend.mqtt.tls_key", rootCmd.PersistentFlags().Lookup("mqtt-tls-key"))
-
-	// aliases 2.4.x -> 2.5.0
-	viper.RegisterAlias("backend.mqtt.auth.generic.server", "backend.mqtt.server")
-	viper.RegisterAlias("backend.mqtt.auth.generic.username", "backend.mqtt.username")
-	viper.RegisterAlias("backend.mqtt.auth.generic.password", "backend.mqtt.password")
-	viper.RegisterAlias("backend.mqtt.auth.generic.ca_cert", "backend.mqtt.ca_cert")
-	viper.RegisterAlias("backend.mqtt.auth.generic.tls_cert", "backend.mqtt.tls_cert")
-	viper.RegisterAlias("backend.mqtt.auth.generic.tls_key", "backend.mqtt.tls_key")
-	viper.RegisterAlias("backend.mqtt.auth.generic.qos", "backend.mqtt.qos")
-	viper.RegisterAlias("backend.mqtt.auth.generic.clean_session", "backend.mqtt.clean_session")
-	viper.RegisterAlias("backend.mqtt.auth.generic.client_id", "backend.mqtt.client_id")
-	viper.RegisterAlias("backend.mqtt.auth.generic.max_reconnect_interval", "backend.mqtt.max_reconnect_interval")
+	viper.BindPFlag("backend.mqtt.auth.generic.server", rootCmd.PersistentFlags().Lookup("mqtt-server"))
+	viper.BindPFlag("backend.mqtt.auth.generic.username", rootCmd.PersistentFlags().Lookup("mqtt-username"))
+	viper.BindPFlag("backend.mqtt.auth.generic.password", rootCmd.PersistentFlags().Lookup("mqtt-password"))
+	viper.BindPFlag("backend.mqtt.auth.generic.ca_cert", rootCmd.PersistentFlags().Lookup("mqtt-ca-cert"))
+	viper.BindPFlag("backend.mqtt.auth.generic.tls_cert", rootCmd.PersistentFlags().Lookup("mqtt-tls-cert"))
+	viper.BindPFlag("backend.mqtt.auth.generic.tls_key", rootCmd.PersistentFlags().Lookup("mqtt-tls-key"))
 
 	// default values
 	viper.SetDefault("packet_forwarder.udp_bind", "0.0.0.0:1700")
@@ -144,5 +132,40 @@ func initConfig() {
 		if err := config.C.PacketForwarder.Configuration[i].MAC.UnmarshalText([]byte(config.C.PacketForwarder.Configuration[i].MACString)); err != nil {
 			log.WithError(err).Fatal("unmarshal config error")
 		}
+	}
+
+	// migrate config
+	if v := config.C.Backend.MQTT.Server; v != "" {
+		config.C.Backend.MQTT.Auth.Generic.Server = v
+	}
+	if v := config.C.Backend.MQTT.Username; v != "" {
+		config.C.Backend.MQTT.Auth.Generic.Username = v
+	}
+	if v := config.C.Backend.MQTT.Password; v != "" {
+		config.C.Backend.MQTT.Auth.Generic.Password = v
+	}
+	if v := config.C.Backend.MQTT.Password; v != "" {
+		config.C.Backend.MQTT.Auth.Generic.Password = v
+	}
+	if v := config.C.Backend.MQTT.CACert; v != "" {
+		config.C.Backend.MQTT.Auth.Generic.CACert = v
+	}
+	if v := config.C.Backend.MQTT.TLSCert; v != "" {
+		config.C.Backend.MQTT.Auth.Generic.TLSCert = v
+	}
+	if v := config.C.Backend.MQTT.TLSKey; v != "" {
+		config.C.Backend.MQTT.Auth.Generic.TLSKey = v
+	}
+	if v := config.C.Backend.MQTT.QOS; v != 0 {
+		config.C.Backend.MQTT.Auth.Generic.QOS = v
+	}
+	if v := config.C.Backend.MQTT.CleanSession; v {
+		config.C.Backend.MQTT.Auth.Generic.CleanSession = v
+	}
+	if v := config.C.Backend.MQTT.ClientID; v != "" {
+		config.C.Backend.MQTT.Auth.Generic.ClientID = v
+	}
+	if v := config.C.Backend.MQTT.MaxReconnectInterval; v != 0 {
+		config.C.Backend.MQTT.Auth.Generic.MaxReconnectInterval = v
 	}
 }
