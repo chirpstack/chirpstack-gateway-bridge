@@ -419,6 +419,18 @@ func (b *Backend) handlePushData(up udpPacket) error {
 		return errors.Wrap(err, "get stats error")
 	}
 	if stats != nil {
+		// set gateway ip
+		if up.addr.IP.IsLoopback() {
+			ip, err := getOutboundIP()
+			if err != nil {
+				log.WithError(err).Error("gateway: get outbound ip error")
+			} else {
+				stats.Ip = ip.String()
+			}
+		} else {
+			stats.Ip = up.addr.IP.String()
+		}
+
 		b.handleStats(p.GatewayMAC, *stats)
 	}
 
@@ -452,4 +464,17 @@ func (b *Backend) handleUplinkFrames(uplinkFrames []gw.UplinkFrame) error {
 	}
 
 	return nil
+}
+
+func getOutboundIP() (net.IP, error) {
+	// this does not actually connect to 8.8.8.8, unless the connection is
+	// used to send UDP frames
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP, nil
 }

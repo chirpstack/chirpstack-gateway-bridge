@@ -94,6 +94,7 @@ Example:
 ```json
 {
     "gatewayID": "cnb/AC4GLBg=",
+    "ip": "192.168.1.5",
     "time": "2018-07-26T13:36:31Z",
     "location": {                   // only set when gateway has GPS
         "latitude": 1.12345,

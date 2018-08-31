@@ -303,6 +303,9 @@ func (ts *BackendTestSuite) TestPushData() {
 			// stats
 			if test.Stats != nil {
 				stats := <-ts.backend.GatewayStatsChan()
+				ip, err := getOutboundIP()
+				assert.NoError(err)
+				test.Stats.Ip = ip.String()
 				assert.Equal(test.Stats, &stats)
 			}
 
