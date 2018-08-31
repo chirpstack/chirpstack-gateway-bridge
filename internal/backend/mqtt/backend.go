@@ -110,7 +110,9 @@ func NewBackend(config BackendConfig) (*Backend, error) {
 		}
 
 		b.unmarshal = func(b []byte, msg proto.Message) error {
-			unmarshaler := &jsonpb.Unmarshaler{}
+			unmarshaler := &jsonpb.Unmarshaler{
+				AllowUnknownFields: true, // we don't want to fail on unknown fields
+			}
 			return unmarshaler.Unmarshal(bytes.NewReader(b), msg)
 		}
 	case "protobuf":
