@@ -435,6 +435,17 @@ func (b *Backend) handleStat(addr *net.UDPAddr, mac lorawan.EUI64, stat Stat) {
 		"mac":  mac,
 	}).Info("gateway: stat packet received")
 
+	if addr.IP.IsLoopback() {
+		ip, err := getOutboundIP()
+		if err != nil {
+			log.WithError(err).Error("gateway: get outbound ip error")
+		} else {
+			gwStats.CustomData["ip"] = ip.String()
+		}
+	} else {
+		gwStats.CustomData["ip"] = addr.IP.String()
+	}
+
 	// set configuration version, if available
 	for _, c := range b.configurations {
 		if gwStats.MAC == c.MAC {
@@ -488,4 +499,17 @@ func (b *Backend) handleTXACK(addr *net.UDPAddr, data []byte) error {
 	}
 
 	return nil
+}
+
+func getOutboundIP() (net.IP, error) {
+	// this does not actually connect to 8.8.8.8, unless the connection is
+	// used to send UDP frames
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP, nil
 }

@@ -474,6 +474,7 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) gw.GatewayStatsPacket {
 		RXPacketsReceivedOK: int(stat.RXOK),
 		TXPacketsReceived:   int(stat.DWNb),
 		TXPacketsEmitted:    int(stat.TXNb),
+		CustomData:          make(map[string]interface{}),
 	}
 
 	if stat.Alti != nil {

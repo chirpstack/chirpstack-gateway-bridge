@@ -171,6 +171,9 @@ func TestBackend(t *testing.T) {
 						stats := <-backend.StatsChan()
 						So([8]byte(stats.MAC), ShouldEqual, [8]byte{1, 2, 3, 4, 5, 6, 7, 8})
 						So(stats.ConfigVersion, ShouldEqual, "12345")
+						ip, ok := stats.CustomData["ip"]
+						So(ok, ShouldBeTrue)
+						So(ip, ShouldNotEqual, "")
 					})
 				})
 			})

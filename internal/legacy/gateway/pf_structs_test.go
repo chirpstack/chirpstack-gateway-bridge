@@ -424,6 +424,7 @@ func TestNewGatewayStatPacket(t *testing.T) {
 					RXPacketsReceivedOK: 2,
 					TXPacketsReceived:   4,
 					TXPacketsEmitted:    3,
+					CustomData:          make(map[string]interface{}),
 				})
 			})
 		})
@@ -452,6 +453,7 @@ func TestNewGatewayStatPacket(t *testing.T) {
 					RXPacketsReceivedOK: 2,
 					TXPacketsReceived:   4,
 					TXPacketsEmitted:    3,
+					CustomData:          make(map[string]interface{}),
 				})
 			})
 		})
