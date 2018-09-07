@@ -293,13 +293,13 @@ Example:
 }
 ```
 
-#### protobuf
+##### protobuf
 
 This message is defined by the [DownlinkTXAck](https://github.com/brocaar/loraserver/blob/master/api/gw/gw.proto)
 Protocol Buffers message.
 
 
-#### json
+##### json
 
 Example:
 
