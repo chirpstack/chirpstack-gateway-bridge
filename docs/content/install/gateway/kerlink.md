@@ -3,6 +3,7 @@ title: Kerlink
 menu:
     main:
         parent: gateway
+description: Installation of the LoRa Gateway Bridge on Kerlink gateways.
 ---
 
 # Kerlink

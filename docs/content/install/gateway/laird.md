@@ -3,6 +3,7 @@ title: Laird
 menu:
     main:
       parent: gateway
+description: Configuring the pre-installed LoRa Gateway Bridge service on Laird gateways.
 ---
 
 # Laird

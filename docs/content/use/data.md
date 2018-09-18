@@ -4,6 +4,7 @@ menu:
     main:
         parent: use
         weight: 1
+description: Sending to and receiving data from gateways using the LoRa Gateway Bridge.
 ---
 
 # MQTT topics

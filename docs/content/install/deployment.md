@@ -4,6 +4,7 @@ menu:
     main:
         parent: install
         weight: 2
+description: Information on different LoRa Gateway Bridge deployment strategies.
 ---
 
 # Deployment strategies

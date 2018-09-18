@@ -4,6 +4,7 @@ menu:
     main:
         parent: install
         weight: 5
+description: Instructions and examples how to configure the LoRa Gateway Bridge service.
 ---
 
 # Configuration

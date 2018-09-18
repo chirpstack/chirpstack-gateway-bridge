@@ -4,6 +4,7 @@ menu:
     main:
         parent: community
         weight: 3
+description: How to get the LoRa Gateway Bridge source and how to compile this into an executable binary.
 ---
 
 # LoRa Gateway Bridge source

@@ -4,6 +4,7 @@ menu:
     main:
         parent: install
         weight: 6
+description: Information on how to debug packet-forwarder and LoRa Gateway Bridge communication issues.
 ---
 
 # Debugging

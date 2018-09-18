@@ -4,6 +4,7 @@ menu:
     main:
         parent: install
         weight: 1
+description: Instructions how to setup the LoRa Gateway Bridge requirements.
 ---
 
 # Requirements
@@ -18,15 +19,6 @@ In case you install Mosquitto, make sure you install a **recent** version.
 ### Install
 
 #### Debian / Ubuntu
-
-For Ubuntu Trusty (14.04), execute the following command in order to add the
-Mosquitto Apt repository, for Ubuntu Xenial and Debian Jessie you can skip
-this step:
-
-```bash
-sudo apt-add-repository ppa:mosquitto-dev/mosquitto-ppa
-sudo apt-get update
-```
 
 In order to install Mosquitto, execute the following command:
 

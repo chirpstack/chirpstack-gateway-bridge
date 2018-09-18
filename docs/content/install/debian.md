@@ -4,15 +4,16 @@ menu:
     main:
         parent: install
         weight: 4
+description: Instructions how to install LoRa Gateway Bridge on a Debian or Ubuntu based Linux installation.
 ---
 
 # Debian / Ubuntu
 
 These steps have been tested using:
 
-* Debian Jessie
-* Ubuntu Trusty (14.04)
-* Ubuntu Xenial (16.04)
+* Ubuntu 16.04 (LTS)
+* Ubuntu 18.04 (LTS)
+* Debian 9 (Stretch)
 
 ## LoRa Server Debian repository
 
@@ -100,12 +101,3 @@ lora-gateway-bridge[9714]: time="2016-08-19T09:05:34+02:00" level=info msg="gate
 
 For an explanation of the different types of data you can receive from and
 send to the LoRa Gateway Bridge see [send / receive data]({{< ref "use/data.md" >}}).
-
-## Install other components
-
-A complete LoRa Server setup, requires the setup of the following components:
-
-
-* LoRa Gateway Bridge
-* [LoRa Server](/loraserver/)
-* [LoRa App Server](/lora-app-server/)
