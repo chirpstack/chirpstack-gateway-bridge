@@ -25,21 +25,21 @@ with version 1.2.1. The latest firmware can be [downloaded here](https://artifac
    TFTP. The example command below shows how to do this from the command-line.
    The KONA Pico IoT Gateway configuration user-guide contains instructions how
    to do this using using a UI (Windows).
-   ```bash
+   {{<highlight text>}}
    $ tftp 192.168.1.10
    tftp> put lorawan_conf.json
    Sent 1412 bytes in 0.0 seconds
-   ```
+   {{< /highlight >}}
    Note: the tftp command is invoked from the same directory as where the
    `lorawan_conf.json` is stored.
 
 3. Upload the configuration file containing the IP of the LoRa Gateway Bridge
    instance and the used ports.
-   ```bash
+   {{<highlight text>}}
    $ tftp 192.168.1.10
    tftp> put customer_conf.json
    Sent 121 bytes in 0.1 seconds
-   ```
+   {{< /highlight >}}
    Note: the tftp command is invoked from the same directory as where the
    `customer_conf.json` is stored.
 
@@ -50,7 +50,7 @@ with version 1.2.1. The latest firmware can be [downloaded here](https://artifac
 This configuration file contains exactly the same radio configuration as
 [global_conf.json.PCB_E336.EU868.basic](https://github.com/Lora-net/packet_forwarder/blob/master/lora_pkt_fwd/cfg/global_conf.json.PCB_E336.EU868.basic)
 
-```json
+{{<highlight json>}}
 {
     "public": true,
     "radio": [
@@ -120,17 +120,17 @@ This configuration file contains exactly the same radio configuration as
         "datarate": 50000
     }
 }
-```
+{{< /highlight >}}
 
 #### customer_conf.json
 
 The IP or hostname of the `network_server` key must match the IP or hostname
 of the machine on which LoRa Gateway Bridge is running.
 
-```json
+{{<highlight json>}}
 {
     "network_server": "192.168.1.5",
     "network_service_up_port": 1700,
     "network_service_down_port": 1700
 }
-```
+{{< /highlight >}}

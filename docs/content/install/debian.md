@@ -21,20 +21,20 @@ The LoRa Server project provides pre-compiled binaries packaged as Debian (.deb)
 packages. In order to activate this repository, execute the following
 commands:
 
-```bash
+{{<highlight bash>}}
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1CE2AFD36DBCCA00
 
 sudo echo "deb https://artifacts.loraserver.io/packages/2.x/deb stable main" | sudo tee /etc/apt/sources.list.d/loraserver.list
 sudo apt-get update
-```
+{{< /highlight >}}
 
 ## Install LoRa Gateway Bridge
 
 In order to install LoRa Gateway Bridge, execute the following command:
 
-```bash
+{{<highlight bash>}}
 sudo apt-get install lora-gateway-bridge
-```
+{{< /highlight >}}
 
 This will setup an user and group, create start scripts for systemd or init.d
 (this depends on your version of Debian / Ubuntu). The configuration file is
@@ -47,15 +47,15 @@ platform uses systemd or init.d.
 
 ### systemd
 
-```bash
+{{<highlight bash>}}
 sudo systemctl [start|stop|restart|status] lora-gateway-bridge
-```
+{{< /highlight >}}
 
 ### init.d
 
-```bash
+{{<highlight bash>}}
 sudo /etc/init.d/lora-gateway-bridge [start|stop|restart|status]
-```
+{{< /highlight >}}
 
 ## LoRa Gateway log output
 
@@ -71,19 +71,19 @@ log output depends on if your distribution uses init.d or systemd.
 All logs are written to `/var/log/lora-gateway-bridge/lora-gateway-bridge.log`.
 To view and follow this logfile:
 
-```bash
+{{<highlight bash>}}
 tail -f /var/log/lora-gateway-bridge/lora-gateway-bridge.log
-```
+{{< /highlight >}}
 
 ### systemd
 
-```bash
+{{<highlight bash>}}
 journalctl -u lora-gateway-bridge -f -n 50
-```
+{{< /highlight >}}
 
 Example output:
 
-```
+{{<highlight text>}}
 lora-gateway-bridge[9714]: time="2016-08-19T09:05:18+02:00" level=info msg="starting LoRa Gateway Bridge" docs="https://docs.loraserver.io/lora-gateway-bridge/" version=2.1.0
 lora-gateway-bridge[9714]: time="2016-08-19T09:05:18+02:00" level=info msg="backend: connecting to mqtt broker" server="tcp://localhost:1883/"
 lora-gateway-bridge[9714]: time="2016-08-19T09:05:18+02:00" level=info msg="gateway: starting gateway udp listener" addr=0.0.0.0:1700
@@ -97,7 +97,7 @@ lora-gateway-bridge[9714]: time="2016-08-19T09:05:24+02:00" level=info msg="back
 lora-gateway-bridge[9714]: time="2016-08-19T09:05:24+02:00" level=info msg="gateway: sending udp packet to gateway" addr=86.83.25.107:45562 protocol_version=2 type=PullACK
 lora-gateway-bridge[9714]: time="2016-08-19T09:05:34+02:00" level=info msg="gateway: received udp packet from gateway" addr=86.83.25.107:45562 protocol_version=2 type=PullData
 lora-gateway-bridge[9714]: time="2016-08-19T09:05:34+02:00" level=info msg="gateway: sending udp packet to gateway" addr=86.83.25.107:45562 protocol_version=2 type=PullACK
-```
+{{< /highlight >}}
 
 For an explanation of the different types of data you can receive from and
 send to the LoRa Gateway Bridge see [send / receive data]({{< ref "use/data.md" >}}).

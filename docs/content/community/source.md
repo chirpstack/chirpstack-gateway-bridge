@@ -20,9 +20,9 @@ The easiest way to get started is by using the provided
 shell within the docker-compose environment, execute the following command from
 the root of this project:
 
-```bash
+{{<highlight bash>}}
 docker-compose run --rm gatewaybridge bash
-```
+{{< /highlight >}}
 
 ### Without Docker
 
@@ -40,7 +40,7 @@ Gateway Bridge repository has been cloned to
 
 A few example commands that you can run:
 
-```bash
+{{<highlight bash>}}
 # install all requirements
 make requirements
 
@@ -52,4 +52,4 @@ make build
 
 # compile snapshot for supported architectures (using goreleaser)
 make snapshot
-```
+{{< /highlight >}}

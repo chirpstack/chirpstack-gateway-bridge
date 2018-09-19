@@ -17,9 +17,9 @@ To validate that the LoRa Gateway Bridge is publishing LoRa frames to the
 MQTT broker, you can subscribe to the `gateway/+/rx` MQTT topic. When using
 the `mosquitto_sub` utility, you can execute the following command:
 
-```bash
+{{<highlight bash>}}
 mosquitto_sub -v -t "gateway/+/rx"
-```
+{{< /highlight >}}
 
 Of course you will only see data when the gateway is receiving LoRa frames.
 Make sure that your node is sending some data.
@@ -42,14 +42,14 @@ installation steps, this is either:
 
 With an interval of a couple of seconds, the following lines should appear (`PullData` / `PullACK`):
 
-```text
+{{<highlight text>}}
 level=info msg="gateway: received udp packet from gateway" addr=127.0.0.1:34268 protocol_version=2 type=PullData
 level=info msg="gateway: sending udp packet to gateway" addr=127.0.0.1:34268 protocol_version=2 type=PullACK
 level=info msg="gateway: received udp packet from gateway" addr=127.0.0.1:34268 protocol_version=2 type=PullData
 level=info msg="gateway: sending udp packet to gateway" addr=127.0.0.1:34268 protocol_version=2 type=PullACK
 level=info msg="gateway: received udp packet from gateway" addr=127.0.0.1:43827 protocol_version=2 type=PushData
 level=info msg="gateway: sending udp packet to gateway" addr=127.0.0.1:43827 protocol_version=2 type=PushACK
-```
+{{< /highlight >}}
 
 The packet-forwarder sends every couple of seconds a ping (`PullData`) to which
 the LoRa Gateway Bridge must respond (`PullACK`).
@@ -74,17 +74,17 @@ be caused by:
 To validate that the packet-forwarder is running, you could execute the
 following command on your gateway:
 
-```bash
+{{<highlight bash>}}
 # when the LoRa Gateway Bridge is running on the same device, add -i lo
 sudo tcpdump -AUq -i lo port 1700
 
 # when the LoRa Gateway Bridge is running somewhere else
 sudo tcpdump -AUq port 1700
-```
+{{< /highlight >}}
 
 This should output something like:
 
-```text
+{{<highlight text>}}
 11:42:00.114726 IP localhost.34268 > localhost.1700: UDP, length 12
 E..(..@.@."................'.....UZ.....
 11:42:00.130292 IP localhost.1700 > localhost.34268: UDP, length 4
@@ -105,7 +105,7 @@ E.. ..@.@.......................
 E..( .@.@..................'.S7..UZ.....
 11:42:30.366310 IP localhost.1700 > localhost.34268: UDP, length 4
 E..  .@.@....................S7.
-```
+{{< /highlight >}}
 
 What we see in this log:
 
@@ -115,7 +115,7 @@ What we see in this log:
 A log example where the packet-forwarder is sending data, but not receiving
 any data (caused by a firewall / NAT issue?):
 
-```text
+{{<highlight text>}}
 11:47:22.724729 IP localhost.34268 > localhost.1700: UDP, length 12
 E..([.@.@..................'.....UZ.....
 11:47:32.804724 IP localhost.34268 > localhost.1700: UDP, length 12
@@ -124,7 +124,7 @@ E..(].@.@..................'.!...UZ.....
 E...`/@.@............3...y...s...UZ.....{"stat":{"time":"2017-09-11 11:47:40 GMT","rxnb":0,"rxok":0,"rxfw":0,"ackr":100.0,"dwnb":0,"txnb":0}}
 11:47:42.884727 IP localhost.34268 > localhost.1700: UDP, length 12
 E..(`f@.@..\...............'.-C..UZ.....
-```
+{{< /highlight >}}
 
 When you don't see any of these, this could be caused by the following issues:
 
@@ -137,7 +137,7 @@ Inspect the `local_conf.json` of the packet-forwarder running on your gateway.
 You might need to refer to your gateway manual to find out where you can locate
 this file. This file could contain the following content:
 
-```json
+{{<highlight json>}}
 {
     "gateway_conf": {
         ...
@@ -147,7 +147,7 @@ this file. This file could contain the following content:
         ...
     }
 }
-```
+{{< /highlight >}}
 
 What we learn from this file is that:
 

@@ -17,7 +17,9 @@ These steps will install the LoRa Gateway Bridge ARM build on the Kerlink.
 
 1. Create the the directories needed:
 
-    `mkdir -p /mnt/fsuser-1/lora-gateway-bridge/bin`
+    {{<highlight bash>}}
+    mkdir -p /mnt/fsuser-1/lora-gateway-bridge/bin
+    {{< /highlight >}}
 
 2. Download and extract the LoRa Gateway Bridge ARM binary into the above
    directory. See [downloads]({{< ref "overview/downloads.md" >}}).
@@ -25,7 +27,7 @@ These steps will install the LoRa Gateway Bridge ARM build on the Kerlink.
 
 3. Save the following content as `/mnt/fsuser-1/lora-gateway-bridge/start.sh`:
 
-    ```bash
+    {{<highlight bash>}}
     #!/bin/bash
 
     LOGGER="logger -p local1.notice"
@@ -34,19 +36,19 @@ These steps will install the LoRa Gateway Bridge ARM build on the Kerlink.
     iptables -A INPUT -p tcp --sport 1883 -j ACCEPT
 
     /mnt/fsuser-1/lora-gateway-bridge/bin/lora-gateway-bridge --mqtt-server tcp://YOURSERVER:1883  2>&1 | $LOGGER &
-    ```
+    {{< /highlight >}}
 
     Make sure to replace `YOURSERVER` with the hostname / IP of your MQTT
     broker. Also make sure the file is marked as executable.
 
 4. Save the following content as `/mnt/fsuser-1/lora-gateway-bridge/manifest.xml`:
 
-    ```xml
+    {{<highlight xml>}}
     <?xml version="1.0"?>
     <manifest>
-    <app name="lora-gateway-bridge" appid="1" binary="start.sh" >
-    <start param="" autostart="y"/>
-    <stop kill="9"/>
-    </app>
+        <app name="lora-gateway-bridge" appid="1" binary="start.sh" >
+            <start param="" autostart="y"/>
+            <stop kill="9"/>
+        </app>
     </manifest>
-    ```
+    {{< /highlight >}}

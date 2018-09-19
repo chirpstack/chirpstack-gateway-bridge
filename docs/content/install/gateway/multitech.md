@@ -54,10 +54,10 @@ likely configured with a static IP.  In this case, edit the file
 `iface eth0 inet dhcp`, and comment out the lines specifying the IP Address and 
 netmask by adding a `#` at the beginning of each line:
 
-```
+{{<highlight text>}}
 # address 192.168.2.1
 # netmask 255.255.255.0
-```
+{{< /highlight >}}
 
 Then execute `/etc/init.d/networking restart`, and obtain the issued IP address
 as outlined above.
@@ -82,20 +82,20 @@ which can be done with the command: `opkg update`.
 
 Example commands for upgrading / migrating:
 
-```bash
-$ mkdir /var/volatile/flash-upgrade
-$ cd /var/volatile/flash-upgrade
-$ wget -O uImage.bin http://www.multitech.net/mlinux/images/mtcdt/4.0.1/uImage--3.12.70-r20.2-mtcdt-20180620182056.bin
-$ wget -O rootfs.jffs2 http://www.multitech.net/mlinux/images/mtcdt/4.0.1/mlinux-base-image-mtcdt-20180620182056.rootfs.jffs2
-$ touch /var/volatile/do_flash_upgrade
-$ reboot
-```
+{{<highlight bash>}}
+mkdir /var/volatile/flash-upgrade
+cd /var/volatile/flash-upgrade
+wget -O uImage.bin http://www.multitech.net/mlinux/images/mtcdt/4.0.1/uImage--3.12.70-r20.2-mtcdt-20180620182056.bin
+wget -O rootfs.jffs2 http://www.multitech.net/mlinux/images/mtcdt/4.0.1/mlinux-base-image-mtcdt-20180620182056.rootfs.jffs2
+touch /var/volatile/do_flash_upgrade
+reboot
+{{< /highlight >}}
 
 Then after the reboot update the `opkg` cache:
 
-```bash
-$ opkg update
-```
+{{<highlight bash>}}
+opkg update
+{{< /highlight >}}
 
 ### Setting up the LoRa Gateway Bridge
 
@@ -104,16 +104,16 @@ $ opkg update
 2. Download the latest `lora-gateway-bridge` `.ipk` package from:
    [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
    Example (assuming you want to install `lora-gateway-bridge_2.5.0-r1.1_arm926ejste.ipk`):
-   ```bash
-   $ wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_2.5.1-r1.0_arm926ejste.ipk
-   ```
+   {{<highlight bash>}}
+   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_2.5.1-r1.0_arm926ejste.ipk
+   {{< /highlight >}}
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
-   ```bash
-   $ opkg install lora-gateway-bridge_2.5.1-r1.0_arm926ejste.ipk
-   ```
+   {{<highlight bash>}}
+   opkg install lora-gateway-bridge_2.5.1-r1.0_arm926ejste.ipk
+   {{< /highlight >}}
 
 4. Update the MQTT connection details so that LoRa Gateway Bridge is able to
    connect to your MQTT broker. You will find the configuration file in the
@@ -121,10 +121,10 @@ $ opkg update
 
 5. Start LoRa Gateway Bridge and ensure it will be started on boot.
    Example:
-   ```bash
-   $ /etc/init.d/lora-gateway-bridge start
-   $ update-rc.d lora-gateway-bridge defaults
-   ```
+   {{<highlight bash>}}
+   /etc/init.d/lora-gateway-bridge start
+   update-rc.d lora-gateway-bridge defaults
+   {{< /highlight >}}
 
 6. Be sure to add the gateway to the lora-app-server.
    See [Gateways](/lora-app-server/use/gateways/).
@@ -139,16 +139,16 @@ for alternative configurations.
 To find out if you should follow the `MTAC-LORA-H` or `MTAC-LORA`
 instructions, you could use the following commands:
 
-```bash
+{{<highlight bash>}}
 # mCard in ap1 slot
-$ mts-io-sysfs show ap1/product-id
+mts-io-sysfs show ap1/product-id
 
 # mCard in ap2 slot
-$ mts-io-sysfs show ap2/product-id
+mts-io-sysfs show ap2/product-id
 
 # detect first mCard
-$ mts-io-sysfs show lora/product-id
-```
+mts-io-sysfs show lora/product-id
+{{< /highlight >}}
 
 #### mLinux with MTAC-LORA-H-915 or MTAC-LORA-H-868
 
@@ -160,33 +160,33 @@ card which uses the SPI interface.
 2. Download the latest `lora-packet-forwarder` `*.ipk` package
    from [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
    Example:
-   ```bash
-   $ wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
-   ```
+   {{<highlight bash>}}
+   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
+   {{< /highlight >}}
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
-   ```bash
-   $ opkg install lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
-   ```
+   {{<highlight bash>}}
+   opkg install lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
+   {{< /highlight >}}
 
 4. As the package has the same name as the default package provided by Multitech
    you need to 'flag' the package with the status `hold` to make sure an
    `opkg upgrade` does not overwrite it:
-   ```bash
-   $ opkg flag hold lora-packet-forwarder
-   ```
+   {{<highlight bash>}}
+   opkg flag hold lora-packet-forwarder
+   {{< /highlight >}}
 
 5. Start the packet-forwarder and enable it to start on boot. Note that the
    `-ap1` or `-ap2` suffix refers to the slot in which your `MTAC-LORA-H` card
    is present. In case you have two `MTAC-LORA-H` cards, this allows you to start
    two packet-forwarder instances with each using their own configuration.
    Example:
-   ```bash
-   $ /etc/init.d/lora-packet-forwarder-ap1 start
-   $ update-rc.d lora-packet-forwarder-ap1 defaults
-   ```
+   {{<highlight bash>}}
+   /etc/init.d/lora-packet-forwarder-ap1 start
+   update-rc.d lora-packet-forwarder-ap1 defaults
+   {{< /highlight >}}
 
    **Note:** on the first start of the packet-forwarder it will detect for you
    the version of your `MTAC-LORA-H` cards (868 or 915) and if your Conduit
@@ -210,30 +210,30 @@ card which uses the FTDI interface.
 2. Download the latest `lora-packet-forwarder-usb` `*.ipk` package
    from [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
    Example:
-   ```bash
-   $ wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
-   ```
+   {{<highlight bash>}}
+   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
+   {{< /highlight >}}
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
-   ```bash
-   $ opkg install lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
-   ```
+   {{<highlight bash>}}
+   opkg install lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
+   {{< /highlight >}}
 
 4. As the package has the same name as the default package provided by Multitech
    you need to 'flag' the package with the status `hold` to make sure an
    `opkg upgrade` does not overwrite it:
-   ```bash
-   $ opkg flag hold lora-packet-forwarder-usb
-   ```
+   {{<highlight bash>}}
+   opkg flag hold lora-packet-forwarder-usb
+   {{< /highlight >}}
 
 5. Start the packet-forwarder and enable it to start on boot. 
    Example:
-   ```bash
-   $ /etc/init.d/lora-packet-forwarder-usb start
-   $ update-rc.d lora-packet-forwarder-usb defaults
-   ```
+   {{<highlight bash>}}
+   /etc/init.d/lora-packet-forwarder-usb start
+   update-rc.d lora-packet-forwarder-usb defaults
+   {{< /highlight >}}
 
    **Note:** on the first start of the packet-forwarder it will detect for you
    the version of your `MTAC-LORA` cards (868 or 915). It will then automatically
@@ -280,7 +280,7 @@ signed certificate.  Accept the certificate to proceed.
     other settings in this section as they are.  The ref\_* fields should be set 
     for the gateway.  (Altitude is specified in meters.):
     
-    ```javascript
+    {{<highlight javascript>}}
     {
         ...
         "gateway_conf": {
@@ -294,7 +294,7 @@ signed certificate.  Accept the certificate to proceed.
             "ref_altitude": 1664
         }
     }
-    ```
+    {{< /highlight >}}
     Note that the serv_port_up and serv_port_down represent the ports used to 
     communicate with the lora-gateway-bridge, usually on localhost (the 
     server_address parameter).  See the image above.
@@ -316,10 +316,10 @@ appearing in LoRa App Server, you may be experiencing a known bug with the
 Multitech packet forwarding code.  On these systems, we need to swap out the 
 application that runs for packet formwarding. The following should resolve the issue:
 
-```bash
-$ cd /opt/lora
-$ mv basic_pkt_fwd-usb basic_pkt_fwd-usb.orig
-$ ln -s gps_pkt_fwd-usb basic_pkt_fwd-usb
-```
+{{<highlight bash>}}
+cd /opt/lora
+mv basic_pkt_fwd-usb basic_pkt_fwd-usb.orig
+ln -s gps_pkt_fwd-usb basic_pkt_fwd-usb
+{{< /highlight >}}
 
 Also see [debugging]({{<ref "install/debug.md">}}).

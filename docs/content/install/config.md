@@ -23,7 +23,7 @@ You will need to change the following configuration keys:
 
 The `lora-gateway-bridge` has the following command-line flags:
 
-```text
+{{<highlight text>}}
 LoRa Gateway Bridge abstracts the packet_forwarder protocol into JSON over MQTT
         > documentation & support: https://docs.loraserver.io/lora-gateway-bridge
         > source & copyright information: https://github.com/brocaar/lora-gateway-bridge
@@ -43,7 +43,7 @@ Flags:
       --log-level int   debug=5, info=4, error=2, fatal=1, panic=0 (default 4)
 
 Use "lora-gateway-bridge [command] --help" for more information about a command.
-```
+{{< /highlight >}}
 
 ### Configuration file
 
@@ -58,22 +58,22 @@ To load configuration from a different location, use the `--config` flag.
 
 To generate a new configuration file `lora-gateway-bridge.toml`, execute the following command:
 
-```bash
+{{<highlight bash>}}
 lora-gateway-bridge configfile > lora-gateway-bridge.toml
-```
+{{< /highlight >}}
 
 Note that this configuration file will be pre-filled with the current configuration
 (either loaded from the paths mentioned above, or by using the `--config` flag).
 This makes it possible when new fields get added to upgrade your configuration file
 while preserving your old configuration. Example:
 
-```bash
+{{<highlight bash>}}
 lora-gateway-bridge configfile --config lora-gateway-bridge-old.toml > lora-gateway-bridge-new.toml
-```
+{{< /highlight >}}
 
 Example configuration file:
 
-```toml
+{{<highlight toml>}}
 [general]
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
 log_level = 4
@@ -232,7 +232,7 @@ marshaler="v2_json"
   # The ip:port to bind the Prometheus metrics server to for serving the
   # metrics endpoint.
   bind=""
-```
+{{< /highlight >}}
 
 ### Warning: deprecation warning! update your configuration
 
@@ -244,7 +244,7 @@ has changed.
 The `.deb` installer will automatically migrate your configuration. For non
 `.deb` installations, you can migrate your configuration in the following way:
 
-```bash
+{{<highlight bash>}}
 # Export your environment variables, in this case from a file, but anything
 # that sets your environment variables will work.
 set -a
@@ -259,4 +259,4 @@ lora-gateway-bridge configfile > /etc/lora-gateway-bridge/lora-gateway-bridge.to
 
 # "Remove" the old configuration (in you were using a file).
 mv /etc/default/lora-gateway-bridge /etc/default/lora-gateway-bridge.old
-```
+{{< /highlight >}}

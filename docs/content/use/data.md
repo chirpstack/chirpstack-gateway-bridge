@@ -18,13 +18,13 @@ which is part of the [Mosquitto](http://mosquitto.org/) MQTT broker.
 Use ``+`` for a single-level wildcard, ``#`` for a multi-level wildcard.
 Examples:
 
-```bash
+{{<highlight bash>}}
 # show data from all gateways 
 mosquitto_sub -t "gateway/#" -v
 
 # show all data for the given gateway
 mosquitto_sub -t "gateway/0101010101010101/+" -v
-```
+{{< /highlight >}}
 
 ## Data encodings
 
@@ -68,7 +68,7 @@ Messages are published to the topic defined by the
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "altitude": 10,                 // only available when gateway has gps
     "latitude": 52.3740364,         // only available when gateway has gps
@@ -80,7 +80,7 @@ Example:
     "txPacketsEmitted": 9,
     "time": "2016-06-10T14:04:53Z"
 }
-```
+{{< /highlight >}}
 
 
 ##### protobuf
@@ -92,7 +92,7 @@ Protocol Buffers message.
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "gatewayID": "cnb/AC4GLBg=",
     "ip": "192.168.1.5",
@@ -109,7 +109,7 @@ Example:
     "txPacketsReceived": 0,
     "txPacketsEmitted": 1
 }
-```
+{{< /highlight >}}
 
 #### Uplink frames
 
@@ -120,7 +120,7 @@ Messages are published to the topic defined by the
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "phyPayload": "AAEBAQEBAQEBAgICAgICAgJpNbxrAh8=",  // base64 encoded LoRaWAN packet
     "rxInfo": {
@@ -145,7 +145,7 @@ Example:
         "timestamp": 2074240683                        // gateway internal timestamp (32 bit) with microsecond precision
     }
 }
-```
+{{< /highlight >}}
 
 ##### protobuf
 
@@ -156,7 +156,7 @@ Protocol Buffers message.
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "phyPayload": "AAEBAQEBAQEBAQEBAQEBAQGXFgzLPxI=",  // base64 encoded LoRaWAN frame
     "txInfo": {
@@ -186,7 +186,7 @@ Example:
         }
     }
 }
-```
+{{< /highlight >}}
 
 #### Downlink frames
 
@@ -204,7 +204,7 @@ the frame must be transmitted.
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "token": 65535,                                // random token (uint16), used for acknowledgements
     "phyPayload": "IKu70cumKom7BREUFrxlHtM=",      // base64 encoded LoRaWAN frame
@@ -225,7 +225,7 @@ Example:
         "timeSinceGPSEpoch": "332535h29m12.222s"  // time since GPS epoch (only when the gateway has a GPS time source)
     }
 }
-```
+{{< /highlight >}}
 
 Optionally, the field `iPol` (type `bool`) can be used to control the
 LoRa modulation polarization inversion. When left blank (`null`), the default
@@ -240,7 +240,7 @@ Protocol Buffers message.
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "phyPayload": "IHN792Ld0vEHetyVv9+llJnnmz88Up6pFz8UiUdJMnUc",
     "txInfo": {
@@ -262,7 +262,7 @@ Example:
     },
     "token": 38150
 }
-```
+{{< /highlight >}}
 
 
 #### Downlink acknowledgements
@@ -287,12 +287,12 @@ Possible error values are:
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "token": 65535,              // same token as used in downlink
     "error": "COLLISION_PACKET"  // not set in case of acknowledgement
 }
-```
+{{< /highlight >}}
 
 ##### protobuf
 
@@ -304,13 +304,13 @@ Protocol Buffers message.
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "gatewayID": "cnb/AC4GLBg=",
     "token": 12345,
     "error": "GPS_UNLOCKED"
 }
-```
+{{< /highlight >}}
 
 #### Gateway configuration
 
@@ -332,7 +332,7 @@ Messages are expected on the topic defined by the
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "mac": "1dee08d0b691d149",
     "version": "1.2.3",
@@ -399,7 +399,7 @@ Example:
         }
     ]
 }
-```
+{{< /highlight >}}
 
 ##### protobuf
 
@@ -410,7 +410,7 @@ Protocol Buffers message.
 
 Example:
 
-```json
+{{<highlight json>}}
 {
     "gatewayID": "cnb/AC4GLBg=",
     "version": "1.2.3",
@@ -499,4 +499,4 @@ Example:
         }
     ]
 }
-```
+{{< /highlight >}}
