@@ -41,7 +41,10 @@ Gateway Bridge repository has been cloned to
 A few example commands that you can run:
 
 {{<highlight bash>}}
-# install all requirements
+# install development requirements
+make dev-requirements
+
+# install requirements
 make requirements
 
 # run the tests

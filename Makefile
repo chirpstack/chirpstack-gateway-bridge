@@ -21,12 +21,6 @@ test:
 	@go vet $(PKGS)
 	@go test -cover -v $(PKGS)
 
-documentation:
-	@echo "Building documentation"
-	@mkdir -p dist
-	@cd docs && hugo
-	@cd docs/public/ && tar -pczf ../../dist/lora-gateway-bridge-documentation.tar.gz .
-
 dist:
 	@goreleaser
 
@@ -36,11 +30,13 @@ snapshot:
 package-deb: dist
 	@cd packaging && TARGET=deb ./package.sh
 
-requirements:
+dev-requirements:
 	go get -u github.com/golang/lint/golint
 	go get -u github.com/kisielk/errcheck
 	go get -u github.com/golang/dep/cmd/dep
 	go get -u github.com/goreleaser/goreleaser
+
+requirements:
 	dep ensure -v
 
 # shortcuts for development
