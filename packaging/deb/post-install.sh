@@ -33,7 +33,7 @@ function restart_gatewaybridge {
 # create gatewaybridge user
 id $DAEMON_USER &>/dev/null
 if [[ $? -ne 0 ]]; then
-	useradd --system -U -M $DAEMON_USER -d /bin/false
+	useradd --system -U -M $DAEMON_USER -s /bin/false -d /etc/$NAME
 fi
 
 mkdir -p "$LOG_DIR"
