@@ -4,10 +4,13 @@
 # configuration files
 *.toml
 
+# certificates
+/certs
+
 # binaries
-dist/
-build/
-docs/public/
+/dist
+/build
+/docs/public
 
 # dependencies
-vendor/
+/vendor
