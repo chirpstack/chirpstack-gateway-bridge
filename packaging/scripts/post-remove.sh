@@ -20,4 +20,3 @@ if [[ $? -eq 0 ]]; then
 else
 	remove_initd
 fi
-

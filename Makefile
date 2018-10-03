@@ -27,14 +27,12 @@ dist:
 snapshot:
 	@goreleaser --snapshot
 
-package-deb: dist
-	@cd packaging && TARGET=deb ./package.sh
-
 dev-requirements:
 	go get -u github.com/golang/lint/golint
 	go get -u github.com/kisielk/errcheck
 	go get -u github.com/golang/dep/cmd/dep
 	go get -u github.com/goreleaser/goreleaser
+	go get -u github.com/goreleaser/nfpm
 
 requirements:
 	dep ensure -v

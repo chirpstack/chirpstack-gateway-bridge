@@ -2,13 +2,13 @@
 
 NAME=lora-gateway-bridge
 BIN_DIR=/usr/bin
-SCRIPT_DIR=/usr/lib/$NAME/scripts
-LOG_DIR=/var/log/$NAME
+SCRIPT_DIR=/usr/lib/lora-gateway-bridge/scripts
+LOG_DIR=/var/log/lora-gateway-bridge
 DAEMON_USER=gatewaybridge
 DAEMON_GROUP=gatewaybridge
 
 function install_init {
-	cp -f $SCRIPT_DIR/init.sh /etc/init.d/$NAME
+	cp -f $SCRIPT_DIR/$NAME.init /etc/init.d/$NAME
 	chmod +x /etc/init.d/$NAME
 	update-rc.d $NAME defaults
 }
@@ -19,8 +19,8 @@ function install_systemd {
 	systemctl enable $NAME
 }
 
-function restart_gatewaybridge {
-	echo "Restarting LoRa Gateway Bridge"
+function restart_service {
+	echo "Restarting $NAME"
 	which systemctl &>/dev/null
 	if [[ $? -eq 0 ]]; then
 		systemctl daemon-reload
@@ -30,7 +30,7 @@ function restart_gatewaybridge {
 	fi	
 }
 
-# create gatewaybridge user
+# create user
 id $DAEMON_USER &>/dev/null
 if [[ $? -ne 0 ]]; then
 	useradd --system -U -M $DAEMON_USER -s /bin/false -d /etc/$NAME
@@ -46,33 +46,15 @@ if [[ ! -d /etc/$NAME ]]; then
 	chmod 750 /etc/$NAME
 fi
 
-# migrate old environment variable based configuration to new format and
-# path.
-if [[ -f /etc/default/$NAME && ! -f /etc/$NAME/$NAME.toml ]]; then
-	set -a
-	source /etc/default/$NAME
-	lora-gateway-bridge configfile > /etc/$NAME/$NAME.toml
-	chown $DAEMON_USER:$DAEMON_GROUP /etc/$NAME/$NAME.toml
-	chmod 640 /etc/$NAME/$NAME.toml
-	mv /etc/default/$NAME /etc/default/$NAME.backup
-
-	echo -e "\n\n\n"
-	echo "-----------------------------------------------------------------------------------------"
-	echo "Your configuration file has been migrated to a new location and format!"
-	echo "Path: /etc/$NAME/$NAME.toml"
-	echo "-----------------------------------------------------------------------------------------"
-	echo -e "\n\n\n"
-fi
-
 # create example configuration file
 if [[ ! -f /etc/$NAME/$NAME.toml ]]; then
-	lora-gateway-bridge configfile > /etc/$NAME/$NAME.toml
+	$NAME configfile > /etc/$NAME/$NAME.toml
 	chown $DAEMON_USER:$DAEMON_GROUP /etc/$NAME/$NAME.toml
 	chmod 640 /etc/$NAME/$NAME.toml
 	echo -e "\n\n\n"
-	echo "-----------------------------------------------------------------------------------------"
+	echo "---------------------------------------------------------------------------------"
 	echo "A sample configuration file has been copied to: /etc/$NAME/$NAME.toml"
-	echo "After setting the correct values, run the following command to start LoRa Gateway Bridge:"
+	echo "After setting the correct values, run the following command to start $NAME:"
 	echo ""
 	which systemctl &>/dev/null
 	if [[ $? -eq 0 ]]; then
@@ -80,7 +62,7 @@ if [[ ! -f /etc/$NAME/$NAME.toml ]]; then
 	else
 		echo "$ sudo /etc/init.d/$NAME start"
 	fi
-	echo "-----------------------------------------------------------------------------------------"
+	echo "---------------------------------------------------------------------------------"
 	echo -e "\n\n\n"
 fi
 
@@ -93,5 +75,5 @@ else
 fi
 
 if [[ -n $2 ]]; then
-	restart_gatewaybridge
+	restart_service
 fi
