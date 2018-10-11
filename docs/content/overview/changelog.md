@@ -10,6 +10,20 @@ description: Lists the changes per LoRa App Server release, including steps how 
 
 # Changelog
 
+## v2.6.0
+
+### Features
+
+#### Google Cloud Platform integration
+
+LoRa Gateway Bridge is able to integrate with [Cloud IoT Core](https://cloud.google.com/iot-core/).
+This makes it easier to scale up, but also makes it possible to manage gateway
+authentication using the web-based Cloud IoT console (or APIs).
+
+#### Gateway IP address
+
+The gateway IP address is exposed through the gateway stats.
+
 ## v2.5.1
 
 ### Bugfixes
