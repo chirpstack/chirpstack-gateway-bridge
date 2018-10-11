@@ -40,6 +40,14 @@
   version = "v1.1.0"
 
 [[projects]]
+  digest = "1:2426da75f49e5b8507a6ed5d4c49b06b2ff795f4aec401c106b7db8fb2625cd7"
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  pruneopts = ""
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
+
+[[projects]]
   digest = "1:d2e2aebcb8e8027345e16f9d0be8cdee3bb470ba406c7a54cb7457ae3ad4ace5"
   name = "github.com/eclipse/paho.mqtt.golang"
   packages = [
@@ -377,6 +385,7 @@
     "github.com/brocaar/loraserver/api/gw",
     "github.com/brocaar/lorawan",
     "github.com/brocaar/lorawan/band",
+    "github.com/dgrijalva/jwt-go",
     "github.com/eclipse/paho.mqtt.golang",
     "github.com/golang/protobuf/jsonpb",
     "github.com/golang/protobuf/proto",

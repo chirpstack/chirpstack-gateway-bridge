@@ -322,4 +322,4 @@ mv basic_pkt_fwd-usb basic_pkt_fwd-usb.orig
 ln -s gps_pkt_fwd-usb basic_pkt_fwd-usb
 {{< /highlight >}}
 
-Also see [debugging]({{<ref "install/debug.md">}}).
+Also see [debugging]({{<ref "/install/debug.md">}}).

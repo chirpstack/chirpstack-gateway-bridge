@@ -19,10 +19,10 @@ pygmentsUseClasses = true
     weight = 2
 
 [[menu.main]]
-    pre = "<i class='fas fa-user'></i>"
-    name = "Use"
-    identifier = "use"
-    url = "/use/"
+    pre = "<i class='fas fa-code'></i>"
+    name = "Integrate"
+    identifier = "integrate"
+    url = "/integrate/"
     weight = 3
 
 [[menu.main]]

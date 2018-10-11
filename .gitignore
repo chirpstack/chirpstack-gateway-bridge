@@ -14,3 +14,6 @@
 
 # dependencies
 /vendor
+
+# certificates
+/certs

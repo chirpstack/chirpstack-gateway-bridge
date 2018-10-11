@@ -142,6 +142,9 @@ skip_crc_check = false
 # LoRa Server MQTT backend. Therefore only change these values when
 # absolutely needed.
 # Use "{{ .MAC }}" as an substitution for the LoRa gateway MAC.
+#
+# Note that some authentication types might overwrite these templates (e.g.
+# in case of GCP Cloud IoT Core)!
 uplink_topic_template="gateway/{{ .MAC }}/rx"
 downlink_topic_template="gateway/{{ .MAC }}/tx"
 stats_topic_template="gateway/{{ .MAC }}/stats"
@@ -216,6 +219,41 @@ marshaler="v2_json"
     # Maximum interval that will be waited between reconnection attempts when connection is lost.
     # Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
     max_reconnect_interval="10m0s"
+
+
+    # Google Cloud Platform Cloud IoT Core authentication.
+    #
+    # Please note that when using this authentication type, the MQTT topics
+    # will be automatically set to match the MQTT topics as expected by
+    # Cloud IoT Core.
+    [backend.mqtt.auth.gcp_cloud_iot_core]
+    # MQTT server.
+    server="ssl://mqtt.googleapis.com:8883"
+
+    # Google Cloud IoT Core Device id.
+    device_id=""
+
+    # Google Cloud project id.
+    project_id=""
+
+    # Google Cloud region.
+    cloud_region=""
+
+    # Google Cloud IoT registry id.
+    registry_id=""
+
+    # JWT token expiration time.
+    jwt_expiration="24h0m0s"
+
+    # JWT token key-file.
+    #
+    # Example command to generate a key-pair:
+    #  $ ssh-keygen -t rsa -b 4096 -f private-key.pem
+    #  $ openssl rsa -in private-key.pem -pubout -outform PEM -out public-key.pem
+    #
+    # Then point the setting below to the private-key.pem and associate the
+    # public-key.pem with this device / gateway in Google Cloud IoT Core.
+    jwt_key_file=""
 
 
 # Metrics configuration.

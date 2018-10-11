@@ -81,11 +81,13 @@ func init() {
 
 	viper.SetDefault("backend.mqtt.marshaler", "v2_json")
 	viper.SetDefault("backend.mqtt.auth.type", "generic")
+
 	viper.SetDefault("backend.mqtt.auth.generic.server", "tcp://127.0.0.1:1883")
 	viper.SetDefault("backend.mqtt.auth.generic.clean_session", true)
 	viper.SetDefault("backend.mqtt.auth.generic.max_reconnect_interval", 10*time.Minute)
 
-	viper.SetDefault("metrics.prometheus.bind", "")
+	viper.SetDefault("backend.mqtt.auth.gcp_cloud_iot_core.server", "ssl://mqtt.googleapis.com:8883")
+	viper.SetDefault("backend.mqtt.auth.gcp_cloud_iot_core.jwt_expiration", time.Hour*24)
 
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)

@@ -25,7 +25,7 @@ web-interface using the following steps:
 * From the *Mode* dropdown, select **MQTT Forwarder**
 * Enter your MQTT **Server Address** and optionally the MQTT **Username** and **Password**
 
-Please see [configuration]({{<ref "install/config.md">}}) for valid
+Please see [configuration]({{<ref "/install/config.md">}}) for valid
 configuration options. The fields map to the following configuration options:
 
 * Server Address:  `--mqtt-server`

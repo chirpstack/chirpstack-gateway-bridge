@@ -3,6 +3,7 @@ package mqtt
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -20,8 +21,9 @@ import (
 
 // BackendAuthConfig holds the MQTT pub-sub backend auth configuration.
 type BackendAuthConfig struct {
-	Type    string
-	Generic auth.GenericConfig
+	Type            string
+	Generic         auth.GenericConfig
+	GCPCloudIoTCore auth.GCPCloudIoTCoreConfig `mapstructure:"gcp_cloud_iot_core"`
 }
 
 // BackendConfig holds the MQTT pub-sub backend configuration.
@@ -60,6 +62,7 @@ type Backend struct {
 	downlinkFrameChan        chan gw.DownlinkFrame
 	gatewayConfigurationChan chan gw.GatewayConfiguration
 	gateways                 map[lorawan.EUI64]bool // the bool indicates if the gateway must always be subscribed
+	topicHandlers            []topicHandler
 
 	qos              uint8
 	uplinkTemplate   *template.Template
@@ -70,6 +73,11 @@ type Backend struct {
 
 	marshal   func(msg proto.Message) ([]byte, error)
 	unmarshal func(b []byte, msg proto.Message) error
+}
+
+type topicHandler struct {
+	topicTemplate *template.Template
+	handler       paho.MessageHandler
 }
 
 // NewBackend creates a new Backend.
@@ -93,7 +101,17 @@ func NewBackend(config BackendConfig) (*Backend, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "mqtt: new generic authentication error")
 		}
+	case "gcp_cloud_iot_core":
+		b.auth, err = auth.NewGCPCloudIoTCoreAuthentication(config.Auth.GCPCloudIoTCore)
+		if err != nil {
+			return nil, errors.Wrap(err, "mqtt: new GCP Cloud IoT Core authentication error")
+		}
 
+		config.UplinkTopicTemplate = `/devices/gw-{{ .MAC }}/events/up`
+		config.StatsTopicTemplate = `/devices/gw-{{ .MAC }}/events/stats`
+		config.AckTopicTemplate = `/devices/gw-{{ .MAC }}/events/ack`
+		config.DownlinkTopicTemplate = `/devices/gw-{{ .MAC }}/commands/#`
+		config.ConfigTopicTemplate = `/devices/gw-{{ .MAC }}/commands/#`
 	default:
 		return nil, fmt.Errorf("mqtt: unknown auth type: %s", config.Auth.Type)
 	}
@@ -152,6 +170,27 @@ func NewBackend(config BackendConfig) (*Backend, error) {
 		return nil, errors.Wrap(err, "mqtt: parse config template error")
 	}
 
+	switch config.Auth.Type {
+	case "gcp_cloud_iot_core":
+		b.topicHandlers = []topicHandler{
+			{
+				topicTemplate: b.downlinkTemplate,
+				handler:       b.commandHandler,
+			},
+		}
+	default:
+		b.topicHandlers = []topicHandler{
+			{
+				topicTemplate: b.downlinkTemplate,
+				handler:       b.downlinkFrameHandler,
+			},
+			{
+				topicTemplate: b.configTemplate,
+				handler:       b.gatewayConfigHandler,
+			},
+		}
+	}
+
 	b.clientOpts.SetProtocolVersion(4)
 	b.clientOpts.SetAutoReconnect(false)
 	b.clientOpts.SetOnConnectHandler(b.onConnected)
@@ -197,43 +236,25 @@ func (b *Backend) SubscribeGateway(gatewayID lorawan.EUI64) error {
 		return nil
 	}
 
-	// downlink topic
-	topic := bytes.NewBuffer(nil)
-	if err := b.downlinkTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{gatewayID}); err != nil {
-		return errors.Wrap(err, "execute downlink template error")
-	}
-	log.WithFields(log.Fields{
-		"topic": topic.String(),
-		"qos":   b.qos,
-	}).Info("mqtt: subscribing to topic")
-
-	err := mqttSubscribeTimer(false, func() error {
-		if token := b.conn.Subscribe(topic.String(), b.qos, b.downlinkFrameHandler); token.Wait() && token.Error() != nil {
-			return errors.Wrap(token.Error(), "subscribe downlink topic error")
+	for _, th := range b.topicHandlers {
+		topic := bytes.NewBuffer(nil)
+		if err := th.topicTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{gatewayID}); err != nil {
+			return errors.Wrap(err, "execute downlink template error")
 		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
+		log.WithFields(log.Fields{
+			"topic": topic.String(),
+			"qos":   b.qos,
+		}).Info("mqtt: subscribing to topic")
 
-	topic.Reset()
-	if err := b.configTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{gatewayID}); err != nil {
-		return errors.Wrap(err, "execute config template error")
-	}
-	log.WithFields(log.Fields{
-		"topic": topic.String(),
-		"qos":   b.qos,
-	}).Info("mqtt: subscribing to topic")
-
-	err = mqttSubscribeTimer(false, func() error {
-		if token := b.conn.Subscribe(topic.String(), b.qos, b.gatewayConfigHandler); token.Wait() && token.Error() != nil {
-			return errors.Wrap(token.Error(), "subscribe config topic error")
+		err := mqttSubscribeTimer(false, func() error {
+			if token := b.conn.Subscribe(topic.String(), b.qos, th.handler); token.Wait() && token.Error() != nil {
+				return errors.Wrap(token.Error(), "subscribe topic error")
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	b.gateways[gatewayID] = false
@@ -251,9 +272,9 @@ func (b *Backend) UnsubscribeGateway(gatewayID lorawan.EUI64) error {
 		return nil
 	}
 
-	for _, t := range []*template.Template{b.downlinkTemplate, b.configTemplate} {
+	for _, th := range b.topicHandlers {
 		topic := bytes.NewBuffer(nil)
-		if err := t.Execute(topic, struct{ MAC lorawan.EUI64 }{gatewayID}); err != nil {
+		if err := th.topicTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{gatewayID}); err != nil {
 			return errors.Wrap(err, "execute template error")
 		}
 		log.WithFields(log.Fields{
@@ -360,68 +381,37 @@ func (b *Backend) onConnected(c paho.Client) {
 
 	log.Info("mqtt: connected to mqtt broker")
 	if len(b.gateways) != 0 {
-		// downlink topic
-		for {
-			topics := make(map[string]byte)
-			for k := range b.gateways {
-				topic := bytes.NewBuffer(nil)
-				if err := b.downlinkTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{k}); err != nil {
-					log.WithError(err).Error("mqtt: execute downlink template error")
-					time.Sleep(time.Second)
-					continue
+		for _, th := range b.topicHandlers {
+			for {
+				topics := make(map[string]byte)
+				for k := range b.gateways {
+					topic := bytes.NewBuffer(nil)
+					if err := th.topicTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{k}); err != nil {
+						log.WithError(err).Error("mqtt: execute downlink template error")
+						time.Sleep(time.Second)
+						continue
+					}
+					topics[topic.String()] = b.qos
+
+					log.WithFields(log.Fields{
+						"topic": topic.String(),
+						"qos":   b.qos,
+					}).Info("mqtt: subscribing to topic")
 				}
-				topics[topic.String()] = b.qos
 
-				log.WithFields(log.Fields{
-					"topic": topic.String(),
-					"qos":   b.qos,
-				}).Info("mqtt: subscribing to topic")
-			}
-
-			err := mqttSubscribeTimer(true, func() error {
-				token := b.conn.SubscribeMultiple(topics, b.downlinkFrameHandler)
-				token.Wait()
-				return token.Error()
-			})
-			if err != nil {
-				log.WithError(err).WithFields(log.Fields{
-					"topic_count": len(topics),
-				}).Error("mqtt: subscribe topics error")
-			}
-
-			break
-		}
-
-		// config topic
-		for {
-			topics := make(map[string]byte)
-			for k := range b.gateways {
-				topic := bytes.NewBuffer(nil)
-				if err := b.configTemplate.Execute(topic, struct{ MAC lorawan.EUI64 }{k}); err != nil {
-					log.WithError(err).Error("mqtt: execute config template error")
-					time.Sleep(time.Second)
-					continue
+				err := mqttSubscribeTimer(true, func() error {
+					token := b.conn.SubscribeMultiple(topics, th.handler)
+					token.Wait()
+					return token.Error()
+				})
+				if err != nil {
+					log.WithError(err).WithFields(log.Fields{
+						"topic_count": len(topics),
+					}).Error("mqtt: subscribe topics error")
 				}
-				topics[topic.String()] = b.qos
 
-				log.WithFields(log.Fields{
-					"topic": topic.String(),
-					"qos":   b.qos,
-				}).Info("mqtt: subscribe to topic")
+				break
 			}
-
-			err := mqttSubscribeTimer(true, func() error {
-				token := b.conn.SubscribeMultiple(topics, b.gatewayConfigHandler)
-				token.Wait()
-				return token.Error()
-			})
-			if err != nil {
-				log.WithError(err).WithFields(log.Fields{
-					"topic_count": len(topics),
-				}).Error("mqtt: subscribe topics error")
-			}
-
-			break
 		}
 	}
 }
@@ -464,6 +454,18 @@ func (b *Backend) gatewayConfigHandler(c paho.Client, msg paho.Message) {
 		b.gatewayConfigurationChan <- gatewayConfig
 		return nil
 	})
+}
+
+func (b *Backend) commandHandler(c paho.Client, msg paho.Message) {
+	if strings.HasSuffix(msg.Topic(), "down") {
+		b.downlinkFrameHandler(c, msg)
+	} else if strings.HasSuffix(msg.Topic(), "config") {
+		b.gatewayConfigHandler(c, msg)
+	} else {
+		log.WithFields(log.Fields{
+			"topic": msg.Topic(),
+		}).Warning("unexpected command received")
+	}
 }
 
 func (b *Backend) publish(gatewayID lorawan.EUI64, topicTemplate *template.Template, msg proto.Message) error {

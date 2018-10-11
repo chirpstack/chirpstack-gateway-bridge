@@ -78,6 +78,9 @@ skip_crc_check = {{ .PacketForwarder.SkipCRCCheck }}
 # LoRa Server MQTT backend. Therefore only change these values when
 # absolutely needed.
 # Use "{{ "{{ .MAC }}" }}" as an substitution for the LoRa gateway MAC. 
+#
+# Note that some authentication types might overwrite these templates (e.g.
+# in case of GCP Cloud IoT Core)!
 uplink_topic_template="{{ .Backend.MQTT.UplinkTopicTemplate }}"
 downlink_topic_template="{{ .Backend.MQTT.DownlinkTopicTemplate }}"
 stats_topic_template="{{ .Backend.MQTT.StatsTopicTemplate }}"
@@ -152,6 +155,41 @@ marshaler="{{ .Backend.MQTT.Marshaler }}"
     # Maximum interval that will be waited between reconnection attempts when connection is lost.
     # Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
     max_reconnect_interval="{{ .Backend.MQTT.Auth.Generic.MaxReconnectInterval }}"
+
+
+    # Google Cloud Platform Cloud IoT Core authentication.
+    #
+    # Please note that when using this authentication type, the MQTT topics
+    # will be automatically set to match the MQTT topics as expected by
+    # Cloud IoT Core.
+    [backend.mqtt.auth.gcp_cloud_iot_core]
+    # MQTT server.
+    server="{{ .Backend.MQTT.Auth.GCPCloudIoTCore.Server }}"
+
+    # Google Cloud IoT Core Device id.
+    device_id="{{ .Backend.MQTT.Auth.GCPCloudIoTCore.DeviceID }}"
+
+    # Google Cloud project id.
+    project_id="{{ .Backend.MQTT.Auth.GCPCloudIoTCore.ProjectID }}"
+
+    # Google Cloud region.
+    cloud_region="{{ .Backend.MQTT.Auth.GCPCloudIoTCore.CloudRegion }}"
+
+    # Google Cloud IoT registry id.
+    registry_id="{{ .Backend.MQTT.Auth.GCPCloudIoTCore.RegistryID }}"
+
+    # JWT token expiration time.
+    jwt_expiration="{{ .Backend.MQTT.Auth.GCPCloudIoTCore.JWTExpiration }}"
+
+    # JWT token key-file.
+    #
+    # Example command to generate a key-pair:
+    #  $ ssh-keygen -t rsa -b 4096 -f private-key.pem
+    #  $ openssl rsa -in private-key.pem -pubout -outform PEM -out public-key.pem
+    #
+    # Then point the setting below to the private-key.pem and associate the
+    # public-key.pem with this device / gateway in Google Cloud IoT Core.
+    jwt_key_file="{{ .Backend.MQTT.Auth.GCPCloudIoTCore.JWTKeyFile }}"
 
 
 # Metrics configuration.

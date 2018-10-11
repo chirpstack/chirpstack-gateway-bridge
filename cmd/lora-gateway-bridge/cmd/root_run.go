@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -56,6 +57,10 @@ func run(cmd *cobra.Command, args []string) error {
 	}()
 
 	if config.C.Backend.MQTT.Marshaler == "v2_json" {
+		if config.C.Backend.MQTT.Auth.Type != "generic" {
+			return fmt.Errorf("auth type '%s' can not be used with 'v2_json' marshaler", config.C.Backend.MQTT.Auth.Type)
+		}
+
 		return runV2(cmd, args)
 	}
 	return runV3(cmd, args)

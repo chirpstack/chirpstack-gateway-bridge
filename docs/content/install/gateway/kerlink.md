@@ -22,7 +22,7 @@ These steps will install the LoRa Gateway Bridge ARM build on the Kerlink.
     {{< /highlight >}}
 
 2. Download and extract the LoRa Gateway Bridge ARM binary into the above
-   directory. See [downloads]({{< ref "overview/downloads.md" >}}).
+   directory. See [downloads]({{< ref "/overview/downloads.md" >}}).
    Make sure the binary is marked as executable.
 
 3. Save the following content as `/mnt/fsuser-1/lora-gateway-bridge/start.sh`:

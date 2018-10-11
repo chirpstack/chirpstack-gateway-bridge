@@ -11,7 +11,7 @@ description: Instructions on how to install the LoRa Gateway Bridge component on
 # Gateway installation & configuration
 
 For Raspberry Pi / Rasbian based gateways, please refer the
-[Debian / Ubuntu]({{< ref "install/debian.md" >}}) installation instructions.
+[Debian / Ubuntu]({{< ref "/install/debian.md" >}}) installation instructions.
 
 ## Contribute to this list
 

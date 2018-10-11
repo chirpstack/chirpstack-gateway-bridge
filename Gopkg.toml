@@ -44,3 +44,7 @@
 [[override]]
   version = "v1.1.0"
   name = "github.com/golang/protobuf"
+
+[[constraint]]
+  name = "github.com/dgrijalva/jwt-go"
+  version = "3.2.0"
