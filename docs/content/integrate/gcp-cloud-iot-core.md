@@ -63,6 +63,12 @@ API method. Example:
 
 #### `index.js`
 
+You need to replace:
+
+* `REGION` with your GCP region
+* `PROJECT_ID` with your GCP project ID
+* `REGISTRY_ID` with your GCP Cloud IoT Core registry ID
+
 {{<highlight js>}}
 'use strict';
 
@@ -70,7 +76,7 @@ const {google} = require('googleapis');
 
 // configuration options
 const REGION = 'europe-west1';
-const PROJECT_ID = 'lora-server-tutorial-2';
+const PROJECT_ID = 'loraserver';
 const REGISTRY_ID = 'eu868-gateways';
 
 
