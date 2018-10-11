@@ -100,4 +100,4 @@ lora-gateway-bridge[9714]: time="2016-08-19T09:05:34+02:00" level=info msg="gate
 {{< /highlight >}}
 
 For an explanation of the different types of data you can receive from and
-send to the LoRa Gateway Bridge see [send / receive data]({{< ref "use/data.md" >}}).
+send to the LoRa Gateway Bridge see [Payload types](/lora-gateway-bridge/integrate/payload-types/).
