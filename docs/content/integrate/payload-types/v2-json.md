@@ -16,7 +16,7 @@ format.
 
 ### Gateway statistics
 
-```json
+{{<highlight json>}}
 {
     "altitude": 10,                 // only available when gateway has gps
     "latitude": 52.3740364,         // only available when gateway has gps
@@ -28,11 +28,11 @@ format.
     "txPacketsEmitted": 9,
     "time": "2016-06-10T14:04:53Z"
 }
-```
+{{< /highlight >}}
 
 ### Uplink frames
 
-```json
+{{<highlight json>}}
 {
     "phyPayload": "AAEBAQEBAQEBAgICAgICAgJpNbxrAh8=",  // base64 encoded LoRaWAN packet
     "rxInfo": {
@@ -57,11 +57,11 @@ format.
         "timestamp": 2074240683                        // gateway internal timestamp (32 bit) with microsecond precision
     }
 }
-```
+{{< /highlight >}}
 
 ### Downlink frames
 
-```json
+{{<highlight json>}}
 {
     "token": 65535,                                // random token (uint16), used for acknowledgements
     "phyPayload": "IKu70cumKom7BREUFrxlHtM=",      // base64 encoded LoRaWAN frame
@@ -82,7 +82,7 @@ format.
         "timeSinceGPSEpoch": "332535h29m12.222s"  // time since GPS epoch (only when the gateway has a GPS time source)
     }
 }
-```
+{{< /highlight >}}
 
 Optionally, the field `iPol` (type `bool`) can be used to control the
 LoRa modulation polarization inversion. When left blank (`null`), the default
@@ -90,16 +90,16 @@ will be used (which is `true` for downlink LoRa modulation).
 
 ### Downlink acknowledgements
 
-```json
+{{<highlight json>}}
 {
     "token": 65535,              // same token as used in downlink
     "error": "COLLISION_PACKET"  // not set in case of acknowledgement
 }
-```
+{{< /highlight >}}
 
 ### Gateway configuration
 
-```json
+{{<highlight json>}}
 {
     "mac": "1dee08d0b691d149",
     "version": "1.2.3",
@@ -166,4 +166,4 @@ will be used (which is `true` for downlink LoRa modulation).
         }
     ]
 }
-```
+{{< /highlight >}}

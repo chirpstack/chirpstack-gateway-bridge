@@ -21,7 +21,7 @@ type, but are easier when performing debugging.
 
 ### Gateway statistics
 
-```json
+{{<highlight json>}}
 {
     "gatewayID": "cnb/AC4GLBg=",
     "ip": "192.168.1.5",
@@ -38,11 +38,11 @@ type, but are easier when performing debugging.
     "txPacketsReceived": 0,
     "txPacketsEmitted": 1
 }
-```
+{{< /highlight >}}
 
 ### Uplink frames
 
-```json
+{{<highlight json>}}
 {
     "phyPayload": "AAEBAQEBAQEBAQEBAQEBAQGXFgzLPxI=",  // base64 encoded LoRaWAN frame
     "txInfo": {
@@ -72,11 +72,11 @@ type, but are easier when performing debugging.
         }
     }
 }
-```
+{{< /highlight >}}
 
 ### Downlink frames
 
-```json
+{{<highlight json>}}
 {
     "phyPayload": "IHN792Ld0vEHetyVv9+llJnnmz88Up6pFz8UiUdJMnUc",
     "txInfo": {
@@ -98,21 +98,21 @@ type, but are easier when performing debugging.
     },
     "token": 38150
 }
-```
+{{< /highlight >}}
 
 ### Downlink acknowledgements
 
-```json
+{{<highlight json>}}
 {
     "gatewayID": "cnb/AC4GLBg=",
     "token": 12345,
     "error": "GPS_UNLOCKED"
 }
-```
+{{< /highlight >}}
 
 ### Gateway configuration
 
-```json
+{{<highlight json>}}
 {
     "gatewayID": "cnb/AC4GLBg=",
     "version": "1.2.3",
@@ -201,4 +201,4 @@ type, but are easier when performing debugging.
         }
     ]
 }
-```
+{{< /highlight >}}

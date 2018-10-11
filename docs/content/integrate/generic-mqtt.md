@@ -22,10 +22,10 @@ which is part of the [Mosquitto](http://mosquitto.org/) MQTT broker.
 Use ``+`` for a single-level wildcard, ``#`` for a multi-level wildcard.
 Examples:
 
-```bash
+{{<highlight bash>}}
 # show data from all gateways 
 mosquitto_sub -t "gateway/#" -v
 
 # show all data for the given gateway
 mosquitto_sub -t "gateway/0101010101010101/+" -v
-```
+{{< /highlight >}}

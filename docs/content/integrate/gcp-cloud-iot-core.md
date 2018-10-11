@@ -63,7 +63,7 @@ API method. Example:
 
 #### `index.js`
 
-```js
+{{<highlight js>}}
 'use strict';
 
 const {google} = require('googleapis');
@@ -131,12 +131,12 @@ exports.sendMessage = (event, context, callback) => {
     });
   });
 };
-```
+{{< /highlight >}}
 
 #### `package.json`
 
 
-```json
+{{<highlight json>}}
 {
   "name": "gateway-commands",
   "version": "2.0.0",
@@ -145,7 +145,7 @@ exports.sendMessage = (event, context, callback) => {
     "googleapis": "34.0.0"
   }
 }
-```
+{{< /highlight >}}
 
 #### Attributes
 
