@@ -23,6 +23,10 @@ test:
 
 dist:
 	@goreleaser
+	mkdir -p dist/upload/tar
+	mkdir -p dist/upload/deb
+	mv dist/*.tar.gz dist/upload/tar
+	mv dist/*.deb dist/upload/deb
 
 snapshot:
 	@goreleaser --snapshot
