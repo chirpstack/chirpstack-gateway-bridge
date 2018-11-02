@@ -219,8 +219,8 @@ func (ts *BackendTestSuite) TestPushData() {
 				ConfigVersion:       "12345",
 				RxPacketsReceived:   1,
 				RxPacketsReceivedOk: 2,
-				TxPacketsReceived:   5,
-				TxPacketsEmitted:    3,
+				TxPacketsReceived:   4,
+				TxPacketsEmitted:    5,
 			},
 		},
 		{
