@@ -96,8 +96,8 @@ func TestGetGatewayStats(t *testing.T) {
 				},
 				RxPacketsReceived:   1,
 				RxPacketsReceivedOk: 2,
-				TxPacketsReceived:   6,
-				TxPacketsEmitted:    3,
+				TxPacketsReceived:   5,
+				TxPacketsEmitted:    6,
 			},
 		},
 		{
@@ -121,8 +121,8 @@ func TestGetGatewayStats(t *testing.T) {
 				Time:                pbTime,
 				RxPacketsReceived:   1,
 				RxPacketsReceivedOk: 2,
-				TxPacketsReceived:   6,
-				TxPacketsEmitted:    3,
+				TxPacketsReceived:   5,
+				TxPacketsEmitted:    6,
 			},
 		},
 	}

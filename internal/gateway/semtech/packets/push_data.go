@@ -54,8 +54,8 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 		GatewayId:           p.GatewayMAC[:],
 		RxPacketsReceived:   p.Payload.Stat.RXNb,
 		RxPacketsReceivedOk: p.Payload.Stat.RXOK,
-		TxPacketsEmitted:    p.Payload.Stat.RXFW,
-		TxPacketsReceived:   p.Payload.Stat.TXNb,
+		TxPacketsEmitted:    p.Payload.Stat.TXNb,
+		TxPacketsReceived:   p.Payload.Stat.DWNb,
 	}
 
 	// time
