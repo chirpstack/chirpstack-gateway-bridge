@@ -10,6 +10,12 @@ description: Lists the changes per LoRa App Server release, including steps how 
 
 # Changelog
 
+## v2.6.1
+
+### Bugfixes
+
+* Fix corrupted gateway statistics for downlink packets. [#94](https://github.com/brocaar/lora-gateway-bridge/pull/94)
+
 ## v2.6.0
 
 ### Features
