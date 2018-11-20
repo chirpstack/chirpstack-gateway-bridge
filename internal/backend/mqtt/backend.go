@@ -116,6 +116,8 @@ func NewBackend(config BackendConfig) (*Backend, error) {
 		return nil, fmt.Errorf("mqtt: unknown auth type: %s", config.Auth.Type)
 	}
 
+	b.qos = config.Auth.Generic.QOS
+
 	switch config.Marshaler {
 	case "json":
 		b.marshal = func(msg proto.Message) ([]byte, error) {
