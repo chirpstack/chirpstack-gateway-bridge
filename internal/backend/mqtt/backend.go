@@ -85,6 +85,7 @@ func NewBackend(config BackendConfig) (*Backend, error) {
 	var err error
 
 	b := Backend{
+		qos:                      config.Auth.Generic.QOS,
 		clientOpts:               paho.NewClientOptions(),
 		downlinkFrameChan:        make(chan gw.DownlinkFrame),
 		gatewayConfigurationChan: make(chan gw.GatewayConfiguration),
