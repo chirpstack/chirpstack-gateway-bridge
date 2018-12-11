@@ -10,6 +10,12 @@ description: Lists the changes per LoRa App Server release, including steps how 
 
 # Changelog
 
+## v2.6.2
+
+### Bugfixes
+
+* Fix QoS backend setting regression. [#95](https://github.com/brocaar/lora-gateway-bridge/pull/95)
+
 ## v2.6.1
 
 ### Bugfixes
