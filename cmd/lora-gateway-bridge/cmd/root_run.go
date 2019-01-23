@@ -95,10 +95,12 @@ func runV2(cmd *cobra.Command, args []string) error {
 	defer gw.Close()
 
 	go func() {
-		for rxPacket := range gw.RXPacketChan() {
-			if err := pubsub.PublishGatewayRX(rxPacket.RXInfo.MAC, rxPacket); err != nil {
-				log.WithError(err).Error("publish uplink message error")
-			}
+		for rxPacket := range gateway.RXPacketChan() {
+			go func(rxPacket gw.RXPacketBytes) {
+				if err := pubsub.PublishGatewayRX(rxPacket.RXInfo.MAC, rxPacket); err != nil {
+					log.WithError(err).Error("publish uplink message error")
+				}
+			}(rxPacket)
 		}
 	}()
 
@@ -166,9 +168,14 @@ func runV3(cmd *cobra.Command, args []string) error {
 		for uplinkFrame := range gateway.UplinkFrameChan() {
 			var gatewayID lorawan.EUI64
 			copy(gatewayID[:], uplinkFrame.RxInfo.GatewayId)
-			if err := backend.PublishUplinkFrame(gatewayID, uplinkFrame); err != nil {
-				log.WithError(err).Error("publish uplink frame error")
-			}
+
+			// publish/wait in a go routine because with QoS > 0 it can take hundreds of milliseconds
+			// and we don't want to block other uplink frames while waiting for the PUBACK
+			go func(uplinkFrame gw.UplinkFrame) {
+				if err := backend.PublishUplinkFrame(gatewayID, uplinkFrame); err != nil {
+					log.WithError(err).Error("publish uplink frame error")
+				}
+			}(uplinkFrame)
 		}
 	}()
 
