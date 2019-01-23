@@ -18,6 +18,7 @@ import (
 	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech"
 	"github.com/brocaar/lora-gateway-bridge/internal/legacy/backend/mqttpubsub"
 	"github.com/brocaar/lora-gateway-bridge/internal/legacy/gateway"
+	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 )
 
@@ -88,11 +89,11 @@ func runV2(cmd *cobra.Command, args []string) error {
 		return pubsub.UnSubscribeGatewayTopics(mac)
 	}
 
-	gw, err := gateway.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.SkipCRCCheck, config.C.PacketForwarder.Configuration)
+	gateway, err := gateway.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.SkipCRCCheck, config.C.PacketForwarder.Configuration)
 	if err != nil {
 		log.Fatalf("could not setup gateway backend: %s", err)
 	}
-	defer gw.Close()
+	defer gateway.Close()
 
 	go func() {
 		for rxPacket := range gateway.RXPacketChan() {
@@ -105,7 +106,7 @@ func runV2(cmd *cobra.Command, args []string) error {
 	}()
 
 	go func() {
-		for stats := range gw.StatsChan() {
+		for stats := range gateway.StatsChan() {
 			if err := pubsub.PublishGatewayStats(stats.MAC, stats); err != nil {
 				log.WithError(err).Error("publish gateway stats message error")
 			}
@@ -114,14 +115,14 @@ func runV2(cmd *cobra.Command, args []string) error {
 
 	go func() {
 		for txPacket := range pubsub.TXPacketChan() {
-			if err := gw.Send(txPacket); err != nil {
+			if err := gateway.Send(txPacket); err != nil {
 				log.WithError(err).Error("send downlink packet error")
 			}
 		}
 	}()
 
 	go func() {
-		for txAck := range gw.TXAckChan() {
+		for txAck := range gateway.TXAckChan() {
 			if err := pubsub.PublishGatewayTXAck(txAck.MAC, txAck); err != nil {
 				log.WithError(err).Error("publish downlink ack error")
 			}
@@ -130,7 +131,7 @@ func runV2(cmd *cobra.Command, args []string) error {
 
 	go func() {
 		for configPacket := range pubsub.ConfigPacketChan() {
-			if err := gw.ApplyConfiguration(configPacket); err != nil {
+			if err := gateway.ApplyConfiguration(configPacket); err != nil {
 				log.WithError(err).Error("apply configuration error")
 			}
 		}
