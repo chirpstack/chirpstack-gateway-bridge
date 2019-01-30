@@ -26,7 +26,7 @@ docker-compose run --rm gatewaybridge bash
 
 ### Without Docker
 
-It is possible to build LoRa App Server without Docker. However this requires
+It is possible to build LoRa Gateway Bridge without Docker. However this requires
 to install a couple of dependencies (depending your platform, there might be
 pre-compiled packages available):
 
