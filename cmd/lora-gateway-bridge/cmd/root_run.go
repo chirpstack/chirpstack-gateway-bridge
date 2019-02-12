@@ -18,6 +18,7 @@ import (
 	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech"
 	"github.com/brocaar/lora-gateway-bridge/internal/legacy/backend/mqttpubsub"
 	"github.com/brocaar/lora-gateway-bridge/internal/legacy/gateway"
+	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 )
 
@@ -88,22 +89,24 @@ func runV2(cmd *cobra.Command, args []string) error {
 		return pubsub.UnSubscribeGatewayTopics(mac)
 	}
 
-	gw, err := gateway.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.SkipCRCCheck, config.C.PacketForwarder.Configuration)
+	gateway, err := gateway.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.SkipCRCCheck, config.C.PacketForwarder.Configuration)
 	if err != nil {
 		log.Fatalf("could not setup gateway backend: %s", err)
 	}
-	defer gw.Close()
+	defer gateway.Close()
 
 	go func() {
-		for rxPacket := range gw.RXPacketChan() {
-			if err := pubsub.PublishGatewayRX(rxPacket.RXInfo.MAC, rxPacket); err != nil {
-				log.WithError(err).Error("publish uplink message error")
-			}
+		for rxPacket := range gateway.RXPacketChan() {
+			go func(rxPacket gw.RXPacketBytes) {
+				if err := pubsub.PublishGatewayRX(rxPacket.RXInfo.MAC, rxPacket); err != nil {
+					log.WithError(err).Error("publish uplink message error")
+				}
+			}(rxPacket)
 		}
 	}()
 
 	go func() {
-		for stats := range gw.StatsChan() {
+		for stats := range gateway.StatsChan() {
 			if err := pubsub.PublishGatewayStats(stats.MAC, stats); err != nil {
 				log.WithError(err).Error("publish gateway stats message error")
 			}
@@ -112,14 +115,14 @@ func runV2(cmd *cobra.Command, args []string) error {
 
 	go func() {
 		for txPacket := range pubsub.TXPacketChan() {
-			if err := gw.Send(txPacket); err != nil {
+			if err := gateway.Send(txPacket); err != nil {
 				log.WithError(err).Error("send downlink packet error")
 			}
 		}
 	}()
 
 	go func() {
-		for txAck := range gw.TXAckChan() {
+		for txAck := range gateway.TXAckChan() {
 			if err := pubsub.PublishGatewayTXAck(txAck.MAC, txAck); err != nil {
 				log.WithError(err).Error("publish downlink ack error")
 			}
@@ -128,7 +131,7 @@ func runV2(cmd *cobra.Command, args []string) error {
 
 	go func() {
 		for configPacket := range pubsub.ConfigPacketChan() {
-			if err := gw.ApplyConfiguration(configPacket); err != nil {
+			if err := gateway.ApplyConfiguration(configPacket); err != nil {
 				log.WithError(err).Error("apply configuration error")
 			}
 		}
@@ -166,9 +169,14 @@ func runV3(cmd *cobra.Command, args []string) error {
 		for uplinkFrame := range gateway.UplinkFrameChan() {
 			var gatewayID lorawan.EUI64
 			copy(gatewayID[:], uplinkFrame.RxInfo.GatewayId)
-			if err := backend.PublishUplinkFrame(gatewayID, uplinkFrame); err != nil {
-				log.WithError(err).Error("publish uplink frame error")
-			}
+
+			// publish/wait in a go routine because with QoS > 0 it can take hundreds of milliseconds
+			// and we don't want to block other uplink frames while waiting for the PUBACK
+			go func(uplinkFrame gw.UplinkFrame) {
+				if err := backend.PublishUplinkFrame(gatewayID, uplinkFrame); err != nil {
+					log.WithError(err).Error("publish uplink frame error")
+				}
+			}(uplinkFrame)
 		}
 	}()
 
