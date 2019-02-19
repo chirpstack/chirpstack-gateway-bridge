@@ -32,9 +32,8 @@ pre-compiled packages available):
 
 #### Go
 
-Make sure you have [Go](https://golang.org/) installed (1.10+) and that the LoRa
-Gateway Bridge repository has been cloned to 
-`$GOPATH/src/github.com/brocaar/lora-gateway-bridge`.
+Make sure you have [Go](https://golang.org/) installed (1.11+). As
+LoRa Gateway Bridge, the repository must be cloned outside the `$GOPATH`.
 
 ### Example commands
 
@@ -43,9 +42,6 @@ A few example commands that you can run:
 {{<highlight bash>}}
 # install development requirements
 make dev-requirements
-
-# install requirements
-make requirements
 
 # run the tests
 make test
