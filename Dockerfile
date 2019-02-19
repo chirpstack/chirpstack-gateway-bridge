@@ -18,5 +18,5 @@ FROM alpine:latest AS production
 
 WORKDIR /root/
 RUN apk --no-cache add ca-certificates
-COPY --from=development /lora-gateway-bridge .
+COPY --from=development /lora-gateway-bridge/build/lora-gateway-bridge .
 ENTRYPOINT ["./lora-gateway-bridge"]
