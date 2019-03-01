@@ -137,6 +137,7 @@ of the machine on which LoRa Gateway Bridge is running.
 
 ## Kona Micro gateway
 
+* [Product detail page](https://tektelic.com/iot/lorawan-gateways/)
 
 ### SSH into the gateway
 
