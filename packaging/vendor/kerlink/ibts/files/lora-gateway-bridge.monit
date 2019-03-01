@@ -1,0 +1,4 @@
+check process lora-gateway-bridge pidfile /var/run/lora-gateway-bridge.pid
+	start program = "/user/lora-gateway-bridge/start.sh"
+	stop program = "/usr/bin/killall -q lora-gateway-bridge"
+

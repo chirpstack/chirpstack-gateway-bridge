@@ -11,6 +11,10 @@
 /dist
 /build
 /docs/public
+*.ipk
+
+# build folders
+/packaging/vendor/*/*/package
 
 # dependencies
 /vendor
