@@ -25,7 +25,7 @@ Source: N/A
 Description: LoRa Gateway Bridge
 EOF
 
-cat $PACKAGE_DIR/CONTROL/postinst << EOF
+cat > $PACKAGE_DIR/CONTROL/postinst << EOF
 /usr/bin/monit reload
 EOF
 chmod 755 $PACKAGE_DIR/CONTROL/postinst
