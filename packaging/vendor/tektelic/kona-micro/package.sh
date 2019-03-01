@@ -2,7 +2,7 @@
 
 PACKAGE_NAME="lora-gateway-bridge"
 PACKAGE_VERSION="2.7.0"
-REV="r5"
+REV="r6"
 
 
 PACKAGE_URL="https://artifacts.loraserver.io/downloads/lora-gateway-bridge/lora-gateway-bridge_${PACKAGE_VERSION}_linux_armv5.tar.gz"
@@ -28,6 +28,7 @@ EOF
 cat $PACKAGE_DIR/CONTROL/postinst << EOF
 /usr/bin/monit reload
 EOF
+chmod 755 $PACKAGE_DIR/CONTROL/postinst
 
 cat > $PACKAGE_DIR/CONTROL/conffiles << EOF
 /etc/$PACKAGE_NAME/$PACKAGE_NAME.toml

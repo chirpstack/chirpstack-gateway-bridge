@@ -30,6 +30,7 @@ EOF
 cat $PACKAGE_DIR/CONTROL/postinst << EOF
 monit reload
 EOF
+chmod 755 $PACKAGE_DIR/CONTROL/postinst
 
 cat > $PACKAGE_DIR/CONTROL/conffiles << EOF
 /user/lora-gateway-bridge/lora-gateway-bridge.toml
