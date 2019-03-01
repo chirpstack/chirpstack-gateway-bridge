@@ -153,20 +153,20 @@ the back of the gateway (the 9 characters above the 12V = 1A line).
 ### Download IPK package
 
 Find the latest package at https://artifacts.loraserver.io/vendor/tektelic/kona-micro/
-and copy the URL to your clipboard. Then on the gateway use `wget` and paste the link
+and copy the URL to your clipboard. Then on the gateway use `curl` and use the link
 as argument. Example for `lora-gateway-bridge_2.7.0-r6_kona_micro.ipk`:
 
 {{<highlight bash>}}
-wget https://artifacts.loraserver.io/vendor/tektelic/kona-micro/lora-gateway-bridge_2.7.0-r6_kona_micro.ipk
+# curl URL --output lora-gateway-bridge.ipk
+curl https://artifacts.loraserver.io/vendor/tektelic/kona-micro/lora-gateway-bridge_2.7.0-r6_kona_micro.ipk --output lora-gateway-bridge.ipk
 {{</highlight>}}
 
 ### Install IPK package
 
-Use the `opkg` package-manager to install the downloaded package. Example for
-`lora-gateway-bridge_2.7.0-r6_kona_micro.ipk`:
+Use the `opkg` package-manager to install the downloaded package. Example:
 
 {{<highlight bash>}}
-opkg install lora-gateway-bridge_2.7.0-r6_kona_micro.ipk
+opkg install lora-gateway-bridge.ipk
 {{</highlight>}}
 
 ### Edit the LoRa Gateway Bridge configuration
