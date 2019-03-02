@@ -18,8 +18,6 @@ packet-forwarder and LoRa Gateway bridge. The packet-forwarder will forwards
 the UDP data to `localhost:1700` and the LoRa Gateway Bridge will forward
 this data as JSON over MQTT to a MQTT broker. See below:
 
-![Gateway Pieces and Connections](/lora-gateway-bridge/img/MultitechGatewaySettings.png)
-
 There are two different Multitech Conduit firmware versions: mLinux and AEP.
 The AEP version comes with a web-interface and IBM Node-RED pre-installed.
 The mLinux version provides an open Linux development environment and is
@@ -103,16 +101,16 @@ opkg update
 
 2. Download the latest `lora-gateway-bridge` `.ipk` package from:
    [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
-   Example (assuming you want to install `lora-gateway-bridge_2.5.0-r1.1_arm926ejste.ipk`):
+   Example (assuming you want to install `lora-gateway-bridge_2.7.0-r2_arm926ejste.ipk`):
    {{<highlight bash>}}
-   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_2.6.0-r1.1_arm926ejste.ipk
+   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_2.7.0-r2_arm926ejste.ipk
    {{< /highlight >}}
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
    {{<highlight bash>}}
-   opkg install lora-gateway-bridge_2.6.0-r1.1_arm926ejste.ipk
+   opkg install lora-gateway-bridge_2.7.0-r2_arm926ejste.ipk
    {{< /highlight >}}
 
 4. Update the MQTT connection details so that LoRa Gateway Bridge is able to
@@ -123,11 +121,7 @@ opkg update
    Example:
    {{<highlight bash>}}
    /etc/init.d/lora-gateway-bridge start
-   update-rc.d lora-gateway-bridge defaults
    {{< /highlight >}}
-
-6. Be sure to add the gateway to the lora-app-server.
-   See [Gateways](/lora-app-server/use/gateways/).
 
 ### Setting up the packet-forwarder
 
@@ -306,18 +300,3 @@ signed certificate.  Accept the certificate to proceed.
 
 6. Finally, restart the system to get everything running.
 
-### Troubleshooting
-
-Be sure to check log files to see what is happening.  Logs can be found on the 
-gateway in the directory `/var/log/`. 
-
-Also, if the gateway seems to be running, but no statistics are 
-appearing in LoRa App Server, you may be experiencing a known bug with the 
-Multitech packet forwarding code.  On these systems, we need to swap out the 
-application that runs for packet formwarding. The following should resolve the issue:
-
-{{<highlight bash>}}
-cd /opt/lora
-mv basic_pkt_fwd-usb basic_pkt_fwd-usb.orig
-ln -s gps_pkt_fwd-usb basic_pkt_fwd-usb
-{{< /highlight >}}
