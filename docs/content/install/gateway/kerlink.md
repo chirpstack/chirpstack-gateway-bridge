@@ -52,85 +52,82 @@ iptables -A INPUT -p tcp --sport 1883 -j ACCEPT
 
 ## Kerlink iBTS
 
-* [Product detail page](https://www.kerlink.com/product/wirnet-ibts/)
+* [Product detail page: iBTS](https://www.kerlink.com/product/wirnet-ibts/)
 
-The following steps describe how to install the LoRa Gateway Bridge component
-on the Kerlink iBTS gateway. These steps must be executed on the gateway.
+### SSH into the gateway
 
-1. Create a path for the LoRa Gateway Bridge binary:
+The first step is to login into the gateway using ssh:
+
 {{<highlight bash>}}
-mkdir /user/lora-gateway-bridge
-cd /user/lora-gateway-bridge
-{{< /highlight >}}
-
-2. Download the latest LoRa Gateway Bridge ARMv5 binary from the
-   [Downloads](https://www.loraserver.io/lora-gateway-bridge/overview/downloads/)
-   page and extract it:
-{{<highlight bash>}}
-# replace VERSION with the version to download
-wget https://artifacts.loraserver.io/downloads/lora-gateway-bridge/lora-gateway-bridge_VERSION_linux_armv5.tar.gz
-
-# extract the .tar.gz file
-tar zxf lora-gateway-bridge_VERSION_linux_armv5.tar.gz
+sh root@GATEWAY-IP-ADDRESS
 {{</highlight>}}
 
-3. Create the LoRa Gateway Bridge configuration file and modify it:
-{{<highlight bash>}}
-# create the lora-gateway-bridge.toml configuration file
-./lora-gateway-bridge configfile > lora-gateway-bridge.toml
+Please refer to the [Kerlink iBTS wiki](http://wikikerlink.fr/wirnet-ibts/)
+for login instructions.
 
-# modify it using vim
-vim lora-gateway-bridge.toml
+### Install IPK package
+
+Find the latest package at https://artifacts.loraserver.io/vendor/kerlink/ibts/
+and copy the URL to your clipboard. Then on the gateway use `wget` to download
+the package into a folder named `/user/.updates`. Example for `lora-gateway-bridge_2.7.0-r1_klk_lpbs.ipk`:
+
+{{<highlight bash>}}
+mkdir -p /user/.updates
+cd /user/.updates
+wget https://artifacts.loraserver.io/vendor/kerlink/ibts/lora-gateway-bridge_2.7.0-r1_klk_lpbs.ipk
 {{</highlight>}}
 
-4. In the `/user/lora-gateway-bridge` directory create a file named
-`execute_lgb.sh` file with the following content:
+To trigger the iBTS gateway to install / update the package, run the following commands:
+
 {{<highlight bash>}}
-#!/bin/sh -e
-
-# Open firewall ports
-iptables_accept() {
-	[ -n "${1}" ] || exit 1
-	local RULE="OUTPUT -t filter -p tcp --dport ${1} -j ACCEPT"
-	iptables -C ${RULE} 2> /dev/null || iptables -I ${RULE}
-	local RULE="INPUT -t filter -p tcp --sport ${1} -j ACCEPT"
-	iptables -C ${RULE} 2> /dev/null || iptables -I ${RULE}
-}
-
-iptables_accept 1883
-iptables_accept 8883
-
-(
-	# Lock on pid file
-	exec 8> /var/run/lora-gateway-bridge.pid
-	flock -n -x 8
-	trap "rm -f /var/run/lora-gateway-bridge.pid" EXIT
-
-	# Start LoRa Gateway Bridge
-	/user/lora-gateway-bridge/lora-gateway-bridge -c /user/lora-gateway-bridge/lora-gateway-bridge.toml 2>&1 | logger -p local1.notice -t lora-gateway-bridge &
-	trap "killall -q lora-gateway-bridge" INT QUIT TERM
-
-	# Update pid and wait for it
-	pidof lora-gateway-bridge >&8
-	wait
-) &
+kerosd -u
+reboot
 {{</highlight>}}
 
-5. Make sure this file is executable:
-{{<highlight bash>}}
-chmod +x execute_lgb.sh
-{{</highlight>}}
+Please refer to the [Kerlink iBTS wiki](http://wikikerlink.fr/wirnet-ibts/)
+for more information about installing and updating packages.
 
-6. Create the LoRa Gateway Bridge [Monit](https://mmonit.com/monit/documentation/monit.html)
-   configuration named `/etc/monit.d/lora-gateway-bridge`:
-{{<highlight text>}}
-check process lora-gateway-bridge pidfile /var/run/lora-gateway-bridge.pid
-	start program = "/user/lora-gateway-bridge/execute_lgb.sh"
-	stop program = "/usr/bin/killall -q lora-gateway-bridge"
-{{</highlight>}}
+### Edit the LoRa Gateway Bridge configuration
 
-7. Finally reload the Monit daemon and start the LoRa Gateway Bridge service:
+To connect the LoRa Gateway Bridge with your MQTT broker, you must update
+the LoRa Gateway Bridge configuration file, which is located at:
+`/user/lora-gateway-bridge/lora-gateway-bridge.toml`.
+
+### (Re)start and stop commands
+
+Use the following commands to (re)start and stop the LoRa Gateway Bridge Service:
+
 {{<highlight bash>}}
-monit reload
+# status
+monit status lora-gateway-bridge
+
+# start
 monit start lora-gateway-bridge
+
+# stop
+monit stop lora-gateway-bridge
+
+# restart
+monit restart lora-gateway-bridge
 {{</highlight>}}
+
+### Configure packet-forwarder
+
+You must configure the packet-forwarder on the gateway to forward its data to
+`127.0.0.1` at port `1700`. The file `/user/spf2/etc/config.json` must contain the
+following lines:
+
+{{<highlight text>}}
+"server_address": "127.0.0.1",
+"serv_port_up": 1700,
+"serv_port_down": 1700,
+{{</highlight>}}
+
+## Kerlink iFemtoCell
+
+* [Product detail page](https://www.kerlink.com/product/wirnet-ifemtocell/)
+
+The installation steps to install the LoRa Gateway Bridge component are exactly
+the same as for the iBTS gateway. The only difference is that the packages
+are located at https://artifacts.loraserver.io/vendor/kerlink/ifemtocell/.
+

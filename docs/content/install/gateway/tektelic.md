@@ -172,7 +172,8 @@ opkg install lora-gateway-bridge.ipk
 ### Edit the LoRa Gateway Bridge configuration
 
 To connect the LoRa Gateway Bridge with your MQTT broker, you must update
-the LoRa Gateway Bridge configuration file: `/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
+the LoRa Gateway Bridge configuration file, which is located at:
+`/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
 
 ### (Re)start and stop commands
 
