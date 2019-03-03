@@ -1,9 +1,9 @@
 ---
 title: MatchX
-menu:
-    main:
-        parent: gateway
 description: Onfigure the MatchX gateway to work with the LoRa Gateway Bridge service.
+menu:
+  main:
+    parent: gateway
 ---
 
 # MatchX

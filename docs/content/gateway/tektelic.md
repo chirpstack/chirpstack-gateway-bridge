@@ -1,9 +1,9 @@
 ---
 title: Tektelic
-menu:
-    main:
-        parent: gateway
 description: Configure the Tektelic Pico IoT Gateway to work with the LoRa Gateway Bridge.
+menu:
+  main:
+    parent: gateway
 ---
 
 # Tektelic

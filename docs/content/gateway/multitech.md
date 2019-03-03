@@ -1,9 +1,9 @@
 ---
 title: Multitech
-menu:
-    main:
-        parent: gateway
 description: Installation of the LoRa Gateway Bridge service on the Multitech Conduit gateway.
+menu:
+  main:
+    parent: gateway
 ---
 
 # Multitech

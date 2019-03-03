@@ -1,9 +1,9 @@
 ---
 title: Raspberry Pi
-menu:
-    main:
-        parent: gateway
 description: Installation of the LoRa Gateway Bridge on Raspberry Pi based gateways.
+menu:
+  main:
+    parent: gateway
 ---
 
 # Raspberry Pi

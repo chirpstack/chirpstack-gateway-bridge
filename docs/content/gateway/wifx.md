@@ -1,9 +1,9 @@
 ---
 title: Wifx
-menu:
-    main:
-        parent: gateway
 description: Installation of the LoRa Gateway Bridge on Wifx gateways (e.g. LORIX One).
+menu:
+  main:
+    parent: gateway
 ---
 
 # Wifx
