@@ -247,7 +247,7 @@ type RXPK struct {
 	Tmms *int64       `json:"tmms"` // GPS time of pkt RX, number of milliseconds since 06.Jan.1980
 	Tmst uint32       `json:"tmst"` // Internal timestamp of "RX finished" event (32b unsigned)
 	Freq float64      `json:"freq"` // RX central frequency in MHz (unsigned float, Hz precision)
-	Brd  uint8        `json:"brd"`  // Concentrator board used for RX (unsigned integer)
+	Brd  uint32        `json:"brd"`  // Concentrator board used for RX (unsigned integer)
 	AESK uint8        `json:"aesk"` //AES key index used for encrypting fine timestamps
 	Chan uint8        `json:"chan"` // Concentrator "IF" channel used for RX (unsigned integer)
 	RFCh uint8        `json:"rfch"` // Concentrator "RF chain" used for RX (unsigned integer)

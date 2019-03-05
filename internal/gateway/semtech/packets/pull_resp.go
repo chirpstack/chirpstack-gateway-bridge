@@ -77,7 +77,7 @@ type TXPK struct {
 	Size uint16  `json:"size"`           // RF packet payload size in bytes (unsigned integer)
 	NCRC bool    `json:"ncrc,omitempty"` // If true, disable the CRC of the physical layer (optional)
 	Data []byte  `json:"data"`           // Base64 encoded RF packet payload, padding optional
-	Brd  uint8   `json:"brd"`            // Concentrator board used for RX (unsigned integer)
+	Brd  uint32   `json:"brd"`            // Concentrator board used for RX (unsigned integer)
 	Ant  uint8   `json:"ant"`            // Antenna number on which signal has been received
 }
 
@@ -95,7 +95,7 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 				Size: uint16(len(frame.PhyPayload)),
 				Data: frame.PhyPayload,
 				Ant:  uint8(frame.TxInfo.Antenna),
-				Brd:  uint8(frame.TxInfo.Board),
+				Brd:  uint32(frame.TxInfo.Board),
 			},
 		},
 	}
