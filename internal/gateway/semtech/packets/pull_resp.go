@@ -77,7 +77,7 @@ type TXPK struct {
 	Size uint16  `json:"size"`           // RF packet payload size in bytes (unsigned integer)
 	NCRC bool    `json:"ncrc,omitempty"` // If true, disable the CRC of the physical layer (optional)
 	Data []byte  `json:"data"`           // Base64 encoded RF packet payload, padding optional
-	Brd  uint32   `json:"brd"`            // Concentrator board used for RX (unsigned integer)
+	Brd  uint32  `json:"brd"`            // Concentrator board used for RX (unsigned integer)
 	Ant  uint8   `json:"ant"`            // Antenna number on which signal has been received
 }
 

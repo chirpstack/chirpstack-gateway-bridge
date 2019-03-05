@@ -560,7 +560,7 @@ func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 		Size: uint16(len(txPacket.PHYPayload)),
 		Data: base64.StdEncoding.EncodeToString(txPacket.PHYPayload),
 		Ant:  uint8(txPacket.TXInfo.Antenna),
-		Brd:  uint32(txPacket.TXInfo.Board),
+		Brd:  txPacket.TXInfo.Board,
 	}
 
 	if txPacket.TXInfo.TimeSinceGPSEpoch != nil {
