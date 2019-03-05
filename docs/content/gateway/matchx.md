@@ -1,16 +1,16 @@
 ---
 title: MatchX
-menu:
-    main:
-        parent: gateway
 description: Onfigure the MatchX gateway to work with the LoRa Gateway Bridge service.
+menu:
+  main:
+    parent: gateway
 ---
 
 # MatchX
 
 ## Matchbox gateway
 
-* [Product detail page](https://www.lairdtech.com/products/rg1xx-lora-gateway)
+* [Product detail page](https://www.matchx.io/hardware/)
 
 The MatchX Matchbox is an OpenWRT / Lede
 base gateway, which by default sends its data to the MatchX hosted network-server

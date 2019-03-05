@@ -32,14 +32,9 @@ snapshot:
 	@goreleaser --snapshot
 
 dev-requirements:
-	go get -u golang.org/x/lint/golint
-	go get -u github.com/kisielk/errcheck
-	go get -u github.com/golang/dep/cmd/dep
-	go get -u github.com/goreleaser/goreleaser
-	go get -u github.com/goreleaser/nfpm
-
-requirements:
-	dep ensure -v
+	go install golang.org/x/lint/golint
+	go install github.com/goreleaser/goreleaser
+	go install github.com/goreleaser/nfpm
 
 # shortcuts for development
 

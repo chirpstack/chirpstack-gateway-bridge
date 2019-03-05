@@ -10,6 +10,21 @@ description: Lists the changes per LoRa App Server release, including steps how 
 
 # Changelog
 
+## v2.7.0
+
+### Features
+
+* Environment variable based [configuration](https://www.loraserver.io/lora-gateway-bridge/install/config/) has been re-implemented.
+
+### Improvements
+
+* Remove QoS > 0 bottleneck with non-blocking MQTT publish ([#101](https://github.com/brocaar/lora-gateway-bridge/pull/101))
+
+### Bugfixes
+
+* Fix potential deadlock on MQTT re-connect ([#103](https://github.com/brocaar/lora-gateway-bridge/issues/103))
+* Fix logrotate issue (init based systems) ([#98](https://github.com/brocaar/lora-gateway-bridge/pull/98))
+
 ## v2.6.2
 
 ### Bugfixes

@@ -272,6 +272,24 @@ marshaler="v2_json"
   bind=""
 {{< /highlight >}}
 
+#### Environment variables
+
+Although using the configuration file is recommended, it is also possible
+to use environment variables to set configuration variables.
+
+Example:
+
+{{<highlight toml>}}
+[packet_forwarder]
+udp_bind="0.0.0.0:1700"
+{{</highlight>}}
+
+Can be set using the environment variable:
+
+{{<highlight toml>}}
+PACKET_FORWARDER.UDP_BIND="0.0.0.0:1700"
+{{</highlight>}}
+
 ### Warning: deprecation warning! update your configuration
 
 When you see this warning, you need to update your configuration!
