@@ -392,7 +392,7 @@ type RXPK struct {
 	Tmms *int64       `json:"tmms"` // GPS time of pkt RX, number of milliseconds since 06.Jan.1980
 	Tmst uint32       `json:"tmst"` // Internal timestamp of "RX finished" event (32b unsigned)
 	Freq float64      `json:"freq"` // RX central frequency in MHz (unsigned float, Hz precision)
-	Brd  uint8        `json:"brd"`  // Concentrator board used for RX (unsigned integer)
+	Brd  uint32       `json:"brd"`  // Concentrator board used for RX (unsigned integer)
 	Chan uint8        `json:"chan"` // Concentrator "IF" channel used for RX (unsigned integer)
 	RFCh uint8        `json:"rfch"` // Concentrator "RF chain" used for RX (unsigned integer)
 	Stat int8         `json:"stat"` // CRC status: 1 = OK, -1 = fail, 0 = no CRC
@@ -445,7 +445,7 @@ type TXPK struct {
 	Size uint16  `json:"size"`           // RF packet payload size in bytes (unsigned integer)
 	NCRC bool    `json:"ncrc,omitempty"` // If true, disable the CRC of the physical layer (optional)
 	Data string  `json:"data"`           // Base64 encoded RF packet payload, padding optional
-	Brd  uint8   `json:"brd"`            // Concentrator board used for RX (unsigned integer)
+	Brd  uint32  `json:"brd"`            // Concentrator board used for RX (unsigned integer)
 	Ant  uint8   `json:"ant"`            // Antenna number on which signal has been received
 }
 
@@ -560,7 +560,7 @@ func newTXPKFromTXPacket(txPacket gw.TXPacketBytes) (TXPK, error) {
 		Size: uint16(len(txPacket.PHYPayload)),
 		Data: base64.StdEncoding.EncodeToString(txPacket.PHYPayload),
 		Ant:  uint8(txPacket.TXInfo.Antenna),
-		Brd:  uint8(txPacket.TXInfo.Board),
+		Brd:  uint32(txPacket.TXInfo.Board),
 	}
 
 	if txPacket.TXInfo.TimeSinceGPSEpoch != nil {
