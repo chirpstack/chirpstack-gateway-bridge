@@ -10,6 +10,12 @@ description: Lists the changes per LoRa App Server release, including steps how 
 
 # Changelog
 
+## v2.7.1
+
+### Bugfixes
+
+* Fix `rxpk.brd` parsing for some packet-forwarders. ([#104](https://github.com/brocaar/lora-gateway-bridge/issues/104))
+
 ## v2.7.0
 
 ### Features

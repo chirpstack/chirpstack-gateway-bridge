@@ -1,8 +1,8 @@
 #!/bin/env bash
 
 PACKAGE_NAME="lora-gateway-bridge"
-PACKAGE_VERSION="2.7.0"
-REV="r6"
+PACKAGE_VERSION="2.7.1"
+REV="r1"
 
 
 PACKAGE_URL="https://artifacts.loraserver.io/downloads/lora-gateway-bridge/lora-gateway-bridge_${PACKAGE_VERSION}_linux_armv5.tar.gz"

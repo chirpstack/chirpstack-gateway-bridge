@@ -101,16 +101,16 @@ opkg update
 
 2. Download the latest `lora-gateway-bridge` `.ipk` package from:
    [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
-   Example (assuming you want to install `lora-gateway-bridge_2.7.0-r2_arm926ejste.ipk`):
+   Example (assuming you want to install `lora-gateway-bridge_2.7.1-r1_arm926ejste.ipk`):
    {{<highlight bash>}}
-   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_2.7.0-r2_arm926ejste.ipk
+   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_2.7.1-r1_arm926ejste.ipk
    {{< /highlight >}}
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
    {{<highlight bash>}}
-   opkg install lora-gateway-bridge_2.7.0-r2_arm926ejste.ipk
+   opkg install lora-gateway-bridge_2.7.1-r1_arm926ejste.ipk
    {{< /highlight >}}
 
 4. Update the MQTT connection details so that LoRa Gateway Bridge is able to
