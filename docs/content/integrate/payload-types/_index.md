@@ -14,7 +14,6 @@ serialization format to use for the messages sent and received over MQTT.
 This can be configured by the `marshaler` option in the [configuration]({{<ref "/install/config.md">}})
 file. The following marshalers are available:
 
-* [V2 JSON]({{<relref "v2-json.md">}}) (will be removed in the next major release)
 * [JSON]({{<relref "json.md">}})
 * [Protocol Buffers]({{<relref "protobuf.md">}})
 

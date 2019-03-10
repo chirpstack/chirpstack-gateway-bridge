@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -16,8 +14,6 @@ import (
 	"github.com/brocaar/lora-gateway-bridge/internal/backend/mqtt"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech"
-	"github.com/brocaar/lora-gateway-bridge/internal/legacy/backend/mqttpubsub"
-	"github.com/brocaar/lora-gateway-bridge/internal/legacy/gateway"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 )
@@ -57,91 +53,7 @@ func run(cmd *cobra.Command, args []string) error {
 		}()
 	}()
 
-	if config.C.Backend.MQTT.Marshaler == "v2_json" {
-		if config.C.Backend.MQTT.Auth.Type != "generic" {
-			return fmt.Errorf("auth type '%s' can not be used with 'v2_json' marshaler", config.C.Backend.MQTT.Auth.Type)
-		}
-
-		return runV2(cmd, args)
-	}
 	return runV3(cmd, args)
-}
-
-func runV2(cmd *cobra.Command, args []string) error {
-	var pubsub *mqttpubsub.Backend
-	for {
-		var err error
-		pubsub, err = mqttpubsub.NewBackend(config.C.Backend.MQTT)
-		if err == nil {
-			break
-		}
-
-		log.Errorf("could not setup mqtt backend, retry in 2 seconds: %s", err)
-		time.Sleep(2 * time.Second)
-	}
-	defer pubsub.Close()
-
-	onNew := func(mac lorawan.EUI64) error {
-		return pubsub.SubscribeGatewayTopics(mac)
-	}
-
-	onDelete := func(mac lorawan.EUI64) error {
-		return pubsub.UnSubscribeGatewayTopics(mac)
-	}
-
-	gateway, err := gateway.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.SkipCRCCheck, config.C.PacketForwarder.Configuration)
-	if err != nil {
-		log.Fatalf("could not setup gateway backend: %s", err)
-	}
-	defer gateway.Close()
-
-	go func() {
-		for rxPacket := range gateway.RXPacketChan() {
-			go func(rxPacket gw.RXPacketBytes) {
-				if err := pubsub.PublishGatewayRX(rxPacket.RXInfo.MAC, rxPacket); err != nil {
-					log.WithError(err).Error("publish uplink message error")
-				}
-			}(rxPacket)
-		}
-	}()
-
-	go func() {
-		for stats := range gateway.StatsChan() {
-			if err := pubsub.PublishGatewayStats(stats.MAC, stats); err != nil {
-				log.WithError(err).Error("publish gateway stats message error")
-			}
-		}
-	}()
-
-	go func() {
-		for txPacket := range pubsub.TXPacketChan() {
-			if err := gateway.Send(txPacket); err != nil {
-				log.WithError(err).Error("send downlink packet error")
-			}
-		}
-	}()
-
-	go func() {
-		for txAck := range gateway.TXAckChan() {
-			if err := pubsub.PublishGatewayTXAck(txAck.MAC, txAck); err != nil {
-				log.WithError(err).Error("publish downlink ack error")
-			}
-		}
-	}()
-
-	go func() {
-		for configPacket := range pubsub.ConfigPacketChan() {
-			if err := gateway.ApplyConfiguration(configPacket); err != nil {
-				log.WithError(err).Error("apply configuration error")
-			}
-		}
-	}()
-
-	sigChan := make(chan os.Signal)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	log.WithField("signal", <-sigChan).Info("signal received")
-	log.Warning("shutting down server")
-	return nil
 }
 
 func runV3(cmd *cobra.Command, args []string) error {

@@ -141,7 +141,7 @@ skip_crc_check = false
 # The default values match the default expected configuration of the
 # LoRa Server MQTT backend. Therefore only change these values when
 # absolutely needed.
-# Use "{{ .MAC }}" as an substitution for the LoRa gateway MAC.
+# Use "{{ .MAC }}" as an substitution for the LoRa gateway MAC. 
 #
 # Note that some authentication types might overwrite these templates (e.g.
 # in case of GCP Cloud IoT Core)!
@@ -154,10 +154,9 @@ config_topic_template="gateway/{{ .MAC }}/config"
 # Payload marshaler.
 #
 # This defines how the MQTT payloads are encoded. Valid options are:
-# * v2_json:   The default LoRa Gateway Bridge v2 encoding (will be deprecated and removed in LoRa Gateway Bridge v3)
 # * protobuf:  Protobuf encoding (this will become the LoRa Gateway Bridge v3 default)
 # * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
-marshaler="v2_json"
+marshaler="json"
 
   # MQTT authentication.
   [backend.mqtt.auth]
@@ -270,18 +269,6 @@ marshaler="v2_json"
   # The ip:port to bind the Prometheus metrics server to for serving the
   # metrics endpoint.
   bind=""
-{{< /highlight >}}
-
-#### Environment variables
-
-Although using the configuration file is recommended, it is also possible
-to use environment variables to set configuration variables.
-
-Example:
-
-{{<highlight toml>}}
-[packet_forwarder]
-udp_bind="0.0.0.0:1700"
 {{</highlight>}}
 
 Can be set using the environment variable:

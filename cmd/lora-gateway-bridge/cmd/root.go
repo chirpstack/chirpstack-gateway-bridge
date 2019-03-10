@@ -81,7 +81,7 @@ func init() {
 	viper.SetDefault("backend.mqtt.ack_topic_template", "gateway/{{ .MAC }}/ack")
 	viper.SetDefault("backend.mqtt.config_topic_template", "gateway/{{ .MAC }}/config")
 
-	viper.SetDefault("backend.mqtt.marshaler", "v2_json")
+	viper.SetDefault("backend.mqtt.marshaler", "json")
 	viper.SetDefault("backend.mqtt.auth.type", "generic")
 
 	viper.SetDefault("backend.mqtt.auth.generic.server", "tcp://127.0.0.1:1883")

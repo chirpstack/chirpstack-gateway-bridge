@@ -90,7 +90,6 @@ config_topic_template="{{ .Backend.MQTT.ConfigTopicTemplate }}"
 # Payload marshaler.
 #
 # This defines how the MQTT payloads are encoded. Valid options are:
-# * v2_json:   The default LoRa Gateway Bridge v2 encoding (will be deprecated and removed in LoRa Gateway Bridge v3)
 # * protobuf:  Protobuf encoding (this will become the LoRa Gateway Bridge v3 default)
 # * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
 marshaler="{{ .Backend.MQTT.Marshaler }}"
