@@ -16,12 +16,12 @@ project.
 ### Component links
 
 * [LoRa Gateway Bridge](https://www.loraserver.io/lora-gateway-bridge)
-* [LoRa Gateway Config](https://www.loraserver.io/lora-app-server/install/config/)
+* [LoRa Gateway Config](https://www.loraserver.io/lora-gateway-bridge/install/config)
 * [LoRa Server](https://www.loraserver.io/loraserver)
 * [LoRa App Server](https://www.loraserver.io/lora-app-server)
 
 ## Links
-
+****
 * [Downloads](https://www.loraserver.io/lora-gateway-bridge/overview/downloads/)
 * [Docker image](https://hub.docker.com/r/loraserver/lora-gateway-bridge/)
 * [Documentation](https://www.loraserver.io/lora-gateway-bridge/)
