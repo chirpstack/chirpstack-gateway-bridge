@@ -14,6 +14,7 @@ type Config struct {
 	PacketForwarder struct {
 		UDPBind      string `mapstructure:"udp_bind"`
 		SkipCRCCheck bool   `mapstructure:"skip_crc_check"`
+		FakeRxInfoTime bool `mapstructure:"fake_rxinfo_time"`
 
 		Configuration []semtech.PFConfiguration `mapstructure:"configuration"`
 	} `mapstructure:"packet_forwarder"`
