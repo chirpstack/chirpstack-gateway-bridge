@@ -546,7 +546,7 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 		mac := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
 
 		Convey("When calling newRXPacketsFromRXPK without RSig field", func() {
-			rxPackets, err := newRXPacketsFromRXPK(mac, rxpk)
+			rxPackets, err := newRXPacketsFromRXPK(mac, rxpk, false)
 			So(err, ShouldBeNil)
 			So(rxPackets, ShouldHaveLength, 1)
 
@@ -591,7 +591,7 @@ func TestNewRXPacketFromRXPK(t *testing.T) {
 					RSSIC: -30,
 				},
 			}
-			rxPackets, err := newRXPacketsFromRXPK(mac, rxpk)
+			rxPackets, err := newRXPacketsFromRXPK(mac, rxpk, false)
 			So(err, ShouldBeNil)
 			So(rxPackets, ShouldHaveLength, 2)
 

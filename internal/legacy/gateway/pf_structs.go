@@ -525,7 +525,7 @@ func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) ([]
 			rxPacket.RXInfo.Time = &ts
 		}
 	} else if FakeRxInfoTime {
-		ts, _ := ptypes.TimestampProto(CompactTime(time.Now().UTC()))
+		ts, _ := ptypes.TimestampProto(time.Now().UTC())
 		frame.RxInfo.Time = ts
 	}
 
