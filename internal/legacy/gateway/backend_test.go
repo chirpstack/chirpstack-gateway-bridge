@@ -32,7 +32,7 @@ func TestBackend(t *testing.T) {
 				RestartCommand: "touch " + filepath.Join(tempDir, "restart"),
 				Version:        "12345",
 			},
-		})
+		},false)
 		So(err, ShouldBeNil)
 
 		backendAddr, err := net.ResolveUDPAddr("udp", backend.conn.LocalAddr().String())
