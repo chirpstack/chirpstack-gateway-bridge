@@ -148,7 +148,7 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 		}
 		frame.RxInfo.Time = ts
 	} else if FakeRxInfoTime {
-		ts, _ := ptypes.TimestampProto(CompactTime(time.Now().UTC()))
+		ts, _ := ptypes.TimestampProto(time.Now().UTC())
 		frame.RxInfo.Time = ts
 	}
 
