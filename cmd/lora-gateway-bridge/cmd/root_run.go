@@ -89,7 +89,7 @@ func runV2(cmd *cobra.Command, args []string) error {
 		return pubsub.UnSubscribeGatewayTopics(mac)
 	}
 
-	gateway, err := gateway.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.SkipCRCCheck, config.C.PacketForwarder.Configuration)
+	gateway, err := gateway.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.SkipCRCCheck, config.C.PacketForwarder.Configuration, config.C.PacketForwarder.FakeRxInfoTime)
 	if err != nil {
 		log.Fatalf("could not setup gateway backend: %s", err)
 	}
@@ -159,7 +159,7 @@ func runV3(cmd *cobra.Command, args []string) error {
 		return backend.UnsubscribeGateway(gatewayID)
 	}
 
-	gateway, err := semtech.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.Configuration)
+	gateway, err := semtech.NewBackend(config.C.PacketForwarder.UDPBind, onNew, onDelete, config.C.PacketForwarder.Configuration, config.C.PacketForwarder.FakeRxInfoTime)
 	if err != nil {
 		return errors.Wrap(err, "new gateway backend error")
 	}

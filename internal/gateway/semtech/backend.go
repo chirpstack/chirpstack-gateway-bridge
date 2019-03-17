@@ -47,10 +47,11 @@ type Backend struct {
 	closed         bool
 	gateways       gateways
 	configurations []PFConfiguration
+	FakeRxInfoTime bool
 }
 
 // NewBackend creates a new backend.
-func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configurations []PFConfiguration) (*Backend, error) {
+func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configurations []PFConfiguration, FakeRxInfoTime bool) (*Backend, error) {
 	addr, err := net.ResolveUDPAddr("udp", bind)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolve udp addr error")
@@ -74,6 +75,7 @@ func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configur
 			onDelete: onDelete,
 		},
 		configurations: configurations,
+		FakeRxInfoTime: FakeRxInfoTime,
 	}
 
 	go func() {
@@ -435,7 +437,7 @@ func (b *Backend) handlePushData(up udpPacket) error {
 	}
 
 	// uplink frames
-	uplinkFrames, err := p.GetUplinkFrames()
+	uplinkFrames, err := p.GetUplinkFrames(b.FakeRxInfoTime)
 	if err != nil {
 		return errors.Wrap(err, "get uplink frames error")
 	}
