@@ -191,6 +191,24 @@ marshaler="{{ .Backend.MQTT.Marshaler }}"
     # public-key.pem with this device / gateway in Google Cloud IoT Core.
     jwt_key_file="{{ .Backend.MQTT.Auth.GCPCloudIoTCore.JWTKeyFile }}"
 
+    # Azure IoT Hub
+    #
+    # This setting will preset uplink and downlink topics that will only
+    # work with Azure IoT Hub service.
+    [backend.mqtt.auth.azure_iot_hub]
+
+    # Azure IoT Device Id
+    device_id=""
+
+    # Azure IoT Hub name
+    iot_hub_name=""
+
+    # Azure IoT Hub CA cert
+    iot_hub_ca_file=""
+
+    # Azure IoT Device Key
+    device_key_file=""
+
 
 # Metrics configuration.
 [metrics]

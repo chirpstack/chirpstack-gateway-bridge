@@ -24,6 +24,7 @@ type BackendAuthConfig struct {
 	Type            string
 	Generic         auth.GenericConfig
 	GCPCloudIoTCore auth.GCPCloudIoTCoreConfig `mapstructure:"gcp_cloud_iot_core"`
+	AzureIoTHub     auth.AzureIoTHubConfig     `mapstructure:"azure_iot_hub"`
 }
 
 // BackendConfig holds the MQTT pub-sub backend configuration.
@@ -113,6 +114,18 @@ func NewBackend(config BackendConfig) (*Backend, error) {
 		config.AckTopicTemplate = `/devices/gw-{{ .MAC }}/events/ack`
 		config.DownlinkTopicTemplate = `/devices/gw-{{ .MAC }}/commands/#`
 		config.ConfigTopicTemplate = `/devices/gw-{{ .MAC }}/commands/#`
+	case "azure_iot_hub":
+		b.auth, err = auth.NewAzureIoTHubAuthentication(config.Auth.AzureIoTHub)
+		if err != nil {
+			return nil, errors.Wrap(err, "mqtt: new Azure IoT Hub authentication error")
+		}
+
+		config.UplinkTopicTemplate = `devices/{{ .MAC }}/messages/events/up`
+		config.StatsTopicTemplate = `devices/{{ .MAC }}/messages/events/stats`
+		config.AckTopicTemplate = `devices/{{ .MAC }}/messages/events/ack`
+		config.DownlinkTopicTemplate = `devices/{{ .MAC }}/messages/devicebound/#`
+		config.ConfigTopicTemplate = `devices/{{ .MAC }}/messages/devicebound/#`
+
 	default:
 		return nil, fmt.Errorf("mqtt: unknown auth type: %s", config.Auth.Type)
 	}
@@ -173,6 +186,13 @@ func NewBackend(config BackendConfig) (*Backend, error) {
 
 	switch config.Auth.Type {
 	case "gcp_cloud_iot_core":
+		b.topicHandlers = []topicHandler{
+			{
+				topicTemplate: b.downlinkTemplate,
+				handler:       b.commandHandler,
+			},
+		}
+	case "azure_iot_hub":
 		b.topicHandlers = []topicHandler{
 			{
 				topicTemplate: b.downlinkTemplate,
