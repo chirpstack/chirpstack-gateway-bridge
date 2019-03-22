@@ -1,4 +1,4 @@
-package semtech
+package semtechudp
 
 import (
 	"encoding/base64"
@@ -12,7 +12,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech/packets"
+	"github.com/brocaar/lora-gateway-bridge/internal/backend/semtechudp/packets"
+	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 )
@@ -23,17 +24,15 @@ type udpPacket struct {
 	data []byte
 }
 
-// PFConfiguration holds the packet-forwarder configuration.
-type PFConfiguration struct {
-	MAC            lorawan.EUI64 `mapstructure:"-"`
-	MACString      string        `mapstructure:"mac"`
-	BaseFile       string        `mapstructure:"base_file"`
-	OutputFile     string        `mapstructure:"output_file"`
-	RestartCommand string        `mapstructure:"restart_command"`
-	Version        string        `mapstructure:"-"`
+type pfConfiguration struct {
+	gatewayID      lorawan.EUI64
+	baseFile       string
+	outputFile     string
+	restartCommand string
+	currentVersion string
 }
 
-// Backend implements a Semtech packet-forwarder gateway backend.
+// Backend implements a Semtech packet-forwarder (UDP) gateway backend.
 type Backend struct {
 	sync.RWMutex
 
@@ -46,17 +45,17 @@ type Backend struct {
 	conn           *net.UDPConn
 	closed         bool
 	gateways       gateways
-	configurations []PFConfiguration
+	configurations []pfConfiguration
 }
 
 // NewBackend creates a new backend.
-func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configurations []PFConfiguration) (*Backend, error) {
-	addr, err := net.ResolveUDPAddr("udp", bind)
+func NewBackend(conf config.Config) (*Backend, error) {
+	addr, err := net.ResolveUDPAddr("udp", conf.Backend.SemtechUDP.UDPBind)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolve udp addr error")
 	}
 
-	log.WithField("addr", addr).Info("gateway: starting gateway udp listener")
+	log.WithField("addr", addr).Info("backend/semtechudp: starting gateway udp listener")
 	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		return nil, errors.Wrap(err, "listen udp error")
@@ -69,18 +68,29 @@ func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configur
 		gatewayStatsChan:  make(chan gw.GatewayStats),
 		udpSendChan:       make(chan udpPacket),
 		gateways: gateways{
-			gateways: make(map[lorawan.EUI64]gateway),
-			onNew:    onNew,
-			onDelete: onDelete,
+			gateways:       make(map[lorawan.EUI64]gateway),
+			connectChan:    make(chan lorawan.EUI64),
+			disconnectChan: make(chan lorawan.EUI64),
 		},
-		configurations: configurations,
+	}
+
+	for _, pfConf := range conf.Backend.SemtechUDP.Configuration {
+		c := pfConfiguration{
+			baseFile:       pfConf.BaseFile,
+			outputFile:     pfConf.OutputFile,
+			restartCommand: pfConf.RestartCommand,
+		}
+		if err := c.gatewayID.UnmarshalText([]byte(pfConf.GatewayID)); err != nil {
+			return nil, errors.Wrap(err, "unmarshal gateway id error")
+		}
+		b.configurations = append(b.configurations, c)
 	}
 
 	go func() {
 		for {
-			log.Debug("gateway: cleanup gateway registry")
+			log.Debug("backend/semtechudp: cleanup gateway registry")
 			if err := b.gateways.cleanup(); err != nil {
-				log.WithError(err).Error("gateway: gateway registry cleanup failed")
+				log.WithError(err).Error("backend/semtechudp: gateway registry cleanup failed")
 			}
 			time.Sleep(time.Minute)
 		}
@@ -90,7 +100,7 @@ func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configur
 		b.wg.Add(1)
 		err := b.readPackets()
 		if !b.isClosed() {
-			log.WithError(err).Error("gateway: read udp packets error")
+			log.WithError(err).Error("backend/semtechudp: read udp packets error")
 		}
 		b.wg.Done()
 	}()
@@ -99,7 +109,7 @@ func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configur
 		b.wg.Add(1)
 		err := b.sendPackets()
 		if !b.isClosed() {
-			log.WithError(err).Error("gateway: send udp packets error")
+			log.WithError(err).Error("backend/semtechudp: send udp packets error")
 		}
 		b.wg.Done()
 	}()
@@ -112,32 +122,42 @@ func (b *Backend) Close() error {
 	b.Lock()
 	b.closed = true
 
-	log.Info("gateway: closing gateway backend")
+	log.Info("backend/semtechudp: closing gateway backend")
 
 	if err := b.conn.Close(); err != nil {
 		return errors.Wrap(err, "close udp listener error")
 	}
 
-	log.Info("gateway: handling last packets")
+	log.Info("backend/semtechudp: handling last packets")
 	close(b.udpSendChan)
 	b.Unlock()
 	b.wg.Wait()
 	return nil
 }
 
-// DownlinkTXAckChan returns the downlink tx ack channel.
-func (b *Backend) DownlinkTXAckChan() chan gw.DownlinkTXAck {
+// GetDownlinkTXAckChan returns the downlink tx ack channel.
+func (b *Backend) GetDownlinkTXAckChan() chan gw.DownlinkTXAck {
 	return b.downlinkTXAckChan
 }
 
-// GatewayStatsChan returns the gateway stats channel.
-func (b *Backend) GatewayStatsChan() chan gw.GatewayStats {
+// GetGatewayStatsChan returns the gateway stats channel.
+func (b *Backend) GetGatewayStatsChan() chan gw.GatewayStats {
 	return b.gatewayStatsChan
 }
 
-// UplinkFrameChan returns the uplink frame channel.
-func (b *Backend) UplinkFrameChan() chan gw.UplinkFrame {
+// GetUplinkFrameChan returns the uplink frame channel.
+func (b *Backend) GetUplinkFrameChan() chan gw.UplinkFrame {
 	return b.uplinkFrameChan
+}
+
+// GetConnectChan returns the channel for received gateway connections.
+func (b *Backend) GetConnectChan() chan lorawan.EUI64 {
+	return b.gateways.connectChan
+}
+
+// GetDisconnectChan returns the channel for disconnected gateway connections.
+func (b *Backend) GetDisconnectChan() chan lorawan.EUI64 {
+	return b.gateways.disconnectChan
 }
 
 // SendDownlinkFrame sends the given downlink frame to the gateway.
@@ -157,7 +177,7 @@ func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
 
 	bytes, err := pullResp.MarshalBinary()
 	if err != nil {
-		return errors.Wrap(err, "gateway: marshal PullRespPacket error")
+		return errors.Wrap(err, "backend/semtechudp: marshal PullRespPacket error")
 	}
 
 	b.udpSendChan <- udpPacket{
@@ -175,9 +195,9 @@ func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
 		copy(gatewayID[:], config.GatewayId)
 
 		b.Lock()
-		var pfConfig *PFConfiguration
+		var pfConfig *pfConfiguration
 		for i := range b.configurations {
-			if b.configurations[i].MAC == gatewayID {
+			if b.configurations[i].gatewayID == gatewayID {
 				pfConfig = &b.configurations[i]
 			}
 		}
@@ -191,18 +211,18 @@ func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
 	})
 }
 
-func (b *Backend) applyConfiguration(pfConfig PFConfiguration, config gw.GatewayConfiguration) error {
+func (b *Backend) applyConfiguration(pfConfig pfConfiguration, config gw.GatewayConfiguration) error {
 	gwConfig, err := getGatewayConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "get gateway config error")
 	}
 
-	baseConfig, err := loadConfigFile(pfConfig.BaseFile)
+	baseConfig, err := loadConfigFile(pfConfig.baseFile)
 	if err != nil {
 		return errors.Wrap(err, "load config file error")
 	}
 
-	if err = mergeConfig(pfConfig.MAC, baseConfig, gwConfig); err != nil {
+	if err = mergeConfig(pfConfig.gatewayID, baseConfig, gwConfig); err != nil {
 		return errors.Wrap(err, "merge config error")
 	}
 
@@ -213,29 +233,29 @@ func (b *Backend) applyConfiguration(pfConfig PFConfiguration, config gw.Gateway
 	}
 
 	// write new config file to disk
-	if err = ioutil.WriteFile(pfConfig.OutputFile, bb, 0644); err != nil {
-		return errors.Wrap(err, "write config file errror")
+	if err = ioutil.WriteFile(pfConfig.outputFile, bb, 0644); err != nil {
+		return errors.Wrap(err, "write config file error")
 	}
 	log.WithFields(log.Fields{
-		"gateway_id": pfConfig.MAC,
-		"file":       pfConfig.OutputFile,
-	}).Info("gateway: new configuration file written")
+		"gateway_id": pfConfig.gatewayID,
+		"file":       pfConfig.outputFile,
+	}).Info("backend/semtechudp: new configuration file written")
 
 	// invoke restart command
-	if err = invokePFRestart(pfConfig.RestartCommand); err != nil {
+	if err = invokePFRestart(pfConfig.restartCommand); err != nil {
 		return errors.Wrap(err, "invoke packet-forwarder restart error")
 	}
 	log.WithFields(log.Fields{
-		"gateway_id": pfConfig.MAC,
-		"cmd":        pfConfig.RestartCommand,
-	}).Info("gateway: packet-forwarder restart command invoked")
+		"gateway_id": pfConfig.gatewayID,
+		"cmd":        pfConfig.restartCommand,
+	}).Info("backend/semtechudp: packet-forwarder restart command invoked")
 
 	b.Lock()
 	defer b.Unlock()
 
 	for i := range b.configurations {
-		if b.configurations[i].MAC == pfConfig.MAC {
-			b.configurations[i].Version = config.Version
+		if b.configurations[i].gatewayID == pfConfig.gatewayID {
+			b.configurations[i].currentVersion = config.Version
 		}
 	}
 
@@ -270,7 +290,7 @@ func (b *Backend) readPackets() error {
 				log.WithError(err).WithFields(log.Fields{
 					"data_base64": base64.StdEncoding.EncodeToString(up.data),
 					"addr":        up.addr,
-				}).Error("gateway: could not handle packet")
+				}).Error("backend/semtechudp: could not handle packet")
 			}
 		}(up)
 	}
@@ -283,7 +303,7 @@ func (b *Backend) sendPackets() error {
 			log.WithError(err).WithFields(log.Fields{
 				"addr":        p.addr,
 				"data_base64": base64.StdEncoding.EncodeToString(p.data),
-			}).Error("gateway: get packet-type error")
+			}).Error("backend/semtechudp: get packet-type error")
 			continue
 		}
 
@@ -291,7 +311,7 @@ func (b *Backend) sendPackets() error {
 			"addr":             p.addr,
 			"type":             pt,
 			"protocol_version": p.data[0],
-		}).Debug("gateway: sending udp packet to gateway")
+		}).Debug("backend/semtechudp: sending udp packet to gateway")
 
 		err = gatewayWriteUDPTimer(pt.String(), func() error {
 			_, err := b.conn.WriteToUDP(p.data, p.addr)
@@ -303,7 +323,7 @@ func (b *Backend) sendPackets() error {
 				"addr":             p.addr,
 				"type":             pt,
 				"protocol_version": p.data[0],
-			}).WithError(err).Error("gateway: write to udp error")
+			}).WithError(err).Error("backend/semtechudp: write to udp error")
 		}
 	}
 	return nil
@@ -325,7 +345,7 @@ func (b *Backend) handlePacket(up udpPacket) error {
 		"addr":             up.addr,
 		"type":             pt,
 		"protocol_version": up.data[0],
-	}).Debug("gateway: received udp packet from gateway")
+	}).Debug("backend/semtechudp: received udp packet from gateway")
 
 	return gatewayHandleTimer(pt.String(), func() error {
 		switch pt {
@@ -336,7 +356,7 @@ func (b *Backend) handlePacket(up udpPacket) error {
 		case packets.TXACK:
 			return b.handleTXACK(up)
 		default:
-			return fmt.Errorf("gateway: unknown packet type: %s", pt)
+			return fmt.Errorf("backend/semtechudp: unknown packet type: %s", pt)
 		}
 	})
 }
@@ -423,7 +443,7 @@ func (b *Backend) handlePushData(up udpPacket) error {
 		if up.addr.IP.IsLoopback() {
 			ip, err := getOutboundIP()
 			if err != nil {
-				log.WithError(err).Error("gateway: get outbound ip error")
+				log.WithError(err).Error("backend/semtechudp: get outbound ip error")
 			} else {
 				stats.Ip = ip.String()
 			}
@@ -450,8 +470,8 @@ func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats gw.GatewayStats) {
 	defer b.RUnlock()
 
 	for _, c := range b.configurations {
-		if gatewayID == c.MAC {
-			stats.ConfigVersion = c.Version
+		if gatewayID == c.gatewayID {
+			stats.ConfigVersion = c.currentVersion
 		}
 	}
 

@@ -1,4 +1,4 @@
-package semtech
+package semtechudp
 
 import (
 	"encoding/json"

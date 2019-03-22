@@ -9,30 +9,23 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pkg/errors"
-)
 
-// GCPCloudIoTCoreConfig devices the Cloud IoT Core configuration.
-type GCPCloudIoTCoreConfig struct {
-	Server        string
-	DeviceID      string        `mapstructure:"device_id"`
-	ProjectID     string        `mapstructure:"project_id"`
-	CloudRegion   string        `mapstructure:"cloud_region"`
-	RegistryID    string        `mapstructure:"registry_id"`
-	JWTExpiration time.Duration `mapstructure:"jwt_expiration"`
-	JWTKeyFile    string        `mapstructure:"jwt_key_file"`
-}
+	"github.com/brocaar/lora-gateway-bridge/internal/config"
+)
 
 // GCPCloudIoTCoreAuthentication implements the Google Cloud IoT Core authentication.
 type GCPCloudIoTCoreAuthentication struct {
 	siginingMethod *jwt.SigningMethodRSA
 	privateKey     *rsa.PrivateKey
 	clientID       string
-	config         GCPCloudIoTCoreConfig
+	server         string
+	projectID      string
+	jwtExpiration  time.Duration
 }
 
 // NewGCPCloudIoTCoreAuthentication create a GCPCloudIoTCoreAuthentication.
-func NewGCPCloudIoTCoreAuthentication(config GCPCloudIoTCoreConfig) (Authentication, error) {
-	keyFileRaw, err := ioutil.ReadFile(config.JWTKeyFile)
+func NewGCPCloudIoTCoreAuthentication(conf config.Config) (Authentication, error) {
+	keyFileRaw, err := ioutil.ReadFile(conf.Integration.MQTT.Auth.GCPCloudIoTCore.JWTKeyFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "read jwt key-file error")
 	}
@@ -43,23 +36,25 @@ func NewGCPCloudIoTCoreAuthentication(config GCPCloudIoTCoreConfig) (Authenticat
 	}
 
 	clientID := fmt.Sprintf("projects/%s/locations/%s/registries/%s/devices/%s",
-		config.ProjectID,
-		config.CloudRegion,
-		config.RegistryID,
-		config.DeviceID,
+		conf.Integration.MQTT.Auth.GCPCloudIoTCore.ProjectID,
+		conf.Integration.MQTT.Auth.GCPCloudIoTCore.CloudRegion,
+		conf.Integration.MQTT.Auth.GCPCloudIoTCore.RegistryID,
+		conf.Integration.MQTT.Auth.GCPCloudIoTCore.DeviceID,
 	)
 
 	return &GCPCloudIoTCoreAuthentication{
 		siginingMethod: jwt.SigningMethodRS256,
 		privateKey:     privateKey,
 		clientID:       clientID,
-		config:         config,
+		server:         conf.Integration.MQTT.Auth.GCPCloudIoTCore.Server,
+		projectID:      conf.Integration.MQTT.Auth.GCPCloudIoTCore.ProjectID,
+		jwtExpiration:  conf.Integration.MQTT.Auth.GCPCloudIoTCore.JWTExpiration,
 	}, nil
 }
 
 // Init applies the initial configuration.
 func (a *GCPCloudIoTCoreAuthentication) Init(opts *mqtt.ClientOptions) error {
-	opts.AddBroker(a.config.Server)
+	opts.AddBroker(a.server)
 	opts.SetClientID(a.clientID)
 	return nil
 }
@@ -69,7 +64,7 @@ func (a *GCPCloudIoTCoreAuthentication) Update(opts *mqtt.ClientOptions) error {
 	token := jwt.NewWithClaims(a.siginingMethod, jwt.StandardClaims{
 		IssuedAt:  time.Now().Unix(),
 		ExpiresAt: time.Now().Add(a.ReconnectAfter()).Unix(),
-		Audience:  a.config.ProjectID,
+		Audience:  a.projectID,
 	})
 
 	signedToken, err := token.SignedString(a.privateKey)
@@ -83,8 +78,8 @@ func (a *GCPCloudIoTCoreAuthentication) Update(opts *mqtt.ClientOptions) error {
 	return nil
 }
 
-// ReconnectAfter returns a time.Duration after which the MQTT client must re-connect.
+// ReconnectAfter returns a time.Duration after which the MQTT.Auth.client must re-connect.
 // Note: return 0 to disable the periodical re-connect feature.
 func (a *GCPCloudIoTCoreAuthentication) ReconnectAfter() time.Duration {
-	return a.config.JWTExpiration
+	return a.jwtExpiration
 }

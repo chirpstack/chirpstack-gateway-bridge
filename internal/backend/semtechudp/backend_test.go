@@ -1,4 +1,4 @@
-package semtech
+package semtechudp
 
 import (
 	"errors"
@@ -16,7 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech/packets"
+	"github.com/brocaar/lora-gateway-bridge/internal/backend/semtechudp/packets"
+	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/loraserver/api/common"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
@@ -42,15 +43,23 @@ func (ts *BackendTestSuite) SetupTest() {
 	ts.tempDir, err = ioutil.TempDir("", "test")
 	assert.NoError(err)
 
-	ts.backend, err = NewBackend("127.0.0.1:0", nil, nil, []PFConfiguration{
+	var conf config.Config
+	conf.Backend.SemtechUDP.UDPBind = "127.0.0.1:0"
+	conf.Backend.SemtechUDP.Configuration = []struct {
+		GatewayID      string `mapstructure:"gateway_id"`
+		BaseFile       string `mapstructure:"base_file"`
+		OutputFile     string `mapstructure:"output_file"`
+		RestartCommand string `mapstructure:"restart_command"`
+	}{
 		{
-			MAC:            lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+			GatewayID:      "0102030405060708",
 			BaseFile:       filepath.Join("test/test.json"),
 			OutputFile:     filepath.Join(ts.tempDir, "out.json"),
 			RestartCommand: "touch " + filepath.Join(ts.tempDir, "restart"),
-			Version:        "12345",
 		},
-	})
+	}
+
+	ts.backend, err = NewBackend(conf)
 	assert.NoError(err)
 
 	ts.backendUDPAddr, err = net.ResolveUDPAddr("udp", ts.backend.conn.LocalAddr().String())
@@ -62,6 +71,18 @@ func (ts *BackendTestSuite) SetupTest() {
 	ts.gwUDPConn, err = net.ListenUDP("udp", gwAddr)
 	assert.NoError(err)
 	assert.NoError(ts.gwUDPConn.SetDeadline(time.Now().Add(time.Second)))
+
+	go func() {
+		for {
+			<-ts.backend.GetConnectChan()
+		}
+	}()
+
+	go func() {
+		for {
+			<-ts.backend.GetDisconnectChan()
+		}
+	}()
 }
 
 func (ts *BackendTestSuite) TearDownTest() {
@@ -163,7 +184,7 @@ func (ts *BackendTestSuite) TestTXAck() {
 			_, err = ts.gwUDPConn.WriteToUDP(b, ts.backendUDPAddr)
 			assert.NoError(err)
 
-			ack := <-ts.backend.DownlinkTXAckChan()
+			ack := <-ts.backend.GetDownlinkTXAckChan()
 			assert.Equal(test.BackendPacket, ack)
 		})
 	}
@@ -216,7 +237,6 @@ func (ts *BackendTestSuite) TestPushData() {
 					Altitude:  123,
 					Source:    common.LocationSource_GPS,
 				},
-				ConfigVersion:       "12345",
 				RxPacketsReceived:   1,
 				RxPacketsReceivedOk: 2,
 				TxPacketsReceived:   4,
@@ -302,7 +322,7 @@ func (ts *BackendTestSuite) TestPushData() {
 
 			// stats
 			if test.Stats != nil {
-				stats := <-ts.backend.GatewayStatsChan()
+				stats := <-ts.backend.GetGatewayStatsChan()
 				ip, err := getOutboundIP()
 				assert.NoError(err)
 				test.Stats.Ip = ip.String()
@@ -311,7 +331,7 @@ func (ts *BackendTestSuite) TestPushData() {
 
 			// uplink frames
 			for _, uf := range test.UplinkFrames {
-				receivedUF := <-ts.backend.UplinkFrameChan()
+				receivedUF := <-ts.backend.GetUplinkFrameChan()
 				assert.Equal(uf, receivedUF)
 			}
 		})

@@ -1,4 +1,4 @@
-package semtech
+package semtechudp
 
 import (
 	"errors"
@@ -29,8 +29,9 @@ type gateway struct {
 type gateways struct {
 	sync.RWMutex
 	gateways map[lorawan.EUI64]gateway
-	onNew    func(lorawan.EUI64) error
-	onDelete func(lorawan.EUI64) error
+
+	connectChan    chan lorawan.EUI64
+	disconnectChan chan lorawan.EUI64
 }
 
 // get returns the gateway object for the given MAC.
@@ -46,19 +47,17 @@ func (c *gateways) get(mac lorawan.EUI64) (gateway, error) {
 	return gw, nil
 }
 
-// set creates or updates the gateway for the given MAC.
-func (c *gateways) set(mac lorawan.EUI64, gw gateway) error {
+// set creates or updates the gateway for the given Gateway ID.
+func (c *gateways) set(gatewayID lorawan.EUI64, gw gateway) error {
 	c.Lock()
 	defer c.Unlock()
 
-	_, ok := c.gateways[mac]
-	if !ok && c.onNew != nil {
+	_, ok := c.gateways[gatewayID]
+	if !ok {
 		gatewayEventCounter("register_gateway")
-		if err := c.onNew(mac); err != nil {
-			return err
-		}
+		c.connectChan <- gatewayID
 	}
-	c.gateways[mac] = gw
+	c.gateways[gatewayID] = gw
 	return nil
 }
 
@@ -67,15 +66,11 @@ func (c *gateways) cleanup() error {
 	c.Lock()
 	defer c.Unlock()
 
-	for mac := range c.gateways {
-		if c.gateways[mac].lastSeen.Before(time.Now().Add(gatewayCleanupDuration)) {
+	for gatewayID := range c.gateways {
+		if c.gateways[gatewayID].lastSeen.Before(time.Now().Add(gatewayCleanupDuration)) {
 			gatewayEventCounter("unregister_gateway")
-			if c.onDelete != nil {
-				if err := c.onDelete(mac); err != nil {
-					return err
-				}
-			}
-			delete(c.gateways, mac)
+			c.disconnectChan <- gatewayID
+			delete(c.gateways, gatewayID)
 		}
 	}
 	return nil

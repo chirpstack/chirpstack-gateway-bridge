@@ -3,6 +3,7 @@ package mqtt
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/brocaar/loraserver/api/gw"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/brocaar/lora-gateway-bridge/internal/backend/mqtt/auth"
+	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
 )
 
@@ -50,26 +51,21 @@ func (ts *MQTTBackendTestSuite) SetupSuite() {
 
 	ts.gatewayID = lorawan.EUI64{8, 7, 6, 5, 4, 3, 2, 1}
 
+	var conf config.Config
+	conf.Integration.Marshaler = "json"
+	conf.Integration.MQTT.EventTopicTemplate = "gateway/{{ .GatewayID }}/event/{{ .EventType }}"
+	conf.Integration.MQTT.CommandTopicTemplate = "gateway/{{ .GatewayID }}/command/#"
+	conf.Integration.MQTT.Auth.Type = "generic"
+	conf.Integration.MQTT.Auth.Generic.Server = server
+	conf.Integration.MQTT.Auth.Generic.Username = username
+	conf.Integration.MQTT.Auth.Generic.Password = password
+	conf.Integration.MQTT.Auth.Generic.CleanSession = true
+
 	var err error
-	ts.backend, err = NewBackend(BackendConfig{
-		UplinkTopicTemplate:   "gateway/{{ .MAC }}/rx",
-		DownlinkTopicTemplate: "gateway/{{ .MAC }}/tx",
-		StatsTopicTemplate:    "gateway/{{ .MAC }}/stats",
-		AckTopicTemplate:      "gateway/{{ .MAC }}/ack",
-		ConfigTopicTemplate:   "gateway/{{ .MAC }}/config",
-		Marshaler:             "json",
-		Auth: BackendAuthConfig{
-			Type: "generic",
-			Generic: auth.GenericConfig{
-				Server:       server,
-				Username:     username,
-				Password:     password,
-				CleanSession: true,
-			},
-		},
-		AlwaysSubscribeMACs: []lorawan.EUI64{ts.gatewayID},
-	})
+	ts.backend, err = NewBackend(conf)
 	assert.NoError(err)
+	assert.NoError(ts.backend.SubscribeGateway(ts.gatewayID))
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (ts *MQTTBackendTestSuite) TearDownSuite() {
@@ -83,9 +79,8 @@ func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 	gatewayID := lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8}
 
 	assert.NoError(ts.backend.SubscribeGateway(gatewayID))
-	bl, ok := ts.backend.gateways[gatewayID]
+	_, ok := ts.backend.gateways[gatewayID]
 	assert.True(ok)
-	assert.False(bl)
 
 	ts.T().Run("Unsubscribe", func(t *testing.T) {
 		assert := require.New(t)
@@ -104,7 +99,7 @@ func (ts *MQTTBackendTestSuite) TestPublishUplinkFrame() {
 	}
 
 	uplinkFrameChan := make(chan gw.UplinkFrame)
-	token := ts.mqttClient.Subscribe("gateway/+/rx", 0, func(c paho.Client, msg paho.Message) {
+	token := ts.mqttClient.Subscribe("gateway/+/event/up", 0, func(c paho.Client, msg paho.Message) {
 		var pl gw.UplinkFrame
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
 		uplinkFrameChan <- pl
@@ -112,7 +107,7 @@ func (ts *MQTTBackendTestSuite) TestPublishUplinkFrame() {
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishUplinkFrame(ts.gatewayID, uplink))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "up", &uplink))
 	uplinkReceived := <-uplinkFrameChan
 	assert.Equal(uplink, uplinkReceived)
 }
@@ -125,7 +120,7 @@ func (ts *MQTTBackendTestSuite) TestGatewayStats() {
 	}
 
 	statsChan := make(chan gw.GatewayStats)
-	token := ts.mqttClient.Subscribe("gateway/+/stats", 0, func(c paho.Client, msg paho.Message) {
+	token := ts.mqttClient.Subscribe("gateway/+/event/stats", 0, func(c paho.Client, msg paho.Message) {
 		var pl gw.GatewayStats
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
 		statsChan <- stats
@@ -133,7 +128,7 @@ func (ts *MQTTBackendTestSuite) TestGatewayStats() {
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishGatewayStats(ts.gatewayID, stats))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "stats", &stats))
 	statsReceived := <-statsChan
 	assert.Equal(stats, statsReceived)
 }
@@ -147,7 +142,7 @@ func (ts *MQTTBackendTestSuite) TestPublishDownlinkTXAck() {
 	}
 
 	txAckChan := make(chan gw.DownlinkTXAck)
-	token := ts.mqttClient.Subscribe("gateway/+/ack", 0, func(c paho.Client, msg paho.Message) {
+	token := ts.mqttClient.Subscribe("gateway/+/event/ack", 0, func(c paho.Client, msg paho.Message) {
 		var pl gw.DownlinkTXAck
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
 		txAckChan <- pl
@@ -155,7 +150,7 @@ func (ts *MQTTBackendTestSuite) TestPublishDownlinkTXAck() {
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishDownlinkTXAck(ts.gatewayID, txAck))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "ack", &txAck))
 	txAckReceived := <-txAckChan
 	assert.Equal(txAck, txAckReceived)
 }
@@ -170,11 +165,11 @@ func (ts *MQTTBackendTestSuite) TestDownlinkFrameHandler() {
 	b, err := ts.backend.marshal(&downlink)
 	assert.NoError(err)
 
-	token := ts.mqttClient.Publish("gateway/0807060504030201/tx", 0, false, b)
+	token := ts.mqttClient.Publish("gateway/0807060504030201/command/down", 0, false, b)
 	token.Wait()
 	assert.NoError(token.Error())
 
-	receivedDownlink := <-ts.backend.DownlinkFrameChan()
+	receivedDownlink := <-ts.backend.GetDownlinkFrameChan()
 	assert.Equal(downlink, receivedDownlink)
 }
 
@@ -190,11 +185,11 @@ func (ts *MQTTBackendTestSuite) TestGatewayConfigHandler() {
 	b, err := ts.backend.marshal(&config)
 	assert.NoError(err)
 
-	token := ts.mqttClient.Publish("gateway/0807060504030201/config", 0, false, b)
+	token := ts.mqttClient.Publish("gateway/0807060504030201/command/config", 0, false, b)
 	token.Wait()
 	assert.NoError(token.Error())
 
-	receivedConfig := <-ts.backend.GatewayConfigurationChan()
+	receivedConfig := <-ts.backend.GetGatewayConfigurationChan()
 	assert.Equal(config, receivedConfig)
 }
 

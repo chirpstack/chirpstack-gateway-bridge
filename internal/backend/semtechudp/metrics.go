@@ -1,4 +1,4 @@
-package semtech
+package semtechudp
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
