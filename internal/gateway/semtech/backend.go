@@ -65,8 +65,7 @@ func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configur
 			onNew:    onNew,
 			onDelete: onDelete,
 		},
-		configurations: configurations,
-		FakeRxInfoTime: FakeRxInfoTime,
+		configurations: configurations
 	}
 
 	go func() {
@@ -428,7 +427,7 @@ func (b *Backend) handlePushData(up udpPacket) error {
 	}
 
 	// uplink frames
-	uplinkFrames, err := p.GetUplinkFrames(b.FakeRxInfoTime)
+	uplinkFrames, err := p.GetUplinkFrames()
 	if err != nil {
 		return errors.Wrap(err, "get uplink frames error")
 	}

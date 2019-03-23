@@ -489,7 +489,7 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) gw.GatewayStatsPacket {
 
 // newRXPacketsFromRXPK transforms a Semtech packet into a slice of
 // gw.RXPacketBytes.
-func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) ([]gw.RXPacketBytes, error) {
+func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, error) {
 	dataRate, err := newDataRateFromDatR(rxpk.DatR)
 	if err != nil {
 		return nil, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)

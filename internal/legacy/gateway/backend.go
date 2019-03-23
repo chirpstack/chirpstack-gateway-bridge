@@ -107,11 +107,10 @@ type Backend struct {
 	configurations []semtech.PFConfiguration
 	wg             sync.WaitGroup
 	skipCRCCheck   bool
-	FakeRxInfoTime bool
 }
 
 // NewBackend creates a new backend.
-func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lorawan.EUI64) error, skipCRCCheck bool, configurations []semtech.PFConfiguration, FakeRxInfoTime bool) (*Backend, error) {
+func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lorawan.EUI64) error, skipCRCCheck bool, configurations []semtech.PFConfiguration) (*Backend, error) {
 	addr, err := net.ResolveUDPAddr("udp", bind)
 	if err != nil {
 		return nil, err
@@ -134,8 +133,7 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 			onNew:    onNew,
 			onDelete: onDelete,
 		},
-		configurations: configurations,
-		FakeRxInfoTime: FakeRxInfoTime,
+		configurations: configurations
 	}
 
 	go func() {
@@ -467,7 +465,7 @@ func (b *Backend) handleRXPacket(addr *net.UDPAddr, mac lorawan.EUI64, rxpk RXPK
 	log.WithFields(logFields).Info("gateway: rxpk packet received")
 
 	// decode packet(s)
-	rxPackets, err := newRXPacketsFromRXPK(mac, rxpk, b.FakeRxInfoTime)
+	rxPackets, err := newRXPacketsFromRXPK(mac, rxpk)
 	if err != nil {
 		return err
 	}
