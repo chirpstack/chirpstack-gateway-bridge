@@ -15,22 +15,14 @@ import (
 	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech/packets"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
+
+	c "github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech/config"
 )
 
 // udpPacket represents a raw UDP packet.
 type udpPacket struct {
 	addr *net.UDPAddr
 	data []byte
-}
-
-// PFConfiguration holds the packet-forwarder configuration.
-type PFConfiguration struct {
-	MAC            lorawan.EUI64 `mapstructure:"-"`
-	MACString      string        `mapstructure:"mac"`
-	BaseFile       string        `mapstructure:"base_file"`
-	OutputFile     string        `mapstructure:"output_file"`
-	RestartCommand string        `mapstructure:"restart_command"`
-	Version        string        `mapstructure:"-"`
 }
 
 // Backend implements a Semtech packet-forwarder gateway backend.
@@ -46,12 +38,11 @@ type Backend struct {
 	conn           *net.UDPConn
 	closed         bool
 	gateways       gateways
-	configurations []PFConfiguration
-	FakeRxInfoTime bool
+	configurations []c.PFConfiguration
 }
 
 // NewBackend creates a new backend.
-func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configurations []PFConfiguration, FakeRxInfoTime bool) (*Backend, error) {
+func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configurations []c.PFConfiguration) (*Backend, error) {
 	addr, err := net.ResolveUDPAddr("udp", bind)
 	if err != nil {
 		return nil, errors.Wrap(err, "resolve udp addr error")
@@ -177,7 +168,7 @@ func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
 		copy(gatewayID[:], config.GatewayId)
 
 		b.Lock()
-		var pfConfig *PFConfiguration
+		var pfConfig *c.PFConfiguration
 		for i := range b.configurations {
 			if b.configurations[i].MAC == gatewayID {
 				pfConfig = &b.configurations[i]
@@ -193,7 +184,7 @@ func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
 	})
 }
 
-func (b *Backend) applyConfiguration(pfConfig PFConfiguration, config gw.GatewayConfiguration) error {
+func (b *Backend) applyConfiguration(pfConfig c.PFConfiguration, config gw.GatewayConfiguration) error {
 	gwConfig, err := getGatewayConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "get gateway config error")

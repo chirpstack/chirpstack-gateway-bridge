@@ -13,6 +13,7 @@ import (
 	"github.com/brocaar/loraserver/api/common"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lora-gateway-bridge/internal/config"
 )
 
 // loRaDataRateRegex contains a regexp for parsing the data-rate string.
@@ -147,7 +148,7 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 			return frame, errors.Wrap(err, "gateway: timestamp proto error")
 		}
 		frame.RxInfo.Time = ts
-	} else if FakeRxInfoTime {
+	} else if config.C.PacketForwarder.FakeRxInfoTime {
 		ts, _ := ptypes.TimestampProto(time.Now().UTC())
 		frame.RxInfo.Time = ts
 	}

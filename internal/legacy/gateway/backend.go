@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech"
+	semtech "github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech/config"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 )

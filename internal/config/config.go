@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/brocaar/lora-gateway-bridge/internal/backend/mqtt"
-	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech"
+	semtech "github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech/config"
 )
 
 // Config defines the configuration structure.

@@ -15,6 +15,7 @@ import (
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
+	"github.com/brocaar/lora-gateway-bridge/internal/config"
 )
 
 // PacketType defines the packet type.
@@ -524,7 +525,7 @@ func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) ([]
 		if !ts.IsZero() {
 			rxPacket.RXInfo.Time = &ts
 		}
-	} else if FakeRxInfoTime {
+	} else if config.C.PacketForwarder.FakeRxInfoTime {
 		ts := time.Now().UTC()
 		rxPacket.RXInfo.Time = &ts
 	}

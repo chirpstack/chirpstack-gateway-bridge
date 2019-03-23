@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech"
+	semtech "github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech/config"
 
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
