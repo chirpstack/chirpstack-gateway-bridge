@@ -133,7 +133,7 @@ func NewBackend(bind string, onNew func(lorawan.EUI64) error, onDelete func(lora
 			onNew:    onNew,
 			onDelete: onDelete,
 		},
-		configurations: configurations
+		configurations: configurations,
 	}
 
 	go func() {

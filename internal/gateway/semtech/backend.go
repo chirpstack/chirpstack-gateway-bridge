@@ -65,7 +65,7 @@ func NewBackend(bind string, onNew, onDelete func(lorawan.EUI64) error, configur
 			onNew:    onNew,
 			onDelete: onDelete,
 		},
-		configurations: configurations
+		configurations: configurations,
 	}
 
 	go func() {
