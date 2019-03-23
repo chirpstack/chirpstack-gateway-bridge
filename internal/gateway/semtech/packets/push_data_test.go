@@ -320,7 +320,7 @@ func TestGetUplinkFrame(t *testing.T) {
 	}
 
 	for _, test := range testTable {
-		f, err := test.PushDataPacket.GetUplinkFrames(false)
+		f, err := test.PushDataPacket.GetUplinkFrames()
 		assert.Nil(err)
 		assert.Equal(test.UplinkFrames, f)
 	}
