@@ -148,6 +148,9 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK) (gw.UplinkFrame, error) {
 			return frame, errors.Wrap(err, "gateway: timestamp proto error")
 		}
 		frame.RxInfo.Time = ts
+	} else if config.C.PacketForwarder.FakeRxInfoTime {
+		ts, _ := ptypes.TimestampProto(time.Now().UTC())
+		frame.RxInfo.Time = ts
 	}
 
 	// Time since GPS epoch

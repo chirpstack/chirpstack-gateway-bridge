@@ -15,6 +15,7 @@ import (
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
+	"github.com/brocaar/lora-gateway-bridge/internal/config"
 )
 
 // PacketType defines the packet type.
@@ -379,7 +380,7 @@ func (d DatR) MarshalJSON() ([]byte, error) {
 func (d *DatR) UnmarshalJSON(data []byte) error {
 	i, err := strconv.ParseUint(string(data), 10, 32)
 	if err != nil {
-		d.LoRa = strings.Trim(string(data), `"`)
+		d.LoRa = strings.Trim(string(data), `"`) //"
 		return nil
 	}
 	d.FSK = uint32(i)
@@ -523,6 +524,9 @@ func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, err
 		if !ts.IsZero() {
 			rxPacket.RXInfo.Time = &ts
 		}
+	} else if config.C.PacketForwarder.FakeRxInfoTime {
+		ts := time.Now().UTC()
+		rxPacket.RXInfo.Time = &ts
 	}
 
 	if rxpk.Tmms != nil {

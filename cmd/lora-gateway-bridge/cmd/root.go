@@ -74,6 +74,7 @@ func init() {
 
 	// default values
 	viper.SetDefault("packet_forwarder.udp_bind", "0.0.0.0:1700")
+	viper.SetDefault("packet_forwarder.fake_rxinfo_time", false)
 
 	viper.SetDefault("backend.mqtt.uplink_topic_template", "gateway/{{ .MAC }}/rx")
 	viper.SetDefault("backend.mqtt.downlink_topic_template", "gateway/{{ .MAC }}/tx")

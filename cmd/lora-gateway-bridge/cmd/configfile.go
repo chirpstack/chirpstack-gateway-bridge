@@ -31,6 +31,10 @@ udp_bind = "{{ .PacketForwarder.UDPBind }}"
 # LoRa frames with CRC errors.
 skip_crc_check = {{ .PacketForwarder.SkipCRCCheck }}
 
+# Use system time when rxpk.time is empty (for gatways w/o GPS)
+# There is no other way to get the time when packet is received.
+fake_rxinfo_time = {{ .PacketForwarder.FakeRxInfoTime }}
+
 
   # # Managed packet-forwarder configuration.
   # #

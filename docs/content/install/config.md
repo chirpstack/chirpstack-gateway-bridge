@@ -95,6 +95,10 @@ udp_bind = "0.0.0.0:1700"
 # LoRa frames with CRC errors.
 skip_crc_check = false
 
+# Use system time when rxpk.time is empty (for gatways w/o GPS)
+# There is no other way to get the time when packet is received.
+fake_rxinfo_time = false
+
 
   # # Managed packet-forwarder configuration.
   # #
