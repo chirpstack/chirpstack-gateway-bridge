@@ -20,6 +20,8 @@ import (
 	"github.com/brocaar/loraserver/api/common"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
+
+	c "github.com/brocaar/lora-gateway-bridge/internal/gateway/semtech/config"
 )
 
 type BackendTestSuite struct {
@@ -42,7 +44,7 @@ func (ts *BackendTestSuite) SetupTest() {
 	ts.tempDir, err = ioutil.TempDir("", "test")
 	assert.NoError(err)
 
-	ts.backend, err = NewBackend("127.0.0.1:0", nil, nil, []PFConfiguration{
+	ts.backend, err = NewBackend("127.0.0.1:0", nil, nil, []c.PFConfiguration{
 		{
 			MAC:            lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
 			BaseFile:       filepath.Join("test/test.json"),
