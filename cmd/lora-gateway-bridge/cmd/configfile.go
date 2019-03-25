@@ -198,16 +198,16 @@ marshaler="{{ .Backend.MQTT.Marshaler }}"
     [backend.mqtt.auth.azure_iot_hub]
 
     # Azure IoT Device Id
-    device_id=""
+    device_id="{{ .Backend.MQTT.Auth.AzureIoTHub.DeviceID }}"
 
     # Azure IoT Hub name
-    iot_hub_name=""
+    iot_hub_name="{{ .Backend.MQTT.Auth.AzureIoTHub.IOTHubName }}"
 
     # Azure IoT Hub CA cert
-    iot_hub_ca_file=""
+    iot_hub_ca_file="{{ .Backend.MQTT.Auth.AzureIoTHub.IOTHubCAFile }}"
 
     # Azure IoT Device Key
-    device_key_file=""
+    device_key_file="{{ .Backend.MQTT.Auth.AzureIoTHub.DeviceKeyFile }}"
 
 
 # Metrics configuration.
