@@ -26,7 +26,7 @@ type AzureIoTHubConfig struct {
 type AzureIoTHubAuthentication struct {
 	clientID  string
 	username  string
-	password  string
+	deviceKey []byte
 	tlsConfig *tls.Config
 	config    AzureIoTHubConfig
 }
@@ -34,6 +34,7 @@ type AzureIoTHubAuthentication struct {
 func createSASToken(uri string, saKey []byte) string {
 	encoded := url.QueryEscape(uri)
 	now := time.Now().Unix()
+	// 24 hours token
 	day := 60 * 60 * 24
 	ts := now + int64(day)
 	expiry := strconv.Itoa(int(ts))
@@ -73,17 +74,10 @@ func NewAzureIoTHubAuthentication(config AzureIoTHubConfig) (Authentication, err
 		config.DeviceID,
 	)
 
-	resourceUri := fmt.Sprintf("%s.azure-devices.net/devices/%s",
-		config.IOTHubname,
-		config.DeviceID,
-	)
-
-	token := createSASToken(resourceUri, deviceKey)
-
 	return &AzureIoTHubAuthentication{
 		clientID:  config.DeviceID,
 		username:  username,
-		password:  token,
+		deviceKey: deviceKey,
 		tlsConfig: tlsConfig,
 		config:    config,
 	}, nil
@@ -94,12 +88,19 @@ func (a *AzureIoTHubAuthentication) Init(opts *mqtt.ClientOptions) error {
 	opts.AddBroker(broker)
 	opts.SetClientID(a.clientID)
 	opts.SetUsername(a.username)
-	opts.SetPassword(a.password)
 
 	return nil
 }
 
 func (a *AzureIoTHubAuthentication) Update(opts *mqtt.ClientOptions) error {
+	resourceURI := fmt.Sprintf("%s.azure-devices.net/devices/%s",
+		a.config.IOTHubname,
+		a.config.DeviceID,
+	)
+	token := createSASToken(resourceURI, a.deviceKey)
+	log.Info("azure: updating")
+	opts.SetPassword(token)
+
 	return nil
 }
 
