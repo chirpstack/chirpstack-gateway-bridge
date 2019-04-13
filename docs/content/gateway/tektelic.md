@@ -204,3 +204,76 @@ following lines:
 "serv_port_up": 1700,
 "serv_port_down": 1700,
 {{</highlight>}}
+
+
+## Kona Macro gateway
+
+* [Product detail page](https://tektelic.com/iot/lorawan-gateways/)
+
+### SSH into the gateway
+
+The first step is to login into the gateway using ssh:
+
+{{<highlight bash>}}
+ssh root@GATEWAY-IP-ADDRESS
+{{</highlight>}}
+
+The default password is the serial-number of the gateway which is printed on
+the back of the gateway (the 9 characters above the 48V = 0.6A line).
+
+
+### Download IPK package
+
+Find the latest package at https://artifacts.loraserver.io/vendor/tektelic/kona-macro/
+and copy the URL to your clipboard. Then on the gateway use `curl` and use the link
+as argument. Example for `lora-gateway-bridge_2.7.1-r1_kona_macro.ipk`:
+
+{{<highlight bash>}}
+# curl URL --output lora-gateway-bridge.ipk
+curl https://artifacts.loraserver.io/vendor/tektelic/kona-macro/lora-gateway-bridge_2.7.1-r1_kona_macro.ipk --output lora-gateway-bridge.ipk
+{{</highlight>}}
+
+### Install IPK package
+
+Use the `opkg` package-manager to install the downloaded package. Example:
+
+{{<highlight bash>}}
+opkg install lora-gateway-bridge.ipk
+{{</highlight>}}
+
+### Edit the LoRa Gateway Bridge configuration
+
+To connect the LoRa Gateway Bridge with your MQTT broker, you must update
+the LoRa Gateway Bridge configuration file, which is located at:
+`/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
+
+### (Re)start and stop commands
+
+Use the following commands to (re)start and stop the LoRa Gateway Bridge Service:
+
+{{<highlight bash>}}
+# status
+monit status lora-gateway-bridge
+
+# start
+monit start lora-gateway-bridge
+
+# stop
+monit stop lora-gateway-bridge
+
+# restart
+monit restart lora-gateway-bridge
+{{</highlight>}}
+
+### Configure packet-forwarder
+
+You must configure the packet-forwarder on the gateway to forward its data to
+`127.0.0.1` at port `1700`. The file `/etc/default/config.json` must contain the
+following lines:
+
+{{<highlight text>}}
+"server_address": "127.0.0.1",
+"serv_port_up": 1700,
+"serv_port_down": 1700,
+{{</highlight>}}
+
