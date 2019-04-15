@@ -9,6 +9,8 @@ type Config struct {
 	}
 
 	Backend struct {
+		Type string `mapstructure:"type"`
+
 		SemtechUDP struct {
 			UDPBind       string `mapstructure:"udp_bind"`
 			SkipCRCCheck  bool   `mapstructure:"skip_crc_check"`
@@ -19,6 +21,23 @@ type Config struct {
 				RestartCommand string `mapstructure:"restart_command"`
 			} `mapstructure:"configuration"`
 		} `mapstructure:"semtech_udp"`
+
+		BasicStation struct {
+			Bind         string        `mapstructure:"bind"`
+			TLSCert      string        `mapstructure:"tls_cert"`
+			TLSKey       string        `mapstructure:"tls_key"`
+			CACert       string        `mapstructure:"ca_cert"`
+			PingInterval time.Duration `mapstructure:"ping_interval"`
+			ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+			WriteTimeout time.Duration `mapstructure:"write_timeout"`
+			Filters      struct {
+				NetIDs   []string    `mapstructure:"net_ids"`
+				JoinEUIs [][2]string `mapstructure:"join_euis"`
+			} `mapstructure:"filters"`
+			Region       string `mapstructure:"region"`
+			FrequencyMin uint32 `mapstructure:"frequency_min"`
+			FrequencyMax uint32 `mapstructure:"frequency_max"`
+		} `mapstructure:"basic_station"`
 	} `mapstructure:"backend"`
 
 	Integration struct {

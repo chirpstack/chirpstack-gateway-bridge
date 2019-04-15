@@ -1,8 +1,11 @@
 package backend
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 
+	"github.com/brocaar/lora-gateway-bridge/internal/backend/basicstation"
 	"github.com/brocaar/lora-gateway-bridge/internal/backend/semtechudp"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/loraserver/api/gw"
@@ -14,10 +17,20 @@ var backend Backend
 // Setup configures the backend.
 func Setup(conf config.Config) error {
 	var err error
-	backend, err = semtechudp.NewBackend(conf)
+
+	switch conf.Backend.Type {
+	case "semtech_udp":
+		backend, err = semtechudp.NewBackend(conf)
+	case "basic_station":
+		backend, err = basicstation.NewBackend(conf)
+	default:
+		return fmt.Errorf("unknown backend type: %s", conf.Backend.Type)
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "new backend error")
 	}
+
 	return nil
 }
 

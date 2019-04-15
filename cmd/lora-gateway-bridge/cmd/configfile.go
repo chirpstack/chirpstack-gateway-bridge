@@ -18,6 +18,14 @@ log_level = {{ .General.LogLevel }}
 # Gateway backend configuration.
 [backend]
 
+# Backend type.
+#
+# Valid options are:
+#   * semtech_udp
+#   * basic_station
+type="{{ .Backend.Type }}"
+
+
   # Semtech UDP packet-forwarder backend.
   [backend.semtech_udp]
 
@@ -68,6 +76,61 @@ log_level = {{ .General.LogLevel }}
     # # change. Make sure the LoRa Gateway Bridge process has sufficient
     # # permissions to execute this command.
     # restart_command="/etc/init.d/lora-packet-forwarder restart"
+
+  # Basic Station backend.
+  [backend.basic_station]
+
+  # ip:port to bind the Websocket listener to.
+  bind="{{ .Backend.BasicStation.Bind }}"
+
+  # TLS certificate and key files.
+  #
+  # When set, the websocket listener will use TLS to secure the connections
+  # between the gateways and LoRa Gateway Bridge (optional).
+  tls_cert="{{ .Backend.BasicStation.TLSCert }}"
+  tls_key="{{ .Backend.BasicStation.TLSKey }}"
+
+  # TLS CA certificate.
+  #
+  # When configured, LoRa Gateway Bridge will validate that the client
+  # certificate of the gateway has been signed by this CA certificate.
+  ca_cert="{{ .Backend.BasicStation.CACert }}"
+
+  # Ping interval.
+  ping_interval="{{ .Backend.BasicStation.PingInterval }}"
+
+  # Read timeout.
+  #
+  # This interval must be greater than the configured ping interval.
+  read_timeout="{{ .Backend.BasicStation.ReadTimeout }}"
+
+  # Write timeout.
+  write_timeout="{{ .Backend.BasicStation.WriteTimeout }}"
+
+  # Region.
+  #
+  # Please refer to the LoRaWAN Regional Parameters specification
+  # for the complete list of common region names.
+  region="{{ .Backend.BasicStation.Region }}"
+
+  # Minimal frequency (Hz).
+  frequency_min={{ .Backend.BasicStation.FrequencyMin }}
+
+  # Maximum frequency (Hz).
+  frequency_max={{ .Backend.BasicStation.FrequencyMax }}
+
+    # Filters.
+    [backend.basic_station.filters]
+
+    # NetIDs to filter on when receiving uplinks.
+    net_ids=[{{ range $index, $elm := .Backend.BasicStation.Filters.NetIDs }}
+      "{{ $elm }}",{{ end }}
+    ]
+
+    # JoinEUIs to filter on when receiving join-requests.
+    join_euis=[{{ range $index, $elm := .Backend.BasicStation.Filters.JoinEUIs }}
+      ["{{ index $elm 0 }}", "{{ index $elm 1 }}"],{{ end }}
+    ]
 
 
 # Integration configuration.

@@ -34,10 +34,20 @@ func init() {
 
 	// default values
 	viper.SetDefault("general.log_level", 4)
+	viper.SetDefault("backend.type", "semtech_udp")
 	viper.SetDefault("backend.semtech_udp.udp_bind", "0.0.0.0:1700")
 
-	viper.SetDefault("integration.marshaler", "protobuf")
+	viper.SetDefault("backend.basic_station.bind", ":3001")
+	viper.SetDefault("backend.basic_station.ping_interval", time.Minute)
+	viper.SetDefault("backend.basic_station.read_timeout", time.Minute+(5*time.Second))
+	viper.SetDefault("backend.basic_station.write_timeout", time.Second)
+	viper.SetDefault("backend.basic_station.filters.net_ids", []string{"000000"})
+	viper.SetDefault("backend.basic_station.filters.join_euis", [][2]string{{"0000000000000000", "ffffffffffffffff"}})
+	viper.SetDefault("backend.basic_station.region", "EU868")
+	viper.SetDefault("backend.basic_station.frequency_min", 863000000)
+	viper.SetDefault("backend.basic_station.frequency_max", 870000000)
 
+	viper.SetDefault("integration.marshaler", "protobuf")
 	viper.SetDefault("integration.mqtt.auth.type", "generic")
 
 	viper.SetDefault("integration.mqtt.event_topic_template", "gateway/{{ .GatewayID }}/event/{{ .EventType }}")

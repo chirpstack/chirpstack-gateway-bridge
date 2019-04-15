@@ -9,18 +9,6 @@ description: Instructions and examples how to configure the LoRa Gateway Bridge 
 
 # Configuration
 
-## Gateway
-
-Modify the [packet-forwarder](https://github.com/lora-net/packet_forwarder)
-of your gateway so that it will send its data to the LoRa Gateway Bridge.
-You will need to change the following configuration keys:
-
-* `server_address` to the IP address / hostname of the LoRa Gateway Bridge
-* `serv_port_up` to `1700` (the default port that LoRa Gateway Bridge is using)
-* `serv_port_down` to `1700` (same)
-
-## LoRa Gateway Bridge
-
 The `lora-gateway-bridge` has the following command-line flags:
 
 {{<highlight text>}}
@@ -45,7 +33,7 @@ Flags:
 Use "lora-gateway-bridge [command] --help" for more information about a command.
 {{< /highlight >}}
 
-### Configuration file
+## Configuration file
 
 By default `lora-gateway-bridge` will look in the following order for a
 configuration at the following paths when `--config` / `-c` is not set:
@@ -81,6 +69,14 @@ log_level = 4
 
 # Gateway backend configuration.
 [backend]
+
+# Backend type.
+#
+# Valid options are:
+#   * semtech_udp
+#   * basic_station
+type="semtech_udp"
+
 
   # Semtech UDP packet-forwarder backend.
   [backend.semtech_udp]
@@ -132,6 +128,61 @@ log_level = 4
     # # change. Make sure the LoRa Gateway Bridge process has sufficient
     # # permissions to execute this command.
     # restart_command="/etc/init.d/lora-packet-forwarder restart"
+
+  # Basic Station backend.
+  [backend.basic_station]
+
+  # ip:port to bind the Websocket listener to.
+  bind=":3001"
+
+  # TLS certificate and key files.
+  #
+  # When set, the websocket listener will use TLS to secure the connections
+  # between the gateways and LoRa Gateway Bridge (optional).
+  tls_cert=""
+  tls_key=""
+
+  # TLS CA certificate.
+  #
+  # When configured, LoRa Gateway Bridge will validate that the client
+  # certificate of the gateway has been signed by this CA certificate.
+  ca_cert=""
+
+  # Ping interval.
+  ping_interval="1m0s"
+
+  # Read timeout.
+  #
+  # This interval must be greater than the configured ping interval.
+  read_timeout="1m5s"
+
+  # Write timeout.
+  write_timeout="1s"
+
+  # Region.
+  #
+  # Please refer to the LoRaWAN Regional Parameters specification
+  # for the complete list of common region names.
+  region="EU868"
+
+  # Minimal frequency (Hz).
+  frequency_min=863000000
+
+  # Maximum frequency (Hz).
+  frequency_max=870000000
+
+    # Filters.
+    [backend.basic_station.filters]
+
+    # NetIDs to filter on when receiving uplinks.
+    net_ids=[
+      "000000",
+    ]
+
+    # JoinEUIs to filter on when receiving join-requests.
+    join_euis=[
+      ["0000000000000000", "ffffffffffffffff"],
+    ]
 
 
 # Integration configuration.
@@ -263,7 +314,7 @@ marshaler="protobuf"
   bind=""
 {{</highlight>}}
 
-#### Environment variables
+## Environment variables
 
 Although using the configuration file is recommended, it is also possible
 to use environment variables to set configuration variables.
