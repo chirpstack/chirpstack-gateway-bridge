@@ -295,6 +295,7 @@ func (ts *BackendTestSuite) TestPushData() {
 						LoraSnr:   7,
 						Channel:   2,
 						RfChain:   1,
+						Context:   []byte{0x2a, 0x33, 0x7a, 0xb3},
 					},
 				},
 			},
@@ -341,8 +342,7 @@ func (ts *BackendTestSuite) TestPushData() {
 func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	assert := require.New(ts.T())
 
-	tmst := uint32(1234567)
-	tmms := int64(time.Second / time.Millisecond)
+	tmst := uint32(2000000)
 
 	testTable := []struct {
 		Name          string
@@ -364,12 +364,7 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 			DownlinkFrame: gw.DownlinkFrame{
 				PhyPayload: []byte{1, 2, 3, 4},
 				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:   []byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Immediately: true,
-					TimeSinceGpsEpoch: &duration.Duration{
-						Seconds: 1,
-					},
-					Timestamp:  tmst,
+					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
 					Frequency:  868100000,
 					Power:      14,
 					Modulation: common.Modulation_LORA,
@@ -381,8 +376,15 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 							PolarizationInversion: true,
 						},
 					},
+					Timing: gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(time.Second),
+						},
+					},
 					Board:   1,
 					Antenna: 2,
+					Context: []byte{0x00, 0x0f, 0x42, 0x40},
 				},
 				Token: 123,
 			},
@@ -391,9 +393,7 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 				RandomToken:     123,
 				Payload: packets.PullRespPayload{
 					TXPK: packets.TXPK{
-						Imme: true,
 						Tmst: &tmst,
-						Tmms: &tmms,
 						Freq: 868.1,
 						RFCh: 0,
 						Powe: 14,
@@ -416,12 +416,7 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 			DownlinkFrame: gw.DownlinkFrame{
 				PhyPayload: []byte{1, 2, 3, 4},
 				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:   []byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Immediately: true,
-					TimeSinceGpsEpoch: &duration.Duration{
-						Seconds: 1,
-					},
-					Timestamp:  tmst,
+					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
 					Frequency:  868100000,
 					Power:      14,
 					Modulation: common.Modulation_FSK,
@@ -432,6 +427,13 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 					},
 					Board:   1,
 					Antenna: 2,
+					Timing:  gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(time.Second),
+						},
+					},
+					Context: []byte{0x00, 0x0f, 0x42, 0x40},
 				},
 				Token: 123,
 			},
@@ -440,9 +442,7 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 				RandomToken:     123,
 				Payload: packets.PullRespPayload{
 					TXPK: packets.TXPK{
-						Imme: true,
 						Tmst: &tmst,
-						Tmms: &tmms,
 						Freq: 868.1,
 						RFCh: 0,
 						Powe: 14,

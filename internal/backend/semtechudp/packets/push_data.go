@@ -137,8 +137,12 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK) (gw.UplinkFrame, error) {
 			Channel:   uint32(rxpk.Chan),
 			RfChain:   uint32(rxpk.RFCh),
 			Board:     uint32(rxpk.Brd),
+			Context:   make([]byte, 4),
 		},
 	}
+
+	// Context
+	binary.BigEndian.PutUint32(frame.RxInfo.Context, rxpk.Tmst)
 
 	// Time.
 	if rxpk.Time != nil && !time.Time(*rxpk.Time).IsZero() {

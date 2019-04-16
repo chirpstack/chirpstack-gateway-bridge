@@ -88,7 +88,6 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 		RandomToken:     randomToken,
 		Payload: PullRespPayload{
 			TXPK: TXPK{
-				Imme: frame.TxInfo.Immediately,
 				Freq: float64(frame.TxInfo.Frequency) / 1000000,
 				Powe: uint8(frame.TxInfo.Power),
 				Modu: frame.TxInfo.Modulation.String(),
@@ -119,18 +118,44 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 		packet.Payload.TXPK.FDev = uint16(modInfo.Bitrate / 2) // TODO: is this correct?!
 	}
 
-	if frame.TxInfo.Timestamp != 0 {
-		packet.Payload.TXPK.Tmst = &frame.TxInfo.Timestamp
-	}
+	switch frame.TxInfo.Timing {
+	case gw.DownlinkTiming_IMMEDIATELY:
+		packet.Payload.TXPK.Imme = true
 
-	if frame.TxInfo.TimeSinceGpsEpoch != nil {
-		dur, err := ptypes.Duration(frame.TxInfo.TimeSinceGpsEpoch)
+	case gw.DownlinkTiming_DELAY:
+		timingInfo := frame.TxInfo.GetDelayTimingInfo()
+		if timingInfo == nil {
+			return packet, errors.New("delay_timing_info must not be nil")
+		}
+
+		delay, err := ptypes.Duration(timingInfo.Delay)
 		if err != nil {
-			return packet, errors.Wrap(err, "parse duration error")
+			return packet, errors.Wrap(err, "get delay duration error")
+		}
+
+		if len(frame.TxInfo.Context) < 4 {
+			return packet, fmt.Errorf("context must contain at least 4 bytes, got: %d", len(frame.TxInfo.Context))
+		}
+		timestamp := binary.BigEndian.Uint32(frame.TxInfo.Context[0:4])
+		timestamp += uint32(delay / time.Microsecond)
+		packet.Payload.TXPK.Tmst = &timestamp
+
+	case gw.DownlinkTiming_GPS_EPOCH:
+		timingInfo := frame.TxInfo.GetGpsEpochTimingInfo()
+		if timingInfo == nil {
+			return packet, errors.New("gps_epoch_timing must not be nil")
+		}
+
+		dur, err := ptypes.Duration(timingInfo.TimeSinceGpsEpoch)
+		if err != nil {
+			return packet, errors.Wrap(err, "parse time_since_gps_epoch error")
 		}
 
 		durMS := int64(dur / time.Millisecond)
 		packet.Payload.TXPK.Tmms = &durMS
+
+	default:
+		return packet, fmt.Errorf("unexpected downlink timing: %s", frame.TxInfo.Timing)
 	}
 
 	return packet, nil

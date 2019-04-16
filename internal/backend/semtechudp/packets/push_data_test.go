@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/brocaar/loraserver/api/common"
 	"github.com/brocaar/loraserver/api/gw"
@@ -145,10 +146,12 @@ func TestGetUplinkFrame(t *testing.T) {
 	tmms := int64(10 * time.Minute / time.Millisecond)
 
 	testTable := []struct {
+		Name           string
 		PushDataPacket PushDataPacket
 		UplinkFrames   []gw.UplinkFrame
 	}{
 		{
+			Name: "no payload",
 			PushDataPacket: PushDataPacket{
 				ProtocolVersion: ProtocolVersion2,
 				Payload:         PushDataPayload{},
@@ -156,6 +159,7 @@ func TestGetUplinkFrame(t *testing.T) {
 			UplinkFrames: nil,
 		},
 		{
+			Name: "uplink with gps time",
 			PushDataPacket: PushDataPacket{
 				GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
 				ProtocolVersion: ProtocolVersion2,
@@ -207,11 +211,13 @@ func TestGetUplinkFrame(t *testing.T) {
 						RfChain:           3,
 						Board:             2,
 						Antenna:           0,
+						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
 					},
 				},
 			},
 		},
 		{
+			Name: "uplink with multiple antennas",
 			PushDataPacket: PushDataPacket{
 				GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
 				ProtocolVersion: ProtocolVersion2,
@@ -286,6 +292,7 @@ func TestGetUplinkFrame(t *testing.T) {
 								EncryptedNs: []byte{2, 3, 4, 5},
 							},
 						},
+						Context: []byte{0x00, 0x0f, 0x42, 0x40},
 					},
 				},
 				{
@@ -313,6 +320,7 @@ func TestGetUplinkFrame(t *testing.T) {
 						RfChain:           3,
 						Board:             2,
 						Antenna:           9,
+						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
 					},
 				},
 			},
@@ -320,8 +328,11 @@ func TestGetUplinkFrame(t *testing.T) {
 	}
 
 	for _, test := range testTable {
-		f, err := test.PushDataPacket.GetUplinkFrames()
-		assert.Nil(err)
-		assert.Equal(test.UplinkFrames, f)
+		t.Run(test.Name, func(t *testing.T) {
+			assert := require.New(t)
+			f, err := test.PushDataPacket.GetUplinkFrames()
+			assert.Nil(err)
+			assert.Equal(test.UplinkFrames, f)
+		})
 	}
 }
