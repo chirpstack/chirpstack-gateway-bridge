@@ -79,19 +79,19 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 }
 
 // GetUplinkFrames returns a slice of gw.UplinkFrame.
-func (p PushDataPacket) GetUplinkFrames() ([]gw.UplinkFrame, error) {
+func (p PushDataPacket) GetUplinkFrames(FakeRxInfoTime bool) ([]gw.UplinkFrame, error) {
 	var frames []gw.UplinkFrame
 
 	for i := range p.Payload.RXPK {
 		if len(p.Payload.RXPK[i].RSig) == 0 {
-			frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i])
+			frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i], FakeRxInfoTime)
 			if err != nil {
 				return nil, errors.Wrap(err, "gateway: get uplink frame error")
 			}
 			frames = append(frames, frame)
 		} else {
 			for j := range p.Payload.RXPK[i].RSig {
-				frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i])
+				frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i], FakeRxInfoTime)
 				if err != nil {
 					return nil, errors.Wrap(err, "gateway: get uplink frame error")
 				}
@@ -123,7 +123,7 @@ func setUplinkFrameRSig(frame gw.UplinkFrame, rxPK RXPK, rSig RSig) gw.UplinkFra
 	return frame
 }
 
-func getUplinkFrame(gatewayID []byte, rxpk RXPK) (gw.UplinkFrame, error) {
+func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.UplinkFrame, error) {
 	frame := gw.UplinkFrame{
 		PhyPayload: rxpk.Data,
 		TxInfo: &gw.UplinkTXInfo{
@@ -146,6 +146,9 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK) (gw.UplinkFrame, error) {
 		if err != nil {
 			return frame, errors.Wrap(err, "gateway: timestamp proto error")
 		}
+		frame.RxInfo.Time = ts
+	} else if FakeRxInfoTime {
+		ts, _ := ptypes.TimestampProto(time.Now().UTC())
 		frame.RxInfo.Time = ts
 	}
 

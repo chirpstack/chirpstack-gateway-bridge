@@ -379,12 +379,13 @@ func (d DatR) MarshalJSON() ([]byte, error) {
 func (d *DatR) UnmarshalJSON(data []byte) error {
 	i, err := strconv.ParseUint(string(data), 10, 32)
 	if err != nil {
-		d.LoRa = strings.Trim(string(data), `"`)
+		d.LoRa = strings.Trim(string(data), `"`) //"
 		return nil
 	}
 	d.FSK = uint32(i)
 	return nil
 }
+
 
 // RXPK contain a RF packet and associated metadata.
 type RXPK struct {
@@ -487,7 +488,7 @@ func newGatewayStatsPacket(mac lorawan.EUI64, stat Stat) gw.GatewayStatsPacket {
 
 // newRXPacketsFromRXPK transforms a Semtech packet into a slice of
 // gw.RXPacketBytes.
-func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, error) {
+func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) ([]gw.RXPacketBytes, error) {
 	dataRate, err := newDataRateFromDatR(rxpk.DatR)
 	if err != nil {
 		return nil, fmt.Errorf("gateway: could not get DataRate from DatR: %s", err)
@@ -523,6 +524,9 @@ func newRXPacketsFromRXPK(mac lorawan.EUI64, rxpk RXPK) ([]gw.RXPacketBytes, err
 		if !ts.IsZero() {
 			rxPacket.RXInfo.Time = &ts
 		}
+	} else if FakeRxInfoTime {
+		ts := time.Now().UTC()
+		rxPacket.RXInfo.Time = &ts
 	}
 
 	if rxpk.Tmms != nil {

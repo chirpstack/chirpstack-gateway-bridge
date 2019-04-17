@@ -50,7 +50,7 @@ func (ts *BackendTestSuite) SetupTest() {
 			RestartCommand: "touch " + filepath.Join(ts.tempDir, "restart"),
 			Version:        "12345",
 		},
-	})
+	},false)
 	assert.NoError(err)
 
 	ts.backendUDPAddr, err = net.ResolveUDPAddr("udp", ts.backend.conn.LocalAddr().String())

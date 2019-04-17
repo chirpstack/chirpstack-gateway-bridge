@@ -32,7 +32,7 @@ func TestBackend(t *testing.T) {
 				RestartCommand: "touch " + filepath.Join(tempDir, "restart"),
 				Version:        "12345",
 			},
-		})
+		},false)
 		So(err, ShouldBeNil)
 
 		backendAddr, err := net.ResolveUDPAddr("udp", backend.conn.LocalAddr().String())
@@ -228,7 +228,7 @@ func TestBackend(t *testing.T) {
 					Convey("Then the packet is returned by the RX packet channel", func() {
 						rxPacket := <-backend.RXPacketChan()
 
-						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0], false)
 						So(err, ShouldBeNil)
 						So(rxPacket, ShouldResemble, rxPackets[0])
 					})
@@ -326,7 +326,7 @@ func TestBackend(t *testing.T) {
 					Convey("Then the packet is returned by the RX packet channel", func() {
 						rxPacket := <-backend.RXPacketChan()
 
-						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0], false)
 						So(err, ShouldBeNil)
 						So(rxPacket, ShouldResemble, rxPackets[0])
 					})
@@ -374,7 +374,7 @@ func TestBackend(t *testing.T) {
 					Convey("Then the packet is returned by the RX packet channel", func() {
 						rxPacket := <-backend.RXPacketChan()
 
-						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0])
+						rxPackets, err := newRXPacketsFromRXPK(p.GatewayMAC, p.Payload.RXPK[0], false)
 						So(err, ShouldBeNil)
 						So(rxPacket, ShouldResemble, rxPackets[0])
 					})
