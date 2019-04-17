@@ -49,12 +49,15 @@ type="{{ .Backend.Type }}"
   # the time would otherwise be unset.
   fake_rx_time={{ .Backend.SemtechUDP.FakeRxTime }}
 
-    # # Managed packet-forwarder configuration.
-    # #
-    # # By configuring one or multiple managed packet-forwarder sections, the
-    # # LoRa Gateway Bridge updates the configuration when the backend receives
-    # # a configuration change, after which it will restart the packet-forwarder.
-    # [[packet_forwarder.configuration]]
+    # Managed packet-forwarder configuration.
+    #
+    # By configuring one or multiple managed packet-forwarder sections, the
+    # LoRa Gateway Bridge updates the configuration when the backend receives
+    # a configuration change, after which it will restart the packet-forwarder.
+    #
+    # Example (this configuration can be repeated):
+    #
+    # [[backend.semtech_udp.configuration]]
     # # Gateway ID.
     # #
     # # The LoRa Gateway Bridge will only apply the configuration updates for this
@@ -82,6 +85,13 @@ type="{{ .Backend.Type }}"
     # # change. Make sure the LoRa Gateway Bridge process has sufficient
     # # permissions to execute this command.
     # restart_command="/etc/init.d/lora-packet-forwarder restart"
+{{ range $i, $config := .Backend.SemtechUDP.Configuration }}
+    [[backend.semtech_udp.configuration]]
+    gateway_id="{{ $config.GatewayID }}"
+    base_file="{{ $config.BaseFile }}"
+    output_file="{{ $config.OutputFile }}"
+    restart_command="{{ $config.RestartCommand }}"
+{{ end }}
 
   # Basic Station backend.
   [backend.basic_station]
