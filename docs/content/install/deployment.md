@@ -39,13 +39,13 @@ the setup, but has the following advantages:
 
 ### MQTT (using TCP) over UDP
 
-By using MQTT (which uses TCP) over UDP, the connection becomes more reliable
-in case packetloss is common.
+By using MQTT (which uses TCP) over UDP when using the Semtech UDP packet-forwarder
+backend, the connection becomes more reliable in case packetloss is common.
 
 ### Authentication
 
-It is possible to setup credentials for each gateway, meaning you know where
-your data is coming from.
+It is possible to setup credentials for each gateway, so that only gateways with
+valid credentials are able to ingest data.
 
 ### SSL/TLS
 

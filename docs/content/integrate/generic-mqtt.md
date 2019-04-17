@@ -26,6 +26,12 @@ Examples:
 # show data from all gateways 
 mosquitto_sub -t "gateway/#" -v
 
-# show all data for the given gateway
-mosquitto_sub -t "gateway/0101010101010101/+" -v
+# show all events and commands for the given gateway ID
+mosquitto_sub -t "gateway/0101010101010101/#" -v
+
+# show all events for the given gateway ID
+mosquitto_sub -t "gateway/0101010101010101/event/+" -v
+
+# show all commands for the given gateway ID
+mosquitto_sub -t "gateway/0101010101010101/command/+" -v
 {{< /highlight >}}

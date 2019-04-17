@@ -10,6 +10,80 @@ description: Lists the changes per LoRa App Server release, including steps how 
 
 # Changelog
 
+## v3.0.0
+
+### Features
+
+#### Basic Station packet-forwarder support
+
+The LoRa Gateway Bridge has been refactored to support multiple packet-forwarder
+backends. Next to the Semtech UDP packet-forwarder, support has been added to
+support the Basic Station packet-forwarder. This backend implements the 
+[Basic Station LNS protocol](https://doc.sm.tc/station/tcproto.html).
+
+#### Updated payload formats
+
+The uplink payload contains a `context` field, used to store gateway
+specific context data (like the internal counter).
+
+The downlink frame contains a `timing` field which can be either
+`IMMEDIATELY`, `DELAY` or `GPS_EPOCH`. Based on the `timing` value, an
+additional object must be given with the additional timing information.
+Refer to [Commands](https://www.loraserver.io/lora-gateway-bridge/payloads/commands/)
+for more details.
+
+### Upgrading
+
+LoRa Gateway Bridge v3.0.0 include a couple of changes that are not backwards
+compatible. You need to re-generate the configuration file and update it where
+needed. LoRa Gateway Bridge v3 is compatible with LoRa Server v2.7+.
+Below a summary:
+
+#### MQTT topics
+
+The MQTT topic configuration has been updated from:
+
+{{<highlight toml>}}
+uplink_topic_template="gateway/{{ .MAC }}/rx"
+downlink_topic_template="gateway/{{ .MAC }}/tx"
+stats_topic_template="gateway/{{ .MAC }}/stats"
+ack_topic_template="gateway/{{ .MAC }}/ack"
+config_topic_template="gateway/{{ .MAC }}/config"
+{{</highlight>}}
+
+To:
+
+{{<highlight toml>}}
+event_topic_template="gateway/{{ .GatewayID }}/event/{{ .EventType }}"
+command_topic_template="gateway/{{ .GatewayID }}/command/#"
+{{</highlight>}}
+
+Event types are: `up`, `stats` and `ack`.
+Commands are: `down` and `config`.
+
+Please note that LoRa Gateway Bridge v3 is compatible with LoRa Server v2.7+,
+but you will need to update the MQTT topics in your `loraserver.toml` file.
+Example snippet:
+
+{{<highlight toml>}}
+uplink_topic_template="gateway/+/event/up"
+stats_topic_template="gateway/+/event/stats"
+ack_topic_template="gateway/+/event/ack"
+downlink_topic_template="gateway/{{ .MAC }}/command/down"
+config_topic_template="gateway/{{ .MAC }}/command/config"
+{{</highlight>}}
+
+#### Backends
+
+With LoRa Gateway Bridge v2 you would configure the MQTT backend under the
+`[backend...]` section. This has changed and the `[backend...]` section is
+now used for selecting and configuring the packet-forwarder backends.
+
+#### Integrations
+
+The MQTT integration configuration has moved to the new `[integration...]`
+section. This allows for adding new integrations in the future besides MQTT.
+
 ## v2.7.1
 
 ### Bugfixes

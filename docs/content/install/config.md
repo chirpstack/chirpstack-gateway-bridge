@@ -9,18 +9,6 @@ description: Instructions and examples how to configure the LoRa Gateway Bridge 
 
 # Configuration
 
-## Gateway
-
-Modify the [packet-forwarder](https://github.com/lora-net/packet_forwarder)
-of your gateway so that it will send its data to the LoRa Gateway Bridge.
-You will need to change the following configuration keys:
-
-* `server_address` to the IP address / hostname of the LoRa Gateway Bridge
-* `serv_port_up` to `1700` (the default port that LoRa Gateway Bridge is using)
-* `serv_port_down` to `1700` (same)
-
-## LoRa Gateway Bridge
-
 The `lora-gateway-bridge` has the following command-line flags:
 
 {{<highlight text>}}
@@ -45,7 +33,7 @@ Flags:
 Use "lora-gateway-bridge [command] --help" for more information about a command.
 {{< /highlight >}}
 
-### Configuration file
+## Configuration file
 
 By default `lora-gateway-bridge` will look in the following order for a
 configuration at the following paths when `--config` / `-c` is not set:
@@ -79,101 +67,157 @@ Example configuration file:
 log_level = 4
 
 
-# Configuration which relates to the packet-forwarder.
-[packet_forwarder]
-# ip:port to bind the UDP listener to
+# Gateway backend configuration.
+[backend]
+
+# Backend type.
 #
-# Example: 0.0.0.0:1700 to listen on port 1700 for all network interfaces.
-# This is the listeren to which the packet-forwarder forwards its data
-# so make sure the 'serv_port_up' and 'serv_port_down' from your
-# packet-forwarder matches this port.
-udp_bind = "0.0.0.0:1700"
-
-# Skip the CRC status-check of received packets
-#
-# This is only has effect when the packet-forwarder is configured to forward
-# LoRa frames with CRC errors.
-skip_crc_check = false
-
-# Use system time when rxpk.time is empty (for gatways w/o GPS)
-# There is no other way to get the time when packet is received.
-fake_rxinfo_time = false
+# Valid options are:
+#   * semtech_udp
+#   * basic_station
+type="semtech_udp"
 
 
-  # # Managed packet-forwarder configuration.
-  # #
-  # # By configuring one or multiple managed packet-forwarder sections, the
-  # # LoRa Gateway Bridge updates the configuration when the backend receives
-  # # a configuration change, after which it will restart the packet-forwarder.
-  # [[packet_forwarder.configuration]]
-  # # Gateway MAC.
-  # #
-  # # The LoRa Gateway Bridge will only apply the configuration updates for this
-  # # gateway MAC.
-  # mac="0102030405060708"
+  # Semtech UDP packet-forwarder backend.
+  [backend.semtech_udp]
 
-  # # Base configuration file.
-  # #
-  # # This file will be used as base-configuration and will not be overwritten on
-  # # a configuration update. This file needs to exist and contains the base
-  # # configuration and vendor specific
-  # base_file="/etc/lora-packet-forwarder/global_conf.json"
+  # ip:port to bind the UDP listener to
+  #
+  # Example: 0.0.0.0:1700 to listen on port 1700 for all network interfaces.
+  # This is the listeren to which the packet-forwarder forwards its data
+  # so make sure the 'serv_port_up' and 'serv_port_down' from your
+  # packet-forwarder matches this port.
+  udp_bind = "0.0.0.0:1700"
 
-  # # Output configuration file.
-  # #
-  # # This will be the final configuration for the packet-forwarder, containing
-  # # a merged version of the base configuration + the requested configuration
-  # # update.
-  # # Warning: this file will be overwritten on a configuration update!
-  # output_file="/etc/lora-packet-forwarder/local_conf.json"
+  # Skip the CRC status-check of received packets
+  #
+  # This is only has effect when the packet-forwarder is configured to forward
+  # LoRa frames with CRC errors.
+  skip_crc_check = false
 
-  # # Restart command.
-  # #
-  # # This command is issued by the LoRa Gateway Bridge on a configuration
-  # # change. Make sure the LoRa Gateway Bridge process has sufficient
-  # # permissions to execute this command.
-  # restart_command="/etc/init.d/lora-packet-forwarder restart"
+  # Fake RX timestamp.
+  #
+  # Fake the RX time when the gateway does not have GPS, in which case
+  # the time would otherwise be unset.
+  fake_rxinfo_time=false
+
+    # # Managed packet-forwarder configuration.
+    # #
+    # # By configuring one or multiple managed packet-forwarder sections, the
+    # # LoRa Gateway Bridge updates the configuration when the backend receives
+    # # a configuration change, after which it will restart the packet-forwarder.
+    # [[packet_forwarder.configuration]]
+    # # Gateway ID.
+    # #
+    # # The LoRa Gateway Bridge will only apply the configuration updates for this
+    # # gateway ID.
+    # gateway_id="0102030405060708"
+
+    # # Base configuration file.
+    # #
+    # # This file will be used as base-configuration and will not be overwritten on
+    # # a configuration update. This file needs to exist and contains the base
+    # # configuration and vendor specific
+    # base_file="/etc/lora-packet-forwarder/global_conf.json"
+
+    # # Output configuration file.
+    # #
+    # # This will be the final configuration for the packet-forwarder, containing
+    # # a merged version of the base configuration + the requested configuration
+    # # update.
+    # # Warning: this file will be overwritten on a configuration update!
+    # output_file="/etc/lora-packet-forwarder/local_conf.json"
+
+    # # Restart command.
+    # #
+    # # This command is issued by the LoRa Gateway Bridge on a configuration
+    # # change. Make sure the LoRa Gateway Bridge process has sufficient
+    # # permissions to execute this command.
+    # restart_command="/etc/init.d/lora-packet-forwarder restart"
+
+  # Basic Station backend.
+  [backend.basic_station]
+
+  # ip:port to bind the Websocket listener to.
+  bind=":3001"
+
+  # TLS certificate and key files.
+  #
+  # When set, the websocket listener will use TLS to secure the connections
+  # between the gateways and LoRa Gateway Bridge (optional).
+  tls_cert=""
+  tls_key=""
+
+  # TLS CA certificate.
+  #
+  # When configured, LoRa Gateway Bridge will validate that the client
+  # certificate of the gateway has been signed by this CA certificate.
+  ca_cert=""
+
+  # Ping interval.
+  ping_interval="1m0s"
+
+  # Read timeout.
+  #
+  # This interval must be greater than the configured ping interval.
+  read_timeout="1m5s"
+
+  # Write timeout.
+  write_timeout="1s"
+
+  # Region.
+  #
+  # Please refer to the LoRaWAN Regional Parameters specification
+  # for the complete list of common region names.
+  region="EU868"
+
+  # Minimal frequency (Hz).
+  frequency_min=863000000
+
+  # Maximum frequency (Hz).
+  frequency_max=870000000
+
+    # Filters.
+    [backend.basic_station.filters]
+
+    # NetIDs to filter on when receiving uplinks.
+    net_ids=[
+      "000000",
+    ]
+
+    # JoinEUIs to filter on when receiving join-requests.
+    join_euis=[
+      ["0000000000000000", "ffffffffffffffff"],
+    ]
 
 
-# Configuration for the MQTT backend.
-[backend.mqtt]
-# MQTT topic templates for the different MQTT topics.
-#
-# The meaning of these topics are documented at:
-# https://docs.loraserver.io/lora-gateway-bridge/use/data/
-#
-# The default values match the default expected configuration of the
-# LoRa Server MQTT backend. Therefore only change these values when
-# absolutely needed.
-# Use "{{ .MAC }}" as an substitution for the LoRa gateway MAC.
-#
-# Note that some authentication types might overwrite these templates (e.g.
-# in case of GCP Cloud IoT Core)!
-uplink_topic_template="gateway/{{ .MAC }}/rx"
-downlink_topic_template="gateway/{{ .MAC }}/tx"
-stats_topic_template="gateway/{{ .MAC }}/stats"
-ack_topic_template="gateway/{{ .MAC }}/ack"
-config_topic_template="gateway/{{ .MAC }}/config"
-
+# Integration configuration.
+[integration]
 # Payload marshaler.
 #
 # This defines how the MQTT payloads are encoded. Valid options are:
-# * v2_json:   The default LoRa Gateway Bridge v2 encoding (will be deprecated and removed in LoRa Gateway Bridge v3)
 # * protobuf:  Protobuf encoding (this will become the LoRa Gateway Bridge v3 default)
 # * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
-marshaler="v2_json"
+marshaler="protobuf"
+
+  # MQTT integration configuration.
+  [integration.mqtt]
+  # Event topic template.
+  event_topic_template="gateway/{{ .GatewayID }}/event/{{ .EventType }}"
+
+  # Command topic template.
+  command_topic_template="gateway/{{ .GatewayID }}/command/#"
+
 
   # MQTT authentication.
-  [backend.mqtt.auth]
+  [integration.mqtt.auth]
   # Type defines the MQTT authentication type to use.
   #
   # Set this to the name of one of the sections below.
-  # Note: when the 'v2_json marhaler' is configured, the generic backend will
-  # always be used.
   type="generic"
 
     # Generic MQTT authentication.
-    [backend.mqtt.auth.generic]
+    [integration.mqtt.auth.generic]
     # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
     server="tcp://127.0.0.1:1883"
 
@@ -230,7 +274,7 @@ marshaler="v2_json"
     # Please note that when using this authentication type, the MQTT topics
     # will be automatically set to match the MQTT topics as expected by
     # Cloud IoT Core.
-    [backend.mqtt.auth.gcp_cloud_iot_core]
+    [integration.mqtt.auth.gcp_cloud_iot_core]
     # MQTT server.
     server="ssl://mqtt.googleapis.com:8883"
 
@@ -274,9 +318,9 @@ marshaler="v2_json"
   # The ip:port to bind the Prometheus metrics server to for serving the
   # metrics endpoint.
   bind=""
-{{< /highlight >}}
+{{</highlight>}}
 
-#### Environment variables
+## Environment variables
 
 Although using the configuration file is recommended, it is also possible
 to use environment variables to set configuration variables.
@@ -284,39 +328,13 @@ to use environment variables to set configuration variables.
 Example:
 
 {{<highlight toml>}}
-[packet_forwarder]
+[backend.semtech_udp]
 udp_bind="0.0.0.0:1700"
 {{</highlight>}}
 
 Can be set using the environment variable:
 
 {{<highlight toml>}}
-PACKET_FORWARDER.UDP_BIND="0.0.0.0:1700"
+BACKEND.SEMTECH_UDP.UDP_BIND="0.0.0.0:1700"
 {{</highlight>}}
 
-### Warning: deprecation warning! update your configuration
-
-When you see this warning, you need to update your configuration!
-Before LoRa Gateway Bridge 2.3.0 environment variables were used for setting
-configuration flags. Since LoRa Gateway Bridge 2.3.0 the configuration format
-has changed.
-
-The `.deb` installer will automatically migrate your configuration. For non
-`.deb` installations, you can migrate your configuration in the following way:
-
-{{<highlight bash>}}
-# Export your environment variables, in this case from a file, but anything
-# that sets your environment variables will work.
-set -a
-source /etc/default/lora-gateway-bridge
-
-# Create the configuration directory.
-mkdir /etc/lora-gateway-bridge
-
-# Generate new configuration file, pre-filled with the configuration set
-# through the environment variables.
-lora-gateway-bridge configfile > /etc/lora-gateway-bridge/lora-gateway-bridge.toml
-
-# "Remove" the old configuration (in you were using a file).
-mv /etc/default/lora-gateway-bridge /etc/default/lora-gateway-bridge.old
-{{< /highlight >}}
