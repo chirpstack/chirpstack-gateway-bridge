@@ -12,10 +12,10 @@ type Config struct {
 		Type string `mapstructure:"type"`
 
 		SemtechUDP struct {
-			UDPBind        string `mapstructure:"udp_bind"`
-			SkipCRCCheck   bool   `mapstructure:"skip_crc_check"`
-			FakeRxInfoTime bool   `mapstructure:"fake_rxinfo_time"`
-			Configuration  []struct {
+			UDPBind       string `mapstructure:"udp_bind"`
+			SkipCRCCheck  bool   `mapstructure:"skip_crc_check"`
+			FakeRxTime    bool   `mapstructure:"fake_rx_time"`
+			Configuration []struct {
 				GatewayID      string `mapstructure:"gateway_id"`
 				BaseFile       string `mapstructure:"base_file"`
 				OutputFile     string `mapstructure:"output_file"`

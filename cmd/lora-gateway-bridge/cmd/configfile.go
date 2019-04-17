@@ -47,7 +47,7 @@ type="{{ .Backend.Type }}"
   #
   # Fake the RX time when the gateway does not have GPS, in which case
   # the time would otherwise be unset.
-  fake_rxinfo_time={{ .Backend.SemtechUDP.FakeRxInfoTime }}
+  fake_rx_time={{ .Backend.SemtechUDP.FakeRxTime }}
 
     # # Managed packet-forwarder configuration.
     # #

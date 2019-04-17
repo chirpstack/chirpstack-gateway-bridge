@@ -99,7 +99,7 @@ type="semtech_udp"
   #
   # Fake the RX time when the gateway does not have GPS, in which case
   # the time would otherwise be unset.
-  fake_rxinfo_time=false
+  fake_rx_time=false
 
     # # Managed packet-forwarder configuration.
     # #

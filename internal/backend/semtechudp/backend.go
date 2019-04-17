@@ -45,7 +45,7 @@ type Backend struct {
 	conn           *net.UDPConn
 	closed         bool
 	gateways       gateways
-	fakeRxInfoTime bool
+	fakeRxTime     bool
 	configurations []pfConfiguration
 }
 
@@ -73,7 +73,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 			connectChan:    make(chan lorawan.EUI64),
 			disconnectChan: make(chan lorawan.EUI64),
 		},
-		fakeRxInfoTime: conf.Backend.SemtechUDP.FakeRxInfoTime,
+		fakeRxTime: conf.Backend.SemtechUDP.FakeRxTime,
 	}
 
 	for _, pfConf := range conf.Backend.SemtechUDP.Configuration {
@@ -457,7 +457,7 @@ func (b *Backend) handlePushData(up udpPacket) error {
 	}
 
 	// uplink frames
-	uplinkFrames, err := p.GetUplinkFrames(b.fakeRxInfoTime)
+	uplinkFrames, err := p.GetUplinkFrames(b.fakeRxTime)
 	if err != nil {
 		return errors.Wrap(err, "get uplink frames error")
 	}
