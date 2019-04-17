@@ -26,25 +26,32 @@ pygmentsUseClasses = true
     weight = 3
 
 [[menu.main]]
+	pre = "<i class='fas fa-cogs'></i>"
+	name = "Backends"
+	identifier = "backends"
+	url = "/backends/"
+	weight = 4
+
+[[menu.main]]
 	pre = "<i class='far fa-file-alt'></i>"
 	name = "Payloads"
 	identifier = "payloads"
 	url = "/payloads/"
-	weight = "4"
+	weight = 5
 
 [[menu.main]]
     pre = "<i class='fas fa-code'></i>"
     name = "Integrate"
     identifier = "integrate"
     url = "/integrate/"
-    weight = 5
+    weight = 6
 
 [[menu.main]]
     pre = "<i class='fab fa-github'></i>"
     name = "Community & support"
     identifier = "community"
     url = "/community/"
-    weight = 6
+    weight = 7
 
 [params]
     version = "3.0.0-test.1"
