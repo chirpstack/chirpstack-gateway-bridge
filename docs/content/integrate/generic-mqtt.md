@@ -4,6 +4,7 @@ menu:
     main:
         parent: integrate
         weight: 2
+description: Setting up the LoRa Gateway Bridge using a generic MQTT broker.
 ---
 
 # Generic MQTT authentication

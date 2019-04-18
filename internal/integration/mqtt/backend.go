@@ -66,6 +66,14 @@ func NewBackend(conf config.Config) (*Backend, error) {
 
 		conf.Integration.MQTT.EventTopicTemplate = "/devices/gw-{{ .GatewayID }}/events/{{ .EventType }}"
 		conf.Integration.MQTT.CommandTopicTemplate = "/devices/gw-{{ .GatewayID }}/commands/#"
+	case "azure_iot_hub":
+		b.auth, err = auth.NewAzureIoTHubAuthentication(conf)
+		if err != nil {
+			return nil, errors.Wrap(err, "integration/mqtt: new azure iot hub authentication error")
+		}
+
+		conf.Integration.MQTT.EventTopicTemplate = "devices/{{ .GatewayID }}/messages/events/{{ .EventType }}"
+		conf.Integration.MQTT.CommandTopicTemplate = "devices/{{ .GatewayID }}/messages/devicebound/#"
 	default:
 		return nil, fmt.Errorf("integration/mqtt: unknown auth type: %s", conf.Integration.MQTT.Auth.Type)
 	}

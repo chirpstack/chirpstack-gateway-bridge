@@ -73,6 +73,14 @@ type Config struct {
 					JWTExpiration time.Duration `mapstructure:"jwt_expiration"`
 					JWTKeyFile    string        `mapstructure:"jwt_key_file"`
 				} `mapstructure:"gcp_cloud_iot_core"`
+
+				AzureIoTHub struct {
+					DeviceConnectionString string        `mapstructure:"device_connection_string"`
+					DeviceID               string        `mapstructure:"-"`
+					Hostname               string        `mapstructure:"-"`
+					DeviceKey              string        `mapstructure:"-"`
+					SASTokenExpiration     time.Duration `mapstructure:"sas_token_expiration"`
+				} `mapstructure:"azure_iot_hub"`
 			} `mapstructure:"auth"`
 		} `mapstructure:"mqtt"`
 	} `mapstructure:"integration"`

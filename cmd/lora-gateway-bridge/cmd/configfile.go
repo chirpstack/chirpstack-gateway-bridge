@@ -262,6 +262,26 @@ marshaler="{{ .Integration.Marshaler }}"
     jwt_key_file="{{ .Integration.MQTT.Auth.GCPCloudIoTCore.JWTKeyFile }}"
 
 
+    # Azure IoT Hub
+    #
+    # This setting will preset uplink and downlink topics that will only
+    # work with Azure IoT Hub service.
+    [integation.mqtt.auth.azure_iot_hub]
+
+    # Device connection string.
+    #
+    # This connection string can be retrieved from the Azure IoT Hub device
+    # details.
+    device_connection_string="{{ .Integration.MQTT.Auth.AzureIoTHub.DeviceConnectionString }}"
+
+    # Token expiration.
+    #
+    # LoRa Gateway Bridge will generate a SAS token with the given expiration.
+    # After the token has expired, it will generate a new one and trigger a
+    # re-connect.
+    sas_token_expiration="{{ .Integration.MQTT.Auth.AzureIoTHub.SASTokenExpiration }}"
+
+
 # Metrics configuration.
 [metrics]
 

@@ -4,6 +4,7 @@ menu:
     main:
         parent: integrate
         weight: 3
+description: Setting up the LoRa Gateway Bridge using the GCP Cloud IoT Core MQTT Bridge.
 ---
 
 # Google Cloud Platform Cloud IoT Core

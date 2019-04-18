@@ -101,12 +101,15 @@ type="semtech_udp"
   # the time would otherwise be unset.
   fake_rx_time=false
 
-    # # Managed packet-forwarder configuration.
-    # #
-    # # By configuring one or multiple managed packet-forwarder sections, the
-    # # LoRa Gateway Bridge updates the configuration when the backend receives
-    # # a configuration change, after which it will restart the packet-forwarder.
-    # [[packet_forwarder.configuration]]
+    # Managed packet-forwarder configuration.
+    #
+    # By configuring one or multiple managed packet-forwarder sections, the
+    # LoRa Gateway Bridge updates the configuration when the backend receives
+    # a configuration change, after which it will restart the packet-forwarder.
+    #
+    # Example (this configuration can be repeated):
+    #
+    # [[backend.semtech_udp.configuration]]
     # # Gateway ID.
     # #
     # # The LoRa Gateway Bridge will only apply the configuration updates for this
@@ -134,6 +137,7 @@ type="semtech_udp"
     # # change. Make sure the LoRa Gateway Bridge process has sufficient
     # # permissions to execute this command.
     # restart_command="/etc/init.d/lora-packet-forwarder restart"
+
 
   # Basic Station backend.
   [backend.basic_station]
@@ -302,6 +306,26 @@ marshaler="protobuf"
     # Then point the setting below to the private-key.pem and associate the
     # public-key.pem with this device / gateway in Google Cloud IoT Core.
     jwt_key_file=""
+
+
+    # Azure IoT Hub
+    #
+    # This setting will preset uplink and downlink topics that will only
+    # work with Azure IoT Hub service.
+    [integation.mqtt.auth.azure_iot_hub]
+
+    # Device connection string.
+    #
+    # This connection string can be retrieved from the Azure IoT Hub device
+    # details.
+    device_connection_string=""
+
+    # Token expiration.
+    #
+    # LoRa Gateway Bridge will generate a SAS token with the given expiration.
+    # After the token has expired, it will generate a new one and trigger a
+    # re-connect.
+    sas_token_expiration="24h0m0s"
 
 
 # Metrics configuration.
