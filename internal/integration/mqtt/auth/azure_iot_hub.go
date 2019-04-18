@@ -93,10 +93,11 @@ func NewAzureIoTHubAuthentication(c config.Config) (Authentication, error) {
 	}
 
 	return &AzureIoTHubAuthentication{
-		clientID:  conf.DeviceID,
-		username:  username,
-		deviceKey: deviceKeyB,
-		hostname:  conf.Hostname,
+		clientID:           conf.DeviceID,
+		username:           username,
+		deviceKey:          deviceKeyB,
+		hostname:           conf.Hostname,
+		sasTokenExpiration: conf.SASTokenExpiration,
 		tlsConfig: &tls.Config{
 			RootCAs: certpool,
 		},
