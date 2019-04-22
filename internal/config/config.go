@@ -1,6 +1,8 @@
 package config
 
-import "time"
+import (
+	"time"
+)
 
 // Config defines the configuration structure.
 type Config struct {
@@ -91,6 +93,15 @@ type Config struct {
 			Bind            string `mapstructure:"bind"`
 		}
 	}
+
+	MetaData struct {
+		Static  map[string]string `mapstructure:"static"`
+		Dynamic struct {
+			ExecutionInterval    time.Duration     `mapstructure:"execution_interval"`
+			MaxExecutionDuration time.Duration     `mapstructure:"max_execution_duration"`
+			Commands             map[string]string `mapstructure:"commands"`
+		} `mapstructure:"dynamic"`
+	} `mapstructure:"meta_data"`
 }
 
 // C holds the global configuration.

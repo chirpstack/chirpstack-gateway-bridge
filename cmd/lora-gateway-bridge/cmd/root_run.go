@@ -13,6 +13,7 @@ import (
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/lora-gateway-bridge/internal/forwarder"
 	"github.com/brocaar/lora-gateway-bridge/internal/integration"
+	"github.com/brocaar/lora-gateway-bridge/internal/metadata"
 	"github.com/brocaar/lora-gateway-bridge/internal/metrics"
 )
 
@@ -25,6 +26,7 @@ func run(cmd *cobra.Command, args []string) error {
 		setupIntegration,
 		setupForwarder,
 		setupMetrics,
+		setupMetaData,
 	}
 
 	for _, t := range tasks {
@@ -78,6 +80,13 @@ func setupForwarder() error {
 func setupMetrics() error {
 	if err := metrics.Setup(config.C); err != nil {
 		return errors.Wrap(err, "setup metrics error")
+	}
+	return nil
+}
+
+func setupMetaData() error {
+	if err := metadata.Setup(config.C); err != nil {
+		return errors.Wrap(err, "setup meta-data error")
 	}
 	return nil
 }

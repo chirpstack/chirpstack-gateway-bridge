@@ -1,10 +1,10 @@
 module github.com/brocaar/lora-gateway-bridge
 
 require (
-	github.com/brocaar/loraserver v0.0.0-20190409085620-14c6fb22dcc4
+	github.com/brocaar/loraserver v0.0.0-20190422074053-c3336fb6b947
 	github.com/brocaar/lorawan v0.0.0-20190402092148-5bca41b178e9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/eclipse/paho.mqtt.golang v0.0.0-20190117150808-cb7eb9363b44
+	github.com/eclipse/paho.mqtt.golang v1.1.1
 	github.com/golang/protobuf v1.3.1
 	github.com/goreleaser/goreleaser v0.101.0
 	github.com/goreleaser/nfpm v0.9.7

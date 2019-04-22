@@ -296,6 +296,50 @@ marshaler="{{ .Integration.Marshaler }}"
   # The ip:port to bind the Prometheus metrics server to for serving the
   # metrics endpoint.
   bind="{{ .Metrics.Prometheus.Bind }}"
+
+
+# Gateway meta-data.
+#
+# The meta-data will be added to every stats message sent by the LoRa Gateway
+# Bridge.
+[meta_data]
+
+  # Static.
+  #
+  # Static key (string) / value (string) meta-data.
+  [meta_data.static]
+  # Example:
+  # serial_number="A1B21234"
+  {{ range $k, $v := .MetaData.Static }}
+  {{ $k }}="{{ $v }}"
+  {{ end }}
+
+
+  # Dynamic meta-data.
+  #
+  # Dynamic meta-data is retrieved by executing external commands.
+  # This makes it possible to for example execute an external command to
+  # read the gateway temperature.
+  [meta_data.dynamic]
+
+  # Execution interval of the commands.
+  execution_interval="{{ .MetaData.Dynamic.ExecutionInterval }}"
+
+  # Max. execution duration.
+  max_execution_duration="{{ .MetaData.Dynamic.MaxExecutionDuration }}"
+
+  # Commands to execute.
+  #
+  # The value of the stdout will be used as the key value (string).
+  # In case the command failed, it is ignored. In case the same key is defined
+  # both as static and dynamic, the dynamic value has priority (as long as the)
+  # command does not fail.
+  [meta_data.dynamic.commands]
+  # Example:
+  # temperature="/opt/gateway-temperature/gateway-temperature.sh"
+  {{ range $k, $v := .MetaData.Dynamic.Commands }}
+  {{ $k }}="{{ $v }}"
+  {{ end }}
 `
 
 var configCmd = &cobra.Command{

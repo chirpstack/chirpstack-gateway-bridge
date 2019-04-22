@@ -7,6 +7,7 @@ import (
 	"github.com/brocaar/lora-gateway-bridge/internal/backend"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/lora-gateway-bridge/internal/integration"
+	"github.com/brocaar/lora-gateway-bridge/internal/metadata"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 )
@@ -107,6 +108,9 @@ func forwardGatewayStatsLoop() {
 		go func(stats gw.GatewayStats) {
 			var gatewayID lorawan.EUI64
 			copy(gatewayID[:], stats.GatewayId)
+
+			// add meta-data to stats
+			stats.MetaData = metadata.Get()
 
 			if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventStats, &stats); err != nil {
 				log.WithError(err).WithFields(log.Fields{
