@@ -32,6 +32,19 @@ additional object must be given with the additional timing information.
 Refer to [Commands](https://www.loraserver.io/lora-gateway-bridge/payloads/commands/)
 for more details.
 
+#### Fake RX time
+
+In case the gateway does not have a GPS module, the RX time would would be
+left blank. This feature makes it possible to use the system time as a fallback.
+([#109](https://github.com/brocaar/lora-gateway-bridge/pull/109))
+
+#### Custom gateway meta-data
+
+This feature makes it possible to expose additional meta-data in the gateway
+stats. Meta-data can either be static or dynamic (executing external commands).
+The latter option allows to for example read and expose the gateway temperature,
+humidity, ...
+
 ### Upgrading
 
 LoRa Gateway Bridge v3.0.0 include a couple of changes that are not backwards
