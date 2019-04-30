@@ -131,7 +131,6 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 		},
 		RxInfo: &gw.UplinkRXInfo{
 			GatewayId: gatewayID,
-			Timestamp: rxpk.Tmst,
 			Rssi:      int32(rxpk.RSSI),
 			LoraSnr:   rxpk.LSNR,
 			Channel:   uint32(rxpk.Chan),
