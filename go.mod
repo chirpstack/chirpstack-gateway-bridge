@@ -1,5 +1,7 @@
 module github.com/brocaar/lora-gateway-bridge
 
+go 1.12
+
 require (
 	github.com/brocaar/loraserver v0.0.0-20190429120626-75ef246869d5
 	github.com/brocaar/lorawan v0.0.0-20190402092148-5bca41b178e9
