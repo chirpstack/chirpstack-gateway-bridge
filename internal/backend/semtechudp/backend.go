@@ -192,25 +192,25 @@ func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
 // ApplyConfiguration applies the given configuration to the gateway
 // (packet-forwarder).
 func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
-	return gatewayConfigHandleTimer(func() error {
-		var gatewayID lorawan.EUI64
-		copy(gatewayID[:], config.GatewayId)
+	eventCounter("configuration")
 
-		b.Lock()
-		var pfConfig *pfConfiguration
-		for i := range b.configurations {
-			if b.configurations[i].gatewayID == gatewayID {
-				pfConfig = &b.configurations[i]
-			}
+	var gatewayID lorawan.EUI64
+	copy(gatewayID[:], config.GatewayId)
+
+	b.Lock()
+	var pfConfig *pfConfiguration
+	for i := range b.configurations {
+		if b.configurations[i].gatewayID == gatewayID {
+			pfConfig = &b.configurations[i]
 		}
-		b.Unlock()
+	}
+	b.Unlock()
 
-		if pfConfig == nil {
-			return errGatewayDoesNotExist
-		}
+	if pfConfig == nil {
+		return errGatewayDoesNotExist
+	}
 
-		return b.applyConfiguration(*pfConfig, config)
-	})
+	return b.applyConfiguration(*pfConfig, config)
 }
 
 func (b *Backend) applyConfiguration(pfConfig pfConfiguration, config gw.GatewayConfiguration) error {
@@ -315,11 +315,8 @@ func (b *Backend) sendPackets() error {
 			"protocol_version": p.data[0],
 		}).Debug("backend/semtechudp: sending udp packet to gateway")
 
-		err = gatewayWriteUDPTimer(pt.String(), func() error {
-			_, err := b.conn.WriteToUDP(p.data, p.addr)
-			return err
-		})
-
+		udpWriteCounter(pt.String())
+		_, err = b.conn.WriteToUDP(p.data, p.addr)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"addr":             p.addr,
@@ -349,18 +346,18 @@ func (b *Backend) handlePacket(up udpPacket) error {
 		"protocol_version": up.data[0],
 	}).Debug("backend/semtechudp: received udp packet from gateway")
 
-	return gatewayHandleTimer(pt.String(), func() error {
-		switch pt {
-		case packets.PushData:
-			return b.handlePushData(up)
-		case packets.PullData:
-			return b.handlePullData(up)
-		case packets.TXACK:
-			return b.handleTXACK(up)
-		default:
-			return fmt.Errorf("backend/semtechudp: unknown packet type: %s", pt)
-		}
-	})
+	udpReadCounter(pt.String())
+
+	switch pt {
+	case packets.PushData:
+		return b.handlePushData(up)
+	case packets.PullData:
+		return b.handlePullData(up)
+	case packets.TXACK:
+		return b.handleTXACK(up)
+	default:
+		return fmt.Errorf("backend/semtechudp: unknown packet type: %s", pt)
+	}
 }
 
 func (b *Backend) handlePullData(up udpPacket) error {

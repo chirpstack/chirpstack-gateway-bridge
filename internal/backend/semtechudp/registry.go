@@ -54,7 +54,7 @@ func (c *gateways) set(gatewayID lorawan.EUI64, gw gateway) error {
 
 	_, ok := c.gateways[gatewayID]
 	if !ok {
-		gatewayEventCounter("register_gateway")
+		eventCounter("connect")
 		c.connectChan <- gatewayID
 	}
 	c.gateways[gatewayID] = gw
@@ -68,7 +68,7 @@ func (c *gateways) cleanup() error {
 
 	for gatewayID := range c.gateways {
 		if c.gateways[gatewayID].lastSeen.Before(time.Now().Add(gatewayCleanupDuration)) {
-			gatewayEventCounter("unregister_gateway")
+			eventCounter("disconnect")
 			c.disconnectChan <- gatewayID
 			delete(c.gateways, gatewayID)
 		}

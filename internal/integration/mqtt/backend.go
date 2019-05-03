@@ -154,8 +154,6 @@ func (b *Backend) GetGatewayConfigurationChan() chan gw.GatewayConfiguration {
 
 // SubscribeGateway subscribes a gateway to its topics.
 func (b *Backend) SubscribeGateway(gatewayID lorawan.EUI64) error {
-	mqttEventCounter("subscribe_gateway")
-
 	b.Lock()
 	defer b.Unlock()
 
@@ -177,7 +175,7 @@ func (b *Backend) subscribeGateway(gatewayID lorawan.EUI64) error {
 		"qos":   b.qos,
 	}).Info("integration/mqtt: subscribing to topic")
 
-	err := mqttSubscribeTimer(false, func() error {
+	err := mqttSubscribeTimer(func() error {
 		if token := b.conn.Subscribe(topic.String(), b.qos, b.handleCommand); token.Wait() && token.Error() != nil {
 			return errors.Wrap(token.Error(), "subscribe topic error")
 		}
@@ -191,8 +189,6 @@ func (b *Backend) subscribeGateway(gatewayID lorawan.EUI64) error {
 
 // UnsubscribeGateway unsubscribes the gateway from its topics.
 func (b *Backend) UnsubscribeGateway(gatewayID lorawan.EUI64) error {
-	mqttEventCounter("unsubscribe_gateway")
-
 	b.Lock()
 	defer b.Unlock()
 
@@ -257,7 +253,7 @@ func (b *Backend) connectLoop() {
 }
 
 func (b *Backend) disconnect() error {
-	mqttEventCounter("disconnect")
+	mqttConnectionCounter("disconnect")
 
 	b.Lock()
 	defer b.Unlock()
@@ -275,6 +271,8 @@ func (b *Backend) reconnectLoop() {
 			time.Sleep(b.auth.ReconnectAfter())
 			log.Info("mqtt: re-connect triggered")
 
+			mqttConnectionCounter("reconnect")
+
 			b.disconnect()
 			b.connectLoop()
 		}
@@ -282,7 +280,7 @@ func (b *Backend) reconnectLoop() {
 }
 
 func (b *Backend) onConnected(c paho.Client) {
-	mqttEventCounter("connected")
+	mqttConnectionCounter("connected")
 
 	b.RLock()
 	defer b.RUnlock()
@@ -303,7 +301,7 @@ func (b *Backend) onConnected(c paho.Client) {
 }
 
 func (b *Backend) onConnectionLost(c paho.Client, err error) {
-	mqttEventCounter("connection_lost")
+	mqttConnectionCounter("lost")
 	log.WithError(err).Error("mqtt: connection error")
 	b.connectLoop()
 }
@@ -313,16 +311,13 @@ func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
 		"topic": msg.Topic(),
 	}).Info("integration/mqtt: downlink frame received")
 
-	_ = mqttHandleTimer("down", func() error {
-		var downlinkFrame gw.DownlinkFrame
-		if err := b.unmarshal(msg.Payload(), &downlinkFrame); err != nil {
-			log.WithError(err).Error("integration/mqtt: unmarshal downlink frame error")
-			return err
-		}
+	var downlinkFrame gw.DownlinkFrame
+	if err := b.unmarshal(msg.Payload(), &downlinkFrame); err != nil {
+		log.WithError(err).Error("integration/mqtt: unmarshal downlink frame error")
+		return
+	}
 
-		b.downlinkFrameChan <- downlinkFrame
-		return nil
-	})
+	b.downlinkFrameChan <- downlinkFrame
 }
 
 func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
@@ -330,22 +325,21 @@ func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 		"topic": msg.Topic(),
 	}).Info("integration/mqtt: gateway configuration received")
 
-	_ = mqttHandleTimer("config", func() error {
-		var gatewayConfig gw.GatewayConfiguration
-		if err := b.unmarshal(msg.Payload(), &gatewayConfig); err != nil {
-			log.WithError(err).Error("integration/mqtt: unmarshal gateway configuration error")
-			return err
-		}
+	var gatewayConfig gw.GatewayConfiguration
+	if err := b.unmarshal(msg.Payload(), &gatewayConfig); err != nil {
+		log.WithError(err).Error("integration/mqtt: unmarshal gateway configuration error")
+		return
+	}
 
-		b.gatewayConfigurationChan <- gatewayConfig
-		return nil
-	})
+	b.gatewayConfigurationChan <- gatewayConfig
 }
 
 func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
 	if strings.HasSuffix(msg.Topic(), "down") {
+		mqttCommandCounter("down")
 		b.handleDownlinkFrame(c, msg)
 	} else if strings.HasSuffix(msg.Topic(), "config") {
+		mqttCommandCounter("config")
 		b.handleGatewayConfiguration(c, msg)
 	} else {
 		log.WithFields(log.Fields{

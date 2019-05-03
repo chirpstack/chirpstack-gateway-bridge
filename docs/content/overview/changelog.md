@@ -97,6 +97,10 @@ now used for selecting and configuring the packet-forwarder backends.
 The MQTT integration configuration has moved to the new `[integration...]`
 section. This allows for adding new integrations in the future besides MQTT.
 
+#### Prometheus metrics
+
+The Prometheus metrics have been updated / cleaned up.
+
 ## v2.7.1
 
 ### Bugfixes
