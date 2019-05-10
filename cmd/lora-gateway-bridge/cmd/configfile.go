@@ -266,7 +266,7 @@ marshaler="{{ .Integration.Marshaler }}"
     #
     # This setting will preset uplink and downlink topics that will only
     # work with Azure IoT Hub service.
-    [integation.mqtt.auth.azure_iot_hub]
+    [integration.mqtt.auth.azure_iot_hub]
 
     # Device connection string.
     #
