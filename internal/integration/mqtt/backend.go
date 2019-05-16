@@ -335,10 +335,10 @@ func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 }
 
 func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
-	if strings.HasSuffix(msg.Topic(), "down") {
+	if strings.HasSuffix(msg.Topic(), "down") || strings.Contains(msg.Topic(), "command=down") {
 		mqttCommandCounter("down")
 		b.handleDownlinkFrame(c, msg)
-	} else if strings.HasSuffix(msg.Topic(), "config") {
+	} else if strings.HasSuffix(msg.Topic(), "config") || strings.Contains(msg.Topic(), "command=config") {
 		mqttCommandCounter("config")
 		b.handleGatewayConfiguration(c, msg)
 	} else {
