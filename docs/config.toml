@@ -54,5 +54,5 @@ pygmentsUseClasses = true
     weight = 7
 
 [params]
-    version = "3.0.0-test.3"
+    version = "3.0.0-test.4"
 

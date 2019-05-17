@@ -32,6 +32,13 @@ additional object must be given with the additional timing information.
 Refer to [Commands](https://www.loraserver.io/lora-gateway-bridge/payloads/commands/)
 for more details.
 
+#### Azure IoT Hub integration
+
+LoRa Gateway Bridge now has support to connect the [Azure IoT Hub](https://azure.microsoft.com/en-us/services/iot-hub/)
+MQTT interface. Like with the Google Cloud Platform IoT Core integration this
+makes it easier to scale up and manage gateway credentials using the IoT Hub
+console (or API).
+
 #### Fake RX time
 
 In case the gateway does not have a GPS module, the RX time would would be
