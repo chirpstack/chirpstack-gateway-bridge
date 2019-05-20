@@ -15,11 +15,12 @@ clean:
 
 test:
 	@echo "Running tests"
+	@rm -f coverage.out
 	@for pkg in $(PKGS) ; do \
 		golint $$pkg ; \
 	done
 	@go vet $(PKGS)
-	@go test -cover -v $(PKGS)
+	@go test -cover -v $(PKGS) -coverprofile coverage.out
 
 dist:
 	@goreleaser

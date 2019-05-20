@@ -4,6 +4,9 @@
 # configuration files
 /*.toml
 
+# coverage file
+/coverage.out
+
 # certificates
 /certs
 
