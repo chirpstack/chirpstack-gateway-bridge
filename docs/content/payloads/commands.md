@@ -4,6 +4,7 @@ menu:
     main:
         parent: payloads
         weight: 1
+description: Commands are messages sent to the gateway.
 ---
 
 # Commands

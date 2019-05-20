@@ -4,6 +4,7 @@ menu:
     main:
         parent: payloads
         weight: 1
+events: Events are uplinks, acks and statistics sent by the gateway.
 ---
 
 # Events
