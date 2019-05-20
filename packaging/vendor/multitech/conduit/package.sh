@@ -1,7 +1,7 @@
 #!/bin/env bash
 
 PACKAGE_NAME="lora-gateway-bridge"
-PACKAGE_VERSION="3.0.0-test.4"
+PACKAGE_VERSION="3.0.0"
 REV="r1"
 
 
