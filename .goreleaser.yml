@@ -36,6 +36,8 @@ nfpm:
     "packaging/files/lora-gateway-bridge.rotate": "/etc/logrotate.d/lora-gateway-bridge"
     "packaging/files/lora-gateway-bridge.init": "/usr/lib/lora-gateway-bridge/scripts/lora-gateway-bridge.init"
     "packaging/files/lora-gateway-bridge.service": "/usr/lib/lora-gateway-bridge/scripts/lora-gateway-bridge.service"
+  config_files:
+    "packaging/files/lora-gateway-bridge.toml": "/etc/lora-gateway-bridge/lora-gateway-bridge.toml"
   scripts:
     postinstall: "packaging/scripts/post-install.sh"
     postremove: "packaging/scripts/post-remove.sh"
