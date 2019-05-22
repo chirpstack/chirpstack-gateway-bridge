@@ -15,8 +15,6 @@ authentication thype must be used when connecting with the
 
 ## Limitations
 
-* Please note that this authentication type is only available for the `json` or
-  `protobuf` marshaler.
 * As you need to setup the device ID (in this case the device is the gateway)
   when provisioning the device (LoRa gateway) in Cloud IoT Core,
   this does not allow to connect multiple LoRa gateways to a single LoRa Gateway
@@ -27,6 +25,7 @@ authentication thype must be used when connecting with the
 ### Device ID naming
 
 The IoT Hub Device ID must match the Gateway ID (e.g. `0102030405060708`).
+It must be entered in lowercase (the IoT Hub Device ID is case-sensitive).
 
 ### MQTT topics
 
