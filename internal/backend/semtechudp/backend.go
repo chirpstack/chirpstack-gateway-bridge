@@ -465,8 +465,6 @@ func (b *Backend) handlePushData(up udpPacket) error {
 
 func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats gw.GatewayStats) {
 	// set configuration version, if available
-	b.RLock()
-	defer b.RUnlock()
 
 	for _, c := range b.configurations {
 		if gatewayID == c.gatewayID {
