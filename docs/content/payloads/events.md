@@ -14,6 +14,10 @@ integration. Depending the `marshaler` configuration, these are sent as JSON or
 [Protobuf](https://developers.google.com/protocol-buffers/). For the Protobuf
 definitions, please refer to [gw.proto](https://github.com/brocaar/loraserver/blob/master/api/gw/gw.proto).
 
+* The Protocol Buffers [JSON Mapping](https://developers.google.com/protocol-buffers/docs/proto3#json)
+  defines that bytes must be encoded as base64 strings. This also affects the `gatewayID` field.
+  When re-encoding this filed to HEX encoding, you will find the expected gateway ID string.
+
 ## `stats` - gateway statistics
 
 Statistics reported by the gateway.
