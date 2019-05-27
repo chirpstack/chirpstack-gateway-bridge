@@ -32,6 +32,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "path to configuration file (optional)")
 	rootCmd.PersistentFlags().Int("log-level", 4, "debug=5, info=4, error=2, fatal=1, panic=0")
 
+	viper.BindPFlag("general.log_level", rootCmd.PersistentFlags().Lookup("log-level"))
+
 	// default values
 	viper.SetDefault("general.log_level", 4)
 	viper.SetDefault("backend.type", "semtech_udp")
