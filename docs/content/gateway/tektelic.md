@@ -154,11 +154,11 @@ the back of the gateway (the 9 characters above the 12V = 1A line).
 
 Find the latest package at https://artifacts.loraserver.io/vendor/tektelic/kona-micro/
 and copy the URL to your clipboard. Then on the gateway use `curl` and use the link
-as argument. Example for `lora-gateway-bridge_2.7.1-r1_kona_micro.ipk`:
+as argument. Example for `lora-gateway-bridge_3.0.1-r1_kona_micro.ipk`:
 
 {{<highlight bash>}}
 # curl URL --output lora-gateway-bridge.ipk
-curl https://artifacts.loraserver.io/vendor/tektelic/kona-micro/lora-gateway-bridge_2.7.1-r1_kona_micro.ipk --output lora-gateway-bridge.ipk
+curl https://artifacts.loraserver.io/vendor/tektelic/kona-micro/lora-gateway-bridge_3.0.1-r1_kona_micro.ipk --output lora-gateway-bridge.ipk
 {{</highlight>}}
 
 ### Install IPK package
@@ -226,11 +226,11 @@ the back of the gateway (the 9 characters above the 48V = 0.6A line).
 
 Find the latest package at https://artifacts.loraserver.io/vendor/tektelic/kona-macro/
 and copy the URL to your clipboard. Then on the gateway use `curl` and use the link
-as argument. Example for `lora-gateway-bridge_2.7.1-r1_kona_macro.ipk`:
+as argument. Example for `lora-gateway-bridge_3.0.1-r1_kona_macro.ipk`:
 
 {{<highlight bash>}}
 # curl URL --output lora-gateway-bridge.ipk
-curl https://artifacts.loraserver.io/vendor/tektelic/kona-macro/lora-gateway-bridge_2.7.1-r1_kona_macro.ipk --output lora-gateway-bridge.ipk
+curl https://artifacts.loraserver.io/vendor/tektelic/kona-macro/lora-gateway-bridge_3.0.1-r1_kona_macro.ipk --output lora-gateway-bridge.ipk
 {{</highlight>}}
 
 ### Install IPK package

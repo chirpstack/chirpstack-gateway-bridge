@@ -69,12 +69,12 @@ for login instructions.
 
 Find the latest package at https://artifacts.loraserver.io/vendor/kerlink/ibts/
 and copy the URL to your clipboard. Then on the gateway use `wget` to download
-the package into a folder named `/user/.updates`. Example for `lora-gateway-bridge_2.7.1-r1_klk_lpbs.ipk`:
+the package into a folder named `/user/.updates`. Example for `lora-gateway-bridge_3.0.1-r1_klk_lpbs.ipk`:
 
 {{<highlight bash>}}
 mkdir -p /user/.updates
 cd /user/.updates
-wget https://artifacts.loraserver.io/vendor/kerlink/ibts/lora-gateway-bridge_2.7.1-r1_klk_lpbs.ipk
+wget https://artifacts.loraserver.io/vendor/kerlink/ibts/lora-gateway-bridge_3.0.1-r1_klk_lpbs.ipk
 {{</highlight>}}
 
 To trigger the iBTS gateway to install / update the package, run the following commands:

@@ -10,6 +10,12 @@ description: Lists the changes per LoRa App Server release, including steps how 
 
 # Changelog
 
+## v3.0.1
+
+### Bugfixes
+
+* Fix acquiring double read-lock (which could result in a deadlock). [#119](https://github.com/brocaar/lora-gateway-bridge/pull/119)
+
 ## v3.0.0
 
 ### Features
