@@ -1,6 +1,6 @@
 # LoRa Gateway Bridge
 
-[![Build Status](https://travis-ci.org/brocaar/lora-gateway-bridge.svg?branch=master)](https://travis-ci.org/brocaar/lora-gateway-bridge)
+[![CircleCI](https://circleci.com/gh/brocaar/lora-gateway-bridge.svg?style=svg)](https://circleci.com/gh/brocaar/lora-gateway-bridge)
 
 LoRa Gateway Bridge is a service which converts LoRa packet-forwarder protocols
 into a LoRa Server [common protocol](https://github.com/brocaar/loraserver/blob/master/api/gw/gw.proto) (JSON and Protobuf).
