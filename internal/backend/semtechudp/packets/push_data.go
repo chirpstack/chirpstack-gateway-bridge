@@ -79,10 +79,15 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 }
 
 // GetUplinkFrames returns a slice of gw.UplinkFrame.
-func (p PushDataPacket) GetUplinkFrames(FakeRxInfoTime bool) ([]gw.UplinkFrame, error) {
+func (p PushDataPacket) GetUplinkFrames(skipCRCCheck bool, FakeRxInfoTime bool) ([]gw.UplinkFrame, error) {
 	var frames []gw.UplinkFrame
 
 	for i := range p.Payload.RXPK {
+		// validate CRC
+		if p.Payload.RXPK[i].Stat != 1 && !skipCRCCheck {
+			continue
+		}
+
 		if len(p.Payload.RXPK[i].RSig) == 0 {
 			frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i], FakeRxInfoTime)
 			if err != nil {

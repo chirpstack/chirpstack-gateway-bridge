@@ -47,6 +47,7 @@ type Backend struct {
 	gateways       gateways
 	fakeRxTime     bool
 	configurations []pfConfiguration
+	skipCRCCheck   bool
 }
 
 // NewBackend creates a new backend.
@@ -73,7 +74,8 @@ func NewBackend(conf config.Config) (*Backend, error) {
 			connectChan:    make(chan lorawan.EUI64),
 			disconnectChan: make(chan lorawan.EUI64),
 		},
-		fakeRxTime: conf.Backend.SemtechUDP.FakeRxTime,
+		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
+		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,
 	}
 
 	for _, pfConf := range conf.Backend.SemtechUDP.Configuration {
@@ -454,7 +456,7 @@ func (b *Backend) handlePushData(up udpPacket) error {
 	}
 
 	// uplink frames
-	uplinkFrames, err := p.GetUplinkFrames(b.fakeRxTime)
+	uplinkFrames, err := p.GetUplinkFrames(b.skipCRCCheck, b.fakeRxTime)
 	if err != nil {
 		return errors.Wrap(err, "get uplink frames error")
 	}
