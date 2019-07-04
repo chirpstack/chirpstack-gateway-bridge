@@ -314,18 +314,38 @@ marshaler="protobuf"
     # work with Azure IoT Hub service.
     [integration.mqtt.auth.azure_iot_hub]
 
-    # Device connection string.
+    # Device connection string (symmetric key authentication).
     #
     # This connection string can be retrieved from the Azure IoT Hub device
-    # details.
+    # details when using the symmetric key authentication type.
     device_connection_string=""
 
-    # Token expiration.
+    # Token expiration (symmetric key authentication).
     #
     # LoRa Gateway Bridge will generate a SAS token with the given expiration.
     # After the token has expired, it will generate a new one and trigger a
-    # re-connect.
+    # re-connect (only for symmetric key authentication).
     sas_token_expiration="24h0m0s"
+
+    # Device ID (X.509 authentication).
+    #
+    # This will be automatically set when a device connection string is given.
+    # It must be set for X.509 authentication.
+    device_id=""
+
+    # IoT Hub hostname (X.509 authentication).
+    #
+    # This will be automatically set when a device connection string is given.
+    # It must be set for X.509 authentication.
+    # Example: iot-hub-name.azure-devices.net
+    hostname=""
+
+    # Client certificates (X.509 authentication).
+    #
+    # Configure the tls_cert (certificate file) and tls_key (private-key file)
+    # when the device is configured with X.509 authentication.
+    tls_cert=""
+    tls_key=""
 
 
 # Metrics configuration.

@@ -78,10 +78,12 @@ type Config struct {
 
 				AzureIoTHub struct {
 					DeviceConnectionString string        `mapstructure:"device_connection_string"`
-					DeviceID               string        `mapstructure:"-"`
-					Hostname               string        `mapstructure:"-"`
+					DeviceID               string        `mapstructure:"device_id"`
+					Hostname               string        `mapstructure:"hostname"`
 					DeviceKey              string        `mapstructure:"-"`
 					SASTokenExpiration     time.Duration `mapstructure:"sas_token_expiration"`
+					TLSCert                string        `mapstructure:"tls_cert"`
+					TLSKey                 string        `mapstructure:"tls_key"`
 				} `mapstructure:"azure_iot_hub"`
 			} `mapstructure:"auth"`
 		} `mapstructure:"mqtt"`

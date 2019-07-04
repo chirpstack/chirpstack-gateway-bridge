@@ -44,8 +44,17 @@ R9I4LtD+gdwyah617jzV/OeBHRnDJELqYzmp
 -----END CERTIFICATE-----
 `
 
+type authType int
+
+const (
+	authTypeSymmetric authType = iota
+	authTypeX509
+)
+
 // AzureIoTHubAuthentication implements the Azure IoT Hub authentication.
 type AzureIoTHubAuthentication struct {
+	authType authType
+
 	clientID           string
 	username           string
 	deviceKey          []byte
@@ -57,51 +66,66 @@ type AzureIoTHubAuthentication struct {
 
 // NewAzureIoTHubAuthentication creates an AzureIoTHubAuthentication.
 func NewAzureIoTHubAuthentication(c config.Config) (Authentication, error) {
+	var auth AzureIoTHubAuthentication
+
+	at := authTypeSymmetric
 	conf := c.Integration.MQTT.Auth.AzureIoTHub
 
 	certpool := x509.NewCertPool()
 	if !certpool.AppendCertsFromPEM([]byte(digiCertBaltimoreRootCA)) {
 		return nil, errors.New("append ca cert from pem error")
 	}
+	tlsConfig := tls.Config{
+		RootCAs: certpool,
+	}
 
-	if conf.DeviceConnectionString != "" {
-		kvMap, err := parseConnectionString(conf.DeviceConnectionString)
-		if err != nil {
-			return nil, errors.Wrap(err, "parse connection string error")
-		}
+	if conf.TLSCert != "" || conf.TLSKey != "" {
+		at = authTypeX509
+	}
 
-		for k, v := range kvMap {
-			switch k {
-			case "HostName":
-				conf.Hostname = v
-			case "DeviceId":
-				conf.DeviceID = v
-			case "SharedAccessKey":
-				conf.DeviceKey = v
+	if at == authTypeSymmetric {
+		if conf.DeviceConnectionString != "" {
+			kvMap, err := parseConnectionString(conf.DeviceConnectionString)
+			if err != nil {
+				return nil, errors.Wrap(err, "parse connection string error")
+			}
+
+			for k, v := range kvMap {
+				switch k {
+				case "HostName":
+					conf.Hostname = v
+				case "DeviceId":
+					conf.DeviceID = v
+				case "SharedAccessKey":
+					conf.DeviceKey = v
+				}
 			}
 		}
+
+		deviceKeyB, err := base64.StdEncoding.DecodeString(conf.DeviceKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "decode device key error")
+		}
+
+		auth.deviceKey = deviceKeyB
+		auth.sasTokenExpiration = conf.SASTokenExpiration
 	}
 
-	username := fmt.Sprintf("%s/%s",
-		conf.Hostname,
-		conf.DeviceID,
-	)
+	if at == authTypeX509 {
+		kp, err := tls.LoadX509KeyPair(conf.TLSCert, conf.TLSKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "load tls key-pair error")
+		}
 
-	deviceKeyB, err := base64.StdEncoding.DecodeString(conf.DeviceKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "decode device key error")
+		tlsConfig.Certificates = []tls.Certificate{kp}
 	}
 
-	return &AzureIoTHubAuthentication{
-		clientID:           conf.DeviceID,
-		username:           username,
-		deviceKey:          deviceKeyB,
-		hostname:           conf.Hostname,
-		sasTokenExpiration: conf.SASTokenExpiration,
-		tlsConfig: &tls.Config{
-			RootCAs: certpool,
-		},
-	}, nil
+	auth.clientID = conf.DeviceID
+	auth.hostname = conf.Hostname
+	auth.tlsConfig = &tlsConfig
+	auth.username = fmt.Sprintf("%s/%s", conf.Hostname, conf.DeviceID)
+
+	return &auth, nil
 }
 
 // Init applies the initial configuration.
@@ -110,22 +134,25 @@ func (a *AzureIoTHubAuthentication) Init(opts *mqtt.ClientOptions) error {
 	opts.AddBroker(broker)
 	opts.SetClientID(a.clientID)
 	opts.SetUsername(a.username)
+	opts.SetTLSConfig(a.tlsConfig)
 
 	return nil
 }
 
 // Update updates the authentication options.
 func (a *AzureIoTHubAuthentication) Update(opts *mqtt.ClientOptions) error {
-	resourceURI := fmt.Sprintf("%s/devices/%s",
-		a.hostname,
-		a.clientID,
-	)
-	token, err := createSASToken(resourceURI, a.deviceKey, a.sasTokenExpiration)
-	if err != nil {
-		return errors.Wrap(err, "create SAS token error")
-	}
+	if a.authType == authTypeSymmetric {
+		resourceURI := fmt.Sprintf("%s/devices/%s",
+			a.hostname,
+			a.clientID,
+		)
+		token, err := createSASToken(resourceURI, a.deviceKey, a.sasTokenExpiration)
+		if err != nil {
+			return errors.Wrap(err, "create SAS token error")
+		}
 
-	opts.SetPassword(token)
+		opts.SetPassword(token)
+	}
 
 	return nil
 }
