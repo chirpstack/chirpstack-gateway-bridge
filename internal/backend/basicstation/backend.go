@@ -112,9 +112,9 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		b.websocketWrap(b.handleRouterInfo, w, r)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		bsEventCounter("connect")
+		connectCounter().Inc()
 		b.websocketWrap(b.handleGateway, w, r)
-		bsEventCounter("disconnect")
+		disconnectCounter().Inc()
 	})
 
 	// using net.Listen makes it easier to test as we can bind to ":0" and
@@ -199,7 +199,7 @@ func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 	var gatewayID lorawan.EUI64
 	copy(gatewayID[:], df.TxInfo.GatewayId)
 
-	bsWebsocketSendCounter("dnmsg")
+	websocketSendCounter("dnmsg").Inc()
 	if err := b.sendToGateway(gatewayID, pl); err != nil {
 		return errors.Wrap(err, "send to gateway error")
 	}
@@ -218,7 +218,7 @@ func (b *Backend) ApplyConfiguration(gwConfig gw.GatewayConfiguration) error {
 	var gatewayID lorawan.EUI64
 	copy(gatewayID[:], gwConfig.GatewayId)
 
-	bsWebsocketSendCounter("router_config")
+	websocketSendCounter("router_config").Inc()
 	if err := b.sendToGateway(gatewayID, rc); err != nil {
 		return errors.Wrap(err, "send router config to gateway error")
 	}
@@ -235,7 +235,7 @@ func (b *Backend) Close() error {
 }
 
 func (b *Backend) handleRouterInfo(r *http.Request, c *websocket.Conn) {
-	bsWebsocketReceiveCounter("router_info")
+	websocketReceiveCounter("router_info").Inc()
 	var req structs.RouterInfoRequest
 
 	if err := c.ReadJSON(&req); err != nil {
@@ -331,7 +331,7 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 			continue
 		}
 
-		bsWebsocketReceiveCounter(string(msgType))
+		websocketReceiveCounter(string(msgType)).Inc()
 
 		// handle message-type
 		switch msgType {
@@ -524,7 +524,7 @@ func (b *Backend) websocketWrap(handler func(*http.Request, *websocket.Conn), w 
 
 	conn.SetReadDeadline(time.Now().Add(b.readTimeout))
 	conn.SetPongHandler(func(string) error {
-		bsWebsocketPingPongCounter("pong")
+		websocketPingPongCounter("pong").Inc()
 		conn.SetReadDeadline(time.Now().Add(b.readTimeout))
 		return nil
 	})
@@ -536,7 +536,7 @@ func (b *Backend) websocketWrap(handler func(*http.Request, *websocket.Conn), w 
 		for {
 			select {
 			case <-ticker.C:
-				bsWebsocketPingPongCounter("ping")
+				websocketPingPongCounter("ping").Inc()
 				conn.SetWriteDeadline(time.Now().Add(b.writeTimeout))
 				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					log.WithError(err).Error("backend/basicstation: send ping message error")

@@ -34,3 +34,27 @@ Basic Station. The flow for this is:
 
 * The Basic Station does not send RX / TX stats
 
+## Prometheus metrics
+
+The Semtech Basic Station packet-forwarder backend exposes several [Prometheus](https://prometheus.io/)
+metrics for monitoring.
+
+### backend_basicstation_websocket_ping_pong_count
+
+The number of WebSocket Ping/Pong requests sent and received (per event type).
+
+### backend_basicstation_websocket_received_count
+
+The number of WebSocket messages received by the backend (per msgtype).
+
+### backend_basicstation_websocket_sent_count
+
+The number of WebSocket messages sent by the backend (per msgtype).
+
+### backend_basicstation_gateway_connect_count
+
+The number of gateway connections received by the backend.
+
+### backend_basicstation_gateway_disconnect_count
+
+The number of gateways that disconnected from the backend.

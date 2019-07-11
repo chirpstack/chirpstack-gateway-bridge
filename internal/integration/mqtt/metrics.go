@@ -1,77 +1,53 @@
 package mqtt
 
 import (
-	"github.com/brocaar/lora-gateway-bridge/internal/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
-	mqttPublishTimer      func(string, func() error) error
-	mqttConnectTimer      func(func() error) error
-	mqttSubscribeTimer    func(func() error) error
-	mqttUnsubscribeTimer  func(func() error) error
-	mqttCommandCounter    func(string)
-	mqttConnectionCounter func(string)
+	pc = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "integration_mqtt_event_count",
+		Help: "The number of gateway events published by the MQTT integration (per event).",
+	}, []string{"event"})
+
+	cc = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "integration_mqtt_command_count",
+		Help: "The number of commands received by the MQTT integration (per command).",
+	}, []string{"command"})
+
+	mqttc = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "integration_mqtt_connect_count",
+		Help: "The number of times the integration connected to the MQTT broker.",
+	})
+
+	mqttd = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "integration_mqtt_disconnect_count",
+		Help: "The number of times the integration disconnected from the MQTT broker.",
+	})
+
+	mqttr = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "integration_mqtt_reconnect_count",
+		Help: "The number of times the integration reconnected to the MQTT broker (this also increments the disconnect and connect counters).",
+	})
 )
 
-func init() {
-	pt := metrics.MustRegisterNewTimerWithError(
-		"integration_mqtt_publish",
-		"Per event-type publish to MQTT broker duration tracking.",
-		[]string{"type"},
-	)
+func mqttEventCounter(e string) prometheus.Counter {
+	return pc.With(prometheus.Labels{"event": e})
+}
 
-	mc := metrics.MustRegisterNewTimerWithError(
-		"integration_mqtt_connect",
-		"Duration of connecting to the MQTT broker.",
-		[]string{},
-	)
+func mqttCommandCounter(c string) prometheus.Counter {
+	return cc.With(prometheus.Labels{"command": c})
+}
 
-	ms := metrics.MustRegisterNewTimerWithError(
-		"integration_mqtt_subscribe",
-		"Duration of subscribing to a MQTT topic.",
-		[]string{},
-	)
+func mqttConnectCounter() prometheus.Counter {
+	return mqttc
+}
 
-	mus := metrics.MustRegisterNewTimerWithError(
-		"integration_mqtt_unsubscribe",
-		"Duration of unsubscribing from a MQTT topic.",
-		[]string{},
-	)
+func mqttDisconnectCounter() prometheus.Counter {
+	return mqttd
+}
 
-	connC := metrics.MustRegisterNewCounter(
-		"integration_mqtt_connection",
-		"Connection event counter.",
-		[]string{"event"},
-	)
-
-	cc := metrics.MustRegisterNewCounter(
-		"integration_mqtt_command",
-		"Received command counter.",
-		[]string{"event"},
-	)
-
-	mqttPublishTimer = func(mType string, f func() error) error {
-		return pt(prometheus.Labels{"type": mType}, f)
-	}
-
-	mqttConnectTimer = func(f func() error) error {
-		return mc(prometheus.Labels{}, f)
-	}
-
-	mqttSubscribeTimer = func(f func() error) error {
-		return ms(prometheus.Labels{}, f)
-	}
-
-	mqttUnsubscribeTimer = func(f func() error) error {
-		return mus(prometheus.Labels{}, f)
-	}
-
-	mqttCommandCounter = func(event string) {
-		cc(prometheus.Labels{"event": event})
-	}
-
-	mqttConnectionCounter = func(event string) {
-		connC(prometheus.Labels{"event": event})
-	}
+func mqttReconnectCounter() prometheus.Counter {
+	return mqttr
 }

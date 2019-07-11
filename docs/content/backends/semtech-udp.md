@@ -65,3 +65,24 @@ This works as follow:
 For the above to work, you must configure the _Mandaged packet-forwarder configuration_
 section in the `lora-gateway-bridge.toml`.
 
+## Prometheus metrics
+
+The Semtech UDP packet-forwarder backend exposes several [Prometheus](https://prometheus.io/)
+metrics for monitoring.
+
+### backend_semtechudp_udp_sent_count
+
+The number of UDP packets sent by the backend (per packet_type).
+
+
+### backend_semtechudp_udp_received_count
+
+The number of UDP packets received by the backend (per packet_type).
+
+### backend_semtechudp_gateway_connect_count
+
+The number of gateway connections received by the backend.
+
+### backend_semtechudp_gateway_disconnect_count
+
+The number of gateways that disconnected from the backend.

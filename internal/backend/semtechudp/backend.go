@@ -194,8 +194,6 @@ func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
 // ApplyConfiguration applies the given configuration to the gateway
 // (packet-forwarder).
 func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
-	eventCounter("configuration")
-
 	var gatewayID lorawan.EUI64
 	copy(gatewayID[:], config.GatewayId)
 
@@ -317,7 +315,6 @@ func (b *Backend) sendPackets() error {
 			"protocol_version": p.data[0],
 		}).Debug("backend/semtechudp: sending udp packet to gateway")
 
-		udpWriteCounter(pt.String())
 		_, err = b.conn.WriteToUDP(p.data, p.addr)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -326,6 +323,8 @@ func (b *Backend) sendPackets() error {
 				"protocol_version": p.data[0],
 			}).WithError(err).Error("backend/semtechudp: write to udp error")
 		}
+
+		udpWriteCounter(pt.String()).Inc()
 	}
 	return nil
 }
@@ -348,7 +347,7 @@ func (b *Backend) handlePacket(up udpPacket) error {
 		"protocol_version": up.data[0],
 	}).Debug("backend/semtechudp: received udp packet from gateway")
 
-	udpReadCounter(pt.String())
+	udpReadCounter(pt.String()).Inc()
 
 	switch pt {
 	case packets.PushData:

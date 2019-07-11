@@ -175,14 +175,8 @@ func (b *Backend) subscribeGateway(gatewayID lorawan.EUI64) error {
 		"qos":   b.qos,
 	}).Info("integration/mqtt: subscribing to topic")
 
-	err := mqttSubscribeTimer(func() error {
-		if token := b.conn.Subscribe(topic.String(), b.qos, b.handleCommand); token.Wait() && token.Error() != nil {
-			return errors.Wrap(token.Error(), "subscribe topic error")
-		}
-		return nil
-	})
-	if err != nil {
-		return err
+	if token := b.conn.Subscribe(topic.String(), b.qos, b.handleCommand); token.Wait() && token.Error() != nil {
+		return errors.Wrap(token.Error(), "subscribe topic error")
 	}
 	return nil
 }
@@ -200,14 +194,8 @@ func (b *Backend) UnsubscribeGateway(gatewayID lorawan.EUI64) error {
 		"topic": topic.String(),
 	}).Info("integration/mqtt: unsubscribe topic")
 
-	err := mqttUnsubscribeTimer(func() error {
-		if token := b.conn.Unsubscribe(topic.String()); token.Wait() && token.Error() != nil {
-			return errors.Wrap(token.Error(), "unsubscribe topic error")
-		}
-		return nil
-	})
-	if err != nil {
-		return err
+	if token := b.conn.Unsubscribe(topic.String()); token.Wait() && token.Error() != nil {
+		return errors.Wrap(token.Error(), "unsubscribe topic error")
 	}
 
 	delete(b.gateways, gatewayID)
@@ -216,9 +204,8 @@ func (b *Backend) UnsubscribeGateway(gatewayID lorawan.EUI64) error {
 
 // PublishEvent publishes the given event.
 func (b *Backend) PublishEvent(gatewayID lorawan.EUI64, event string, v proto.Message) error {
-	return mqttPublishTimer(event, func() error {
-		return b.publish(gatewayID, event, v)
-	})
+	mqttEventCounter(event).Inc()
+	return b.publish(gatewayID, event, v)
 }
 
 func (b *Backend) connect() error {
@@ -230,13 +217,11 @@ func (b *Backend) connect() error {
 	}
 
 	b.conn = paho.NewClient(b.clientOpts)
+	if token := b.conn.Connect(); token.Wait() && token.Error() != nil {
+		return token.Error()
+	}
 
-	return mqttConnectTimer(func() error {
-		if token := b.conn.Connect(); token.Wait() && token.Error() != nil {
-			return token.Error()
-		}
-		return nil
-	})
+	return nil
 }
 
 // connectLoop blocks until the client is connected
@@ -253,7 +238,7 @@ func (b *Backend) connectLoop() {
 }
 
 func (b *Backend) disconnect() error {
-	mqttConnectionCounter("disconnect")
+	mqttDisconnectCounter().Inc()
 
 	b.Lock()
 	defer b.Unlock()
@@ -271,7 +256,7 @@ func (b *Backend) reconnectLoop() {
 			time.Sleep(b.auth.ReconnectAfter())
 			log.Info("mqtt: re-connect triggered")
 
-			mqttConnectionCounter("reconnect")
+			mqttReconnectCounter().Inc()
 
 			b.disconnect()
 			b.connectLoop()
@@ -280,7 +265,7 @@ func (b *Backend) reconnectLoop() {
 }
 
 func (b *Backend) onConnected(c paho.Client) {
-	mqttConnectionCounter("connected")
+	mqttConnectCounter().Inc()
 
 	b.RLock()
 	defer b.RUnlock()
@@ -301,7 +286,7 @@ func (b *Backend) onConnected(c paho.Client) {
 }
 
 func (b *Backend) onConnectionLost(c paho.Client, err error) {
-	mqttConnectionCounter("lost")
+	mqttDisconnectCounter().Inc()
 	log.WithError(err).Error("mqtt: connection error")
 	b.connectLoop()
 }
@@ -336,10 +321,10 @@ func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 
 func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
 	if strings.HasSuffix(msg.Topic(), "down") || strings.Contains(msg.Topic(), "command=down") {
-		mqttCommandCounter("down")
+		mqttCommandCounter("down").Inc()
 		b.handleDownlinkFrame(c, msg)
 	} else if strings.HasSuffix(msg.Topic(), "config") || strings.Contains(msg.Topic(), "command=config") {
-		mqttCommandCounter("config")
+		mqttCommandCounter("config").Inc()
 		b.handleGatewayConfiguration(c, msg)
 	} else {
 		log.WithFields(log.Fields{

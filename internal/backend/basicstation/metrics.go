@@ -2,55 +2,52 @@ package basicstation
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/brocaar/lora-gateway-bridge/internal/metrics"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
-	bsEventCounter             func(string)
-	bsWebsocketSendCounter     func(string)
-	bsWebsocketReceiveCounter  func(string)
-	bsWebsocketPingPongCounter func(string)
+	ppc = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "backend_basicstation_websocket_ping_pong_count",
+		Help: "The number of WebSocket Ping/Pong requests sent and received (per event type).",
+	}, []string{"type"})
+
+	wsr = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "backend_basicstation_websocket_received_count",
+		Help: "The number of WebSocket messages received by the backend (per msgtype).",
+	}, []string{"msgtype"})
+
+	wss = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "backend_basicstation_websocket_sent_count",
+		Help: "The number of WebSocket messages sent by the backend (per msgtype).",
+	}, []string{"msgtype"})
+
+	gwc = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "backend_basicstation_gateway_connect_count",
+		Help: "The number of gateway connections received by the backend.",
+	})
+
+	gwd = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "backend_basicstation_gateway_disconnect_count",
+		Help: "The number of gateways that disconnected from the backend.",
+	})
 )
 
-func init() {
-	ec := metrics.MustRegisterNewCounter(
-		"backend_basicstation_event",
-		"Per gateway event type counter.",
-		[]string{"event"},
-	)
+func websocketPingPongCounter(typ string) prometheus.Counter {
+	return ppc.With(prometheus.Labels{"type": typ})
+}
 
-	wsc := metrics.MustRegisterNewCounter(
-		"backend_basicstation_websocket_send",
-		"Per message-type websocket write counter.",
-		[]string{"msgtype"},
-	)
+func websocketReceiveCounter(msgtype string) prometheus.Counter {
+	return wsr.With(prometheus.Labels{"msgtype": msgtype})
+}
 
-	wrc := metrics.MustRegisterNewCounter(
-		"backend_basicstation_websocket_receive",
-		"Per message-type websocket receive counter.",
-		[]string{"msgtype"},
-	)
+func websocketSendCounter(msgtype string) prometheus.Counter {
+	return wss.With(prometheus.Labels{"msgtype": msgtype})
+}
 
-	ppc := metrics.MustRegisterNewCounter(
-		"backend_basicstation_websocket_ping_pong",
-		"Websocket Ping/Pong counter.",
-		[]string{"type"},
-	)
+func connectCounter() prometheus.Counter {
+	return gwc
+}
 
-	bsEventCounter = func(event string) {
-		ec(prometheus.Labels{"event": event})
-	}
-
-	bsWebsocketReceiveCounter = func(msgtype string) {
-		wsc(prometheus.Labels{"msgtype": msgtype})
-	}
-
-	bsWebsocketSendCounter = func(msgtype string) {
-		wrc(prometheus.Labels{"msgtype": msgtype})
-	}
-
-	bsWebsocketPingPongCounter = func(typ string) {
-		ppc(prometheus.Labels{"type": typ})
-	}
+func disconnectCounter() prometheus.Counter {
+	return gwd
 }

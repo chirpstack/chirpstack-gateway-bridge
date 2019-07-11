@@ -2,44 +2,43 @@ package semtechudp
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/brocaar/lora-gateway-bridge/internal/metrics"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
-	eventCounter    func(string)
-	udpWriteCounter func(string)
-	udpReadCounter  func(string)
+	uwc = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "backend_semtechudp_udp_sent_count",
+		Help: "The number of UDP packets sent by the backend (per packet_type).",
+	}, []string{"packet_type"})
+
+	urc = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "backend_semtechudp_udp_received_count",
+		Help: "The number of UDP packets received by the backend (per packet_type).",
+	}, []string{"packet_type"})
+
+	gwc = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "backend_semtechudp_gateway_connect_count",
+		Help: "The number of gateway connections received by the backend.",
+	})
+
+	gwd = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "backend_semtechudp_gateway_diconnect_count",
+		Help: "The number of gateways that disconnected from the backend.",
+	})
 )
 
-func init() {
-	ec := metrics.MustRegisterNewCounter(
-		"backend_semtechudp_event",
-		"Per gateway event type counter.",
-		[]string{"event"},
-	)
+func udpWriteCounter(pt string) prometheus.Counter {
+	return uwc.With(prometheus.Labels{"packet_type": pt})
+}
 
-	uwc := metrics.MustRegisterNewCounter(
-		"backend_semtechudp_udp_write",
-		"UDP packets written by packet type.",
-		[]string{"packet_type"},
-	)
+func udpReadCounter(pt string) prometheus.Counter {
+	return urc.With(prometheus.Labels{"packet_type": pt})
+}
 
-	urc := metrics.MustRegisterNewCounter(
-		"backend_semtechudp_udp_read",
-		"UDP packets read by packet type.",
-		[]string{"packet_type"},
-	)
+func connectCounter() prometheus.Counter {
+	return gwc
+}
 
-	eventCounter = func(event string) {
-		ec(prometheus.Labels{"event": event})
-	}
-
-	udpWriteCounter = func(pt string) {
-		uwc(prometheus.Labels{"packet_type": pt})
-	}
-
-	udpReadCounter = func(pt string) {
-		urc(prometheus.Labels{"packet_type": pt})
-	}
+func disconnectCounter() prometheus.Counter {
+	return gwd
 }
