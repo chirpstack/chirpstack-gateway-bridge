@@ -118,7 +118,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	}
 
 	b.clientOpts.SetProtocolVersion(4)
-	b.clientOpts.SetAutoReconnect(false)
+	b.clientOpts.SetAutoReconnect(true) // this is required for buffering messages in case offline!
 	b.clientOpts.SetOnConnectHandler(b.onConnected)
 	b.clientOpts.SetConnectionLostHandler(b.onConnectionLost)
 
@@ -288,7 +288,6 @@ func (b *Backend) onConnected(c paho.Client) {
 func (b *Backend) onConnectionLost(c paho.Client, err error) {
 	mqttDisconnectCounter().Inc()
 	log.WithError(err).Error("mqtt: connection error")
-	b.connectLoop()
 }
 
 func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
