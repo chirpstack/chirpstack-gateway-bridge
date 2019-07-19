@@ -121,6 +121,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	b.clientOpts.SetAutoReconnect(true) // this is required for buffering messages in case offline!
 	b.clientOpts.SetOnConnectHandler(b.onConnected)
 	b.clientOpts.SetConnectionLostHandler(b.onConnectionLost)
+	b.clientOpts.SetMaxReconnectInterval(conf.Integration.MQTT.MaxReconnectInterval)
 
 	if err = b.auth.Init(b.clientOpts); err != nil {
 		return nil, errors.Wrap(err, "mqtt: init authentication error")

@@ -54,10 +54,10 @@ func init() {
 
 	viper.SetDefault("integration.mqtt.event_topic_template", "gateway/{{ .GatewayID }}/event/{{ .EventType }}")
 	viper.SetDefault("integration.mqtt.command_topic_template", "gateway/{{ .GatewayID }}/command/#")
+	viper.SetDefault("integration.mqtt.max_reconnect_interval", 10*time.Minute)
 
 	viper.SetDefault("integration.mqtt.auth.generic.server", "tcp://127.0.0.1:1883")
 	viper.SetDefault("integration.mqtt.auth.generic.clean_session", true)
-	viper.SetDefault("integration.mqtt.auth.generic.max_reconnect_interval", 10*time.Minute)
 
 	viper.SetDefault("integration.mqtt.auth.gcp_cloud_iot_core.server", "ssl://mqtt.googleapis.com:8883")
 	viper.SetDefault("integration.mqtt.auth.gcp_cloud_iot_core.jwt_expiration", time.Hour*24)
