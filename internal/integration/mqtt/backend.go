@@ -304,6 +304,7 @@ func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
 	b.downlinkFrameChan <- downlinkFrame
 }
 
+// TODO: this feature is deprecated. Remove this in the next major release.
 func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 	log.WithFields(log.Fields{
 		"topic": msg.Topic(),

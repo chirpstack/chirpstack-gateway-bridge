@@ -207,7 +207,7 @@ func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
 	b.Unlock()
 
 	if pfConfig == nil {
-		return errGatewayDoesNotExist
+		return nil
 	}
 
 	return b.applyConfiguration(*pfConfig, config)

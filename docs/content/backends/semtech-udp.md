@@ -44,27 +44,6 @@ same LoRa Gateway Bridge instance.
 When the LoRa Gateway Bridge is deployed on the gateway, you will benefit from
 the MQTT authentication / authorization layer and optional TLS.
 
-## Packet-forwarder re-configuration over MQTT
-
-The Semtech UDP backend supports the re-configuration of the packet-forwarder
-over MQTT using the `config` [Commands]({{<ref "payloads/commands.md">}}).
-
-This works as follow:
-
-* The LoRa Gateway Bridge will periodically send `stats` [Events]({{<relref "payloads/events.md">}})
-  containing the current configuration version.
-* [LoRa Server](/loraserver/) processes these stats events and when a _Gateway Profile_
-  is associated with the gateway, it will compare the configuration version.
-* In case the _Gateway Profile_ version is newer, it will send a `config`
-  command to the LoRa Gateway Bridge.
-* LoRa Gateway Bridge will then read the `base_file`, update it and writes it
-  to the `output_file`.
-* It then restarts the packet-forwarder using the `restart_command` causing the
-  packet-forwarder to reload its configuration.
-
-For the above to work, you must configure the _Mandaged packet-forwarder configuration_
-section in the `lora-gateway-bridge.toml`.
-
 ## Prometheus metrics
 
 The Semtech UDP packet-forwarder backend exposes several [Prometheus](https://prometheus.io/)
