@@ -208,7 +208,7 @@ func (ts *BackendTestSuite) TestPushData() {
 		UplinkFrames  []gw.UplinkFrame
 	}{
 		{
-			Name: "stats",
+			Name: "stats with location",
 			GatewayPacket: packets.PushDataPacket{
 				ProtocolVersion: packets.ProtocolVersion2,
 				RandomToken:     1234,
@@ -216,9 +216,9 @@ func (ts *BackendTestSuite) TestPushData() {
 				Payload: packets.PushDataPayload{
 					Stat: &packets.Stat{
 						Time: packets.ExpandedTime(now.UTC()),
-						Lati: &latitude,
-						Long: &longitude,
-						Alti: &altitude,
+						Lati: latitude,
+						Long: longitude,
+						Alti: altitude,
 						RXNb: 1,
 						RXOK: 2,
 						RXFW: 3,
@@ -237,6 +237,33 @@ func (ts *BackendTestSuite) TestPushData() {
 					Altitude:  123,
 					Source:    common.LocationSource_GPS,
 				},
+				RxPacketsReceived:   1,
+				RxPacketsReceivedOk: 2,
+				TxPacketsReceived:   4,
+				TxPacketsEmitted:    5,
+			},
+		},
+		{
+			Name: "stats without location",
+			GatewayPacket: packets.PushDataPacket{
+				ProtocolVersion: packets.ProtocolVersion2,
+				RandomToken:     1234,
+				GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+				Payload: packets.PushDataPayload{
+					Stat: &packets.Stat{
+						Time: packets.ExpandedTime(now.UTC()),
+						RXNb: 1,
+						RXOK: 2,
+						RXFW: 3,
+						ACKR: 33.3,
+						DWNb: 4,
+						TXNb: 5,
+					},
+				},
+			},
+			Stats: &gw.GatewayStats{
+				GatewayId:           []byte{1, 2, 3, 4, 5, 6, 7, 8},
+				Time:                nowPB,
 				RxPacketsReceived:   1,
 				RxPacketsReceivedOk: 2,
 				TxPacketsReceived:   4,

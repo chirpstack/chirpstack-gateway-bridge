@@ -74,9 +74,9 @@ func TestGetGatewayStats(t *testing.T) {
 				Payload: PushDataPayload{
 					Stat: &Stat{
 						Time: ecNow,
-						Long: &long,
-						Lati: &lat,
-						Alti: &alti,
+						Long: long,
+						Lati: lat,
+						Alti: alti,
 						RXNb: 1,
 						RXOK: 2,
 						RXFW: 3,
