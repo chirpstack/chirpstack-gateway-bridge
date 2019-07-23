@@ -5,10 +5,52 @@ menu:
         parent: overview
         weight: 2
 toc: false
-description: Lists the changes per LoRa App Server release, including steps how to upgrade.
+description: Lists the changes per LoRa Gateway Bridge release, including steps how to upgrade.
 ---
 
 # Changelog
+
+## v3.1.0
+
+### Features
+
+#### Azure IoT Hub X.509
+
+X.509 certificate authentication is added to the `azure_iot_hub` MQTT
+authentication option.
+
+### Improvements
+
+#### Prometheus metrics
+
+The Prometheus metrics have been improved for consistency.
+Documentation has been updated to document the metrics that are available.
+
+### Max reconnect interval
+
+The MQTT max. reconnect interval is now a global MQTT configuration and can
+be used regardless of the MQTT authentication type.
+
+### Lat / lon / alt = 0
+
+When the latitude, longitude and altitude are all three `0`, then LoRa Gateway
+Bridge assumes there is no GPS module / location available and it will not
+expose a location in the stats message.
+
+### Bugfixes
+
+* The CRC check has been fixed for the Semtech UDP backend.
+* Fix message buffering for QoS > 0 (on manual reconnect, the Paho library discards messages when offline).
+
+### Deprecated
+
+#### Managed gateway configuration
+
+Documentation (and configuration) references to the managed
+packet-forwarder configuration have been removed. The feature itself is still
+available and will stay available until the next major release.
+Please refer to [this forum discussion](https://forum.loraserver.io/t/who-is-using-the-gateway-profile-how-are-you-using-it/5091)
+for more background.
 
 ## v3.0.1
 
