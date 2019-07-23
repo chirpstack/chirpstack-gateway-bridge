@@ -26,12 +26,12 @@ authentication option.
 The Prometheus metrics have been improved for consistency.
 Documentation has been updated to document the metrics that are available.
 
-### Max reconnect interval
+#### Max reconnect interval
 
 The MQTT max. reconnect interval is now a global MQTT configuration and can
 be used regardless of the MQTT authentication type.
 
-### Lat / lon / alt = 0
+#### Lat / lon / alt = 0
 
 When the latitude, longitude and altitude are all three `0`, then LoRa Gateway
 Bridge assumes there is no GPS module / location available and it will not
