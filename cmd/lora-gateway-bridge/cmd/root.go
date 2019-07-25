@@ -108,6 +108,12 @@ func initConfig() {
 	if err := viper.Unmarshal(&config.C); err != nil {
 		log.WithError(err).Fatal("unmarshal config error")
 	}
+
+	// backwards compatibility when BasicStation filters have been configured.
+	if config.C.Backend.Type == "basic_station" && (len(config.C.Backend.BasicStation.Filters.NetIDs) != 0 || len(config.C.Backend.BasicStation.Filters.JoinEUIs) != 0) {
+		config.C.Filters.NetIDs = config.C.Backend.BasicStation.Filters.NetIDs
+		config.C.Filters.JoinEUIs = config.C.Backend.BasicStation.Filters.JoinEUIs
+	}
 }
 
 func viperBindEnvs(iface interface{}, parts ...string) {

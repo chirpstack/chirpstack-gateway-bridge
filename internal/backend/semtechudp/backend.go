@@ -14,6 +14,7 @@ import (
 
 	"github.com/brocaar/lora-gateway-bridge/internal/backend/semtechudp/packets"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
+	"github.com/brocaar/lora-gateway-bridge/internal/filters"
 	"github.com/brocaar/loraserver/api/gw"
 	"github.com/brocaar/lorawan"
 )
@@ -478,7 +479,13 @@ func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats gw.GatewayStats) {
 
 func (b *Backend) handleUplinkFrames(uplinkFrames []gw.UplinkFrame) error {
 	for i := range uplinkFrames {
-		b.uplinkFrameChan <- uplinkFrames[i]
+		if filters.MatchFilters(uplinkFrames[i].PhyPayload) {
+			b.uplinkFrameChan <- uplinkFrames[i]
+		} else {
+			log.WithFields(log.Fields{
+				"data_base64": base64.StdEncoding.EncodeToString(uplinkFrames[i].PhyPayload),
+			}).Debug("backend/semtechudp: frame dropped because of configured filters")
+		}
 	}
 
 	return nil

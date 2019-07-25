@@ -81,7 +81,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		frequencyMax: conf.Backend.BasicStation.FrequencyMax,
 	}
 
-	for _, n := range conf.Backend.BasicStation.Filters.NetIDs {
+	for _, n := range conf.Filters.NetIDs {
 		var netID lorawan.NetID
 		if err := netID.UnmarshalText([]byte(n)); err != nil {
 			return nil, errors.Wrap(err, "unmarshal netid error")
@@ -89,7 +89,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		b.netIDs = append(b.netIDs, netID)
 	}
 
-	for _, set := range conf.Backend.BasicStation.Filters.JoinEUIs {
+	for _, set := range conf.Filters.JoinEUIs {
 		var joinEUIs [2]lorawan.EUI64
 		for i, s := range set {
 			var eui lorawan.EUI64

@@ -15,6 +15,42 @@ const configTemplate = `[general]
 log_level = {{ .General.LogLevel }}
 
 
+# Filters.
+#
+# These can be used to filter LoRaWAN frames to reduce bandwith usage between
+# the gateway and LoRa Gateway Bride. Depending the used backend, filtering
+# will be performed by the Packet Forwarder or LoRa Gateway Bridge.
+[filters]
+
+# NetIDs filters.
+#
+# The configured NetIDs will be used to filter uplink data frames.
+# When left blank, no filtering will be performed on NetIDs.
+#
+# Example:
+# net_ids=[
+#   "000000",
+#   "000001",
+# ]
+net_ids=[{{ range $index, $elm := .Filters.NetIDs }}
+  "{{ $elm }}",{{ end }}
+]
+
+# JoinEUI filters.
+#
+# The configured JoinEUI ranges will be used to filter join-requests.
+# When left blank, no filtering will be performed on JoinEUIs.
+#
+# Example:
+# join_euis=[
+#   ["0000000000000000", "00000000000000ff"],
+#   ["000000000000ff00", "000000000000ffff"],
+# ]
+join_euis=[{{ range $index, $elm := .Filters.JoinEUIs }}
+  ["{{ index $elm 0 }}", "{{ index $elm 1 }}"],{{ end }}
+]
+
+
 # Gateway backend configuration.
 [backend]
 
@@ -98,19 +134,6 @@ type="{{ .Backend.Type }}"
 
   # Maximum frequency (Hz).
   frequency_max={{ .Backend.BasicStation.FrequencyMax }}
-
-    # Filters.
-    [backend.basic_station.filters]
-
-    # NetIDs to filter on when receiving uplinks.
-    net_ids=[{{ range $index, $elm := .Backend.BasicStation.Filters.NetIDs }}
-      "{{ $elm }}",{{ end }}
-    ]
-
-    # JoinEUIs to filter on when receiving join-requests.
-    join_euis=[{{ range $index, $elm := .Backend.BasicStation.Filters.JoinEUIs }}
-      ["{{ index $elm 0 }}", "{{ index $elm 1 }}"],{{ end }}
-    ]
 
 
 # Integration configuration.

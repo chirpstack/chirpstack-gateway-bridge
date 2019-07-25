@@ -11,6 +11,7 @@ import (
 
 	"github.com/brocaar/lora-gateway-bridge/internal/backend"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
+	"github.com/brocaar/lora-gateway-bridge/internal/filters"
 	"github.com/brocaar/lora-gateway-bridge/internal/forwarder"
 	"github.com/brocaar/lora-gateway-bridge/internal/integration"
 	"github.com/brocaar/lora-gateway-bridge/internal/metadata"
@@ -22,6 +23,7 @@ func run(cmd *cobra.Command, args []string) error {
 	tasks := []func() error{
 		setLogLevel,
 		printStartMessage,
+		setupFilters,
 		setupBackend,
 		setupIntegration,
 		setupForwarder,
@@ -87,6 +89,13 @@ func setupMetrics() error {
 func setupMetaData() error {
 	if err := metadata.Setup(config.C); err != nil {
 		return errors.Wrap(err, "setup meta-data error")
+	}
+	return nil
+}
+
+func setupFilters() error {
+	if err := filters.Setup(config.C); err != nil {
+		return errors.Wrap(err, "setup filters error")
 	}
 	return nil
 }

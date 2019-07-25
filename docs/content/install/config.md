@@ -67,6 +67,40 @@ Example configuration file:
 log_level = 4
 
 
+# Filters.
+#
+# These can be used to filter LoRaWAN frames to reduce bandwith usage between
+# the gateway and LoRa Gateway Bride. Depending the used backend, filtering
+# will be performed by the Packet Forwarder or LoRa Gateway Bridge.
+[filters]
+
+# NetIDs filters.
+#
+# The configured NetIDs will be used to filter uplink data frames.
+# When left blank, no filtering will be performed on NetIDs.
+#
+# Example:
+# net_ids=[
+#   "000000",
+#   "000001",
+# ]
+net_ids=[
+]
+
+# JoinEUI filters.
+#
+# The configured JoinEUI ranges will be used to filter join-requests.
+# When left blank, no filtering will be performed on JoinEUIs.
+#
+# Example:
+# join_euis=[
+#   ["0000000000000000", "00000000000000ff"],
+#   ["000000000000ff00", "000000000000ffff"],
+# ]
+join_euis=[
+]
+
+
 # Gateway backend configuration.
 [backend]
 
@@ -144,19 +178,6 @@ type="semtech_udp"
 
   # Maximum frequency (Hz).
   frequency_max=870000000
-
-    # Filters.
-    [backend.basic_station.filters]
-
-    # NetIDs to filter on when receiving uplinks.
-    net_ids=[
-      "000000",
-    ]
-
-    # JoinEUIs to filter on when receiving join-requests.
-    join_euis=[
-      ["0000000000000000", "ffffffffffffffff"],
-    ]
 
 
 # Integration configuration.

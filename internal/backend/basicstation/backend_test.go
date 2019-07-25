@@ -37,8 +37,8 @@ func (ts *BackendTestSuite) SetupTest() {
 	var conf config.Config
 	conf.Backend.Type = "basic_station"
 	conf.Backend.BasicStation.Bind = "127.0.0.1:0"
-	conf.Backend.BasicStation.Filters.NetIDs = []string{"010203"}
-	conf.Backend.BasicStation.Filters.JoinEUIs = [][2]string{{"0000000000000000", "0102030405060708"}}
+	conf.Filters.NetIDs = []string{"010203"}
+	conf.Filters.JoinEUIs = [][2]string{{"0000000000000000", "0102030405060708"}}
 	conf.Backend.BasicStation.Region = "EU868"
 	conf.Backend.BasicStation.FrequencyMin = 867000000
 	conf.Backend.BasicStation.FrequencyMax = 869000000

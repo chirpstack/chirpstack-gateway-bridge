@@ -10,6 +10,11 @@ type Config struct {
 		LogLevel int `mapstructure:"log_level"`
 	}
 
+	Filters struct {
+		NetIDs   []string    `mapstructure:"net_ids"`
+		JoinEUIs [][2]string `mapstructure:"join_euis"`
+	} `mapstructure:"filters"`
+
 	Backend struct {
 		Type string `mapstructure:"type"`
 
@@ -33,7 +38,8 @@ type Config struct {
 			PingInterval time.Duration `mapstructure:"ping_interval"`
 			ReadTimeout  time.Duration `mapstructure:"read_timeout"`
 			WriteTimeout time.Duration `mapstructure:"write_timeout"`
-			Filters      struct {
+			// TODO: remove Filters in the next major release, use global filters instead
+			Filters struct {
 				NetIDs   []string    `mapstructure:"net_ids"`
 				JoinEUIs [][2]string `mapstructure:"join_euis"`
 			} `mapstructure:"filters"`
