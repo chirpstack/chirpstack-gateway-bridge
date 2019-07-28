@@ -16,20 +16,12 @@ menu:
 After completing this steps, you have a Multitech Conduit running both the
 packet-forwarder and LoRa Gateway bridge. The packet-forwarder will forwards
 the UDP data to `localhost:1700` and the LoRa Gateway Bridge will forward
-this data as JSON over MQTT to a MQTT broker. See below:
+this data over MQTT to a MQTT broker.
 
 There are two different Multitech Conduit firmware versions: mLinux and AEP.
 The AEP version comes with a web-interface and IBM Node-RED pre-installed.
 The mLinux version provides an open Linux development environment and is
 recommended when complete (firmware) control is preferred.
-
-If you don't know the firmware version, here are a couple of ways to tell
-them apart:
-
-1. When logging in via the serial port behind the Multitech logo cover, they
-   display the type of box they are.
-2. The AEP model ships with the default login/password as admin/admin.  The 
-   mLinux version uses root/root.
 
 Please refer to [http://www.multitech.net/developer/products/multiconnect-conduit-platform/](http://www.multitech.net/developer/products/multiconnect-conduit-platform/)
 for more documentation on on the Multitech Conduit.
@@ -42,14 +34,20 @@ the AEP firmware.
 
 Before continuing, you'll want to obtain the IP address of the Conduit.  This can 
 be done using a serial connection from a computer using a USB-to-microUSB cable,
-connecting to the plug behind the Multitech logo placard.  Plug the device into 
+connecting to the plug behind the Multitech logo placard. Plug the device into 
 your network, provide power, and let it boot until the "STATUS" light is 
 blinking in a heartbeat pattern.  Connect to the device via a serial terminal 
-program.  Once logged in, issue the command "ifconfig" to get the IP address of 
+program. Example (where `/dev/ttyACM0` should equal to the serial interface):
+
+{{<highlight bash>}}
+screen /dev/ttyACM0 115200
+{{</highlight>}}
+
+Once logged in, issue the command "ifconfig" to get the IP address of 
 the eth0 connection.  Note that if the IP address is `192.168.2.1`, the device is
 likely configured with a static IP.  In this case, edit the file 
 `/etc/network/interfaces`, change the line that says, `iface eth0 inet static` to 
-`iface eth0 inet dhcp`, and comment out the lines specifying the IP Address and 
+`iface eth0 inet dhcp`, and comment out the lines specifying the IP address and 
 netmask by adding a `#` at the beginning of each line:
 
 {{<highlight text>}}
@@ -83,8 +81,8 @@ Example commands for upgrading / migrating:
 {{<highlight bash>}}
 mkdir /var/volatile/flash-upgrade
 cd /var/volatile/flash-upgrade
-wget -O uImage.bin http://www.multitech.net/mlinux/images/mtcdt/4.0.1/uImage--3.12.70-r20.2-mtcdt-20180620182056.bin
-wget -O rootfs.jffs2 http://www.multitech.net/mlinux/images/mtcdt/4.0.1/mlinux-base-image-mtcdt-20180620182056.rootfs.jffs2
+wget -O uImage.bin http://www.multitech.net/mlinux/images/mtcdt/5.0.0/uImage--4.9.87-r9.2-mtcdt-20190618233259.bin
+wget -O rootfs.jffs2 http://www.multitech.net/mlinux/images/mtcdt/5.0.0/mlinux-base-image-mtcdt-20190618233259.rootfs.jffs2
 touch /var/volatile/do_flash_upgrade
 reboot
 {{< /highlight >}}
@@ -101,16 +99,16 @@ opkg update
 
 2. Download the latest `lora-gateway-bridge` `.ipk` package from:
    [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
-   Example (assuming you want to install `lora-gateway-bridge_3.0.1-r1_arm926ejste.ipk`):
+   Example (assuming you want to install `lora-gateway-bridge_3.1.0-r1_arm926ejste.ipk`):
    {{<highlight bash>}}
-   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_3.0.1-r1_arm926ejste.ipk
+   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_3.1.0-r1_arm926ejste.ipk
    {{< /highlight >}}
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
    {{<highlight bash>}}
-   opkg install lora-gateway-bridge_3.0.1-r1_arm926ejste.ipk
+   opkg install lora-gateway-bridge_3.1.0-r1_arm926ejste.ipk
    {{< /highlight >}}
 
 4. Update the MQTT connection details so that LoRa Gateway Bridge is able to
