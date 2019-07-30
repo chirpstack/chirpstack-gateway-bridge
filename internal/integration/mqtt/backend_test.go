@@ -193,6 +193,29 @@ func (ts *MQTTBackendTestSuite) TestGatewayConfigHandler() {
 	assert.Equal(config, receivedConfig)
 }
 
+func (ts *MQTTBackendTestSuite) TestGatewayCommandExecRequest() {
+	assert := require.New(ts.T())
+
+	execReq := gw.GatewayCommandExecRequest{
+		GatewayId: ts.gatewayID[:],
+		Token:     []byte{0x01, 0x02, 0x03, 0x04},
+		Command:   "reboot",
+		Environment: map[string]string{
+			"FOO": "bar",
+		},
+	}
+
+	b, err := ts.backend.marshal(&execReq)
+	assert.NoError(err)
+
+	token := ts.mqttClient.Publish("gateway/0807060504030201/command/exec", 0, false, b)
+	token.Wait()
+	assert.NoError(token.Error())
+
+	receivedExecReq := <-ts.backend.GetGatewayCommandExecRequestChan()
+	assert.Equal(execReq, receivedExecReq)
+}
+
 func TestMQTTBackend(t *testing.T) {
 	suite.Run(t, new(MQTTBackendTestSuite))
 }

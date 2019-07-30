@@ -24,13 +24,14 @@ import (
 type Backend struct {
 	sync.RWMutex
 
-	auth                     auth.Authentication
-	conn                     paho.Client
-	closed                   bool
-	clientOpts               *paho.ClientOptions
-	downlinkFrameChan        chan gw.DownlinkFrame
-	gatewayConfigurationChan chan gw.GatewayConfiguration
-	gateways                 map[lorawan.EUI64]struct{}
+	auth                          auth.Authentication
+	conn                          paho.Client
+	closed                        bool
+	clientOpts                    *paho.ClientOptions
+	downlinkFrameChan             chan gw.DownlinkFrame
+	gatewayConfigurationChan      chan gw.GatewayConfiguration
+	gatewayCommandExecRequestChan chan gw.GatewayCommandExecRequest
+	gateways                      map[lorawan.EUI64]struct{}
 
 	qos                  uint8
 	eventTopicTemplate   *template.Template
@@ -45,11 +46,12 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	var err error
 
 	b := Backend{
-		qos:                      conf.Integration.MQTT.Auth.Generic.QOS,
-		clientOpts:               paho.NewClientOptions(),
-		downlinkFrameChan:        make(chan gw.DownlinkFrame),
-		gatewayConfigurationChan: make(chan gw.GatewayConfiguration),
-		gateways:                 make(map[lorawan.EUI64]struct{}),
+		qos:                           conf.Integration.MQTT.Auth.Generic.QOS,
+		clientOpts:                    paho.NewClientOptions(),
+		downlinkFrameChan:             make(chan gw.DownlinkFrame),
+		gatewayConfigurationChan:      make(chan gw.GatewayConfiguration),
+		gatewayCommandExecRequestChan: make(chan gw.GatewayCommandExecRequest),
+		gateways:                      make(map[lorawan.EUI64]struct{}),
 	}
 
 	switch conf.Integration.MQTT.Auth.Type {
@@ -151,6 +153,11 @@ func (b *Backend) GetDownlinkFrameChan() chan gw.DownlinkFrame {
 // GetGatewayConfigurationChan returns the gateway configuration channel.
 func (b *Backend) GetGatewayConfigurationChan() chan gw.GatewayConfiguration {
 	return b.gatewayConfigurationChan
+}
+
+// GetGatewayCommandExecRequestChan() returns the channel for gateway command execution.
+func (b *Backend) GetGatewayCommandExecRequestChan() chan gw.GatewayCommandExecRequest {
+	return b.gatewayCommandExecRequestChan
 }
 
 // SubscribeGateway subscribes a gateway to its topics.
@@ -320,6 +327,20 @@ func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 	b.gatewayConfigurationChan <- gatewayConfig
 }
 
+func (b *Backend) handleGatewayCommandExecRequest(c paho.Client, msg paho.Message) {
+	log.WithFields(log.Fields{
+		"topic": msg.Topic(),
+	}).Info("integration/mqtt: gateway command execution request received")
+
+	var gatewayCommandExecRequest gw.GatewayCommandExecRequest
+	if err := b.unmarshal(msg.Payload(), &gatewayCommandExecRequest); err != nil {
+		log.WithError(err).Error("integration/mqtt: unmarshal gateway command exeqution request error")
+		return
+	}
+
+	b.gatewayCommandExecRequestChan <- gatewayCommandExecRequest
+}
+
 func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
 	if strings.HasSuffix(msg.Topic(), "down") || strings.Contains(msg.Topic(), "command=down") {
 		mqttCommandCounter("down").Inc()
@@ -327,6 +348,8 @@ func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
 	} else if strings.HasSuffix(msg.Topic(), "config") || strings.Contains(msg.Topic(), "command=config") {
 		mqttCommandCounter("config").Inc()
 		b.handleGatewayConfiguration(c, msg)
+	} else if strings.HasSuffix(msg.Topic(), "exec") || strings.Contains(msg.Topic(), "command=exec") {
+		b.handleGatewayCommandExecRequest(c, msg)
 	} else {
 		log.WithFields(log.Fields{
 			"topic": msg.Topic(),

@@ -118,3 +118,23 @@ Possible error values are:
 
 This message is defined by the `DownlinkTXAck` Protobuf message.
 
+## `exec` - Command execution response
+
+The `exec` event is sent back after an `exec` command and contains the
+execution output (or possible error).
+
+### JSON
+
+{{<highlight json>}}
+{
+    "gatewayID": "cnb/AC4GLBg=",
+    "token": "[BASE64 ENCODED BLOB]",
+    "stdout": "[BASE64 ENCODED BLOB]",
+    "stderr": "[BASE64 ENCODED BLOB]",
+    "error": "optional error message"
+}
+{{< /highlight >}}
+
+### Protobuf
+
+This message is defined by the `GatewayCommandExecResponse` Protobuf message.

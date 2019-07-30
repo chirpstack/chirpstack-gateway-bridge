@@ -386,6 +386,17 @@ marshaler="protobuf"
   [meta_data.dynamic.commands]
   # Example:
   # temperature="/opt/gateway-temperature/gateway-temperature.sh"
+
+
+# Executable commands.
+#
+# The configured commands can be triggered by sending a message to the
+# LoRa Gateway Bridge.
+[commands]
+  # Example:
+  # [commands.commands.reboot]
+  # max_execution_duration="1s"
+  # command="/usr/bin/reboot"
 {{</highlight>}}
 
 ## Environment variables

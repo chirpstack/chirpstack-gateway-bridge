@@ -2,7 +2,6 @@ package metadata
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"strings"
 	"sync"
@@ -12,15 +11,16 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/brocaar/lora-gateway-bridge/internal/commands"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
 )
 
 var (
 	mux sync.RWMutex
 
-	static   map[string]string
-	commands map[string]string
-	cached   map[string]string
+	static map[string]string
+	cmnds  map[string]string
+	cached map[string]string
 
 	interval     time.Duration
 	maxExecution time.Duration
@@ -32,7 +32,7 @@ func Setup(conf config.Config) error {
 	defer mux.Unlock()
 
 	static = conf.MetaData.Static
-	commands = conf.MetaData.Dynamic.Commands
+	cmnds = conf.MetaData.Dynamic.Commands
 
 	interval = conf.MetaData.Dynamic.ExecutionInterval
 	maxExecution = conf.MetaData.Dynamic.MaxExecutionDuration
@@ -61,7 +61,7 @@ func runCommands() {
 		newKV[k] = v
 	}
 
-	for k, cmd := range commands {
+	for k, cmd := range cmnds {
 		out, err := runCommand(cmd)
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
@@ -80,7 +80,7 @@ func runCommands() {
 }
 
 func runCommand(cmdStr string) (string, error) {
-	cmdArgs, err := parseCommandLine(cmdStr)
+	cmdArgs, err := commands.ParseCommandLine(cmdStr)
 	if err != nil {
 		return "", errors.Wrap(err, "parse command error")
 	}
@@ -102,70 +102,4 @@ func runCommand(cmdStr string) (string, error) {
 	}
 
 	return strings.TrimRight(string(out), "\n\r"), nil
-}
-
-// source: https://stackoverflow.com/questions/34118732/parse-a-command-line-string-into-flags-and-arguments-in-golang
-func parseCommandLine(command string) ([]string, error) {
-	var args []string
-	state := "start"
-	current := ""
-	quote := "\""
-	escapeNext := true
-	for i := 0; i < len(command); i++ {
-		c := command[i]
-
-		if state == "quotes" {
-			if string(c) != quote {
-				current += string(c)
-			} else {
-				args = append(args, current)
-				current = ""
-				state = "start"
-			}
-			continue
-		}
-
-		if escapeNext {
-			current += string(c)
-			escapeNext = false
-			continue
-		}
-
-		if c == '\\' {
-			escapeNext = true
-			continue
-		}
-
-		if c == '"' || c == '\'' {
-			state = "quotes"
-			quote = string(c)
-			continue
-		}
-
-		if state == "arg" {
-			if c == ' ' || c == '\t' {
-				args = append(args, current)
-				current = ""
-				state = "start"
-			} else {
-				current += string(c)
-			}
-			continue
-		}
-
-		if c != ' ' && c != '\t' {
-			state = "arg"
-			current += string(c)
-		}
-	}
-
-	if state == "quotes" {
-		return []string{}, errors.New(fmt.Sprintf("Unclosed quote in command line: %s", command))
-	}
-
-	if current != "" {
-		args = append(args, current)
-	}
-
-	return args, nil
 }

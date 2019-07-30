@@ -347,6 +347,21 @@ marshaler="{{ .Integration.Marshaler }}"
   {{ range $k, $v := .MetaData.Dynamic.Commands }}
   {{ $k }}="{{ $v }}"
   {{ end }}
+
+# Executable commands.
+#
+# The configured commands can be triggered by sending a message to the
+# LoRa Gateway Bridge.
+[commands]
+  # Example:
+  # [commands.commands.reboot]
+  # max_execution_duration="1s"
+  # command="/usr/bin/reboot"
+{{ range $k, $v := .Commands.Commands }}
+  [commands.commands.{{ $k }}]
+  max_execution_duration="{{ $v.MaxExecutionDuration }}"
+  command="{{ $v.Command }}"
+{{ end }}
 `
 
 var configCmd = &cobra.Command{

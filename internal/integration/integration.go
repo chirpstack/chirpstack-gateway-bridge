@@ -50,6 +50,9 @@ type Integration interface {
 	// GetGatewayConfigurationChan returns the channel for gateway configuration.
 	GetGatewayConfigurationChan() chan gw.GatewayConfiguration
 
+	// GetGatewayCommandExecRequestChan() returns the channel for gateway command execution.
+	GetGatewayCommandExecRequestChan() chan gw.GatewayCommandExecRequest
+
 	// Close closes the integration.
 	Close() error
 }

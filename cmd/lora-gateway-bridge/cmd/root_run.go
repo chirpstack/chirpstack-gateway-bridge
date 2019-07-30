@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/brocaar/lora-gateway-bridge/internal/backend"
+	"github.com/brocaar/lora-gateway-bridge/internal/commands"
 	"github.com/brocaar/lora-gateway-bridge/internal/config"
 	"github.com/brocaar/lora-gateway-bridge/internal/filters"
 	"github.com/brocaar/lora-gateway-bridge/internal/forwarder"
@@ -29,6 +30,7 @@ func run(cmd *cobra.Command, args []string) error {
 		setupForwarder,
 		setupMetrics,
 		setupMetaData,
+		setupCommands,
 	}
 
 	for _, t := range tasks {
@@ -96,6 +98,13 @@ func setupMetaData() error {
 func setupFilters() error {
 	if err := filters.Setup(config.C); err != nil {
 		return errors.Wrap(err, "setup filters error")
+	}
+	return nil
+}
+
+func setupCommands() error {
+	if err := commands.Setup(config.C); err != nil {
+		return errors.Wrap(err, "setup commands error")
 	}
 	return nil
 }

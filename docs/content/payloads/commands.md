@@ -110,3 +110,26 @@ It holds the gateway internal context (e.g. internal timing information).
 
 This message is defined by the `DownlinkFrame` Protobuf message.
 
+## `exec` - Command execution request
+
+This will request the execution of a command by the LoRa Gateway Bridge. Please
+note that these commands must be pre-configured in the [Configuration file]({{<ref "install/config.md">}}).
+
+### JSON
+
+{{<highlight json>}}
+{
+    "gatewayID": "cnb/AC4GLBg=",
+    "command": "reboot",
+    "token": "[BASE64 ENCODED BLOB]",
+    "stdin": "[OPTIONAL BASE64 ENCODED BLOB]",
+    "environment": {
+        "ENV_VAR_1": "value1",
+        "ENV_VAR_2": "value2"
+    }
+}
+{{< /highlight >}}
+
+### Protobuf
+
+This message is defined by the `GatewayCommandExecRequest` Protobuf message.

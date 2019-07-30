@@ -8,30 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseCommandLine(t *testing.T) {
-	assert := require.New(t)
-
-	tests := []struct {
-		In    string
-		Out   []string
-		Error error
-	}{
-		{
-			In:  "/path/to/bin arg1 arg2 arg3",
-			Out: []string{"/path/to/bin", "arg1", "arg2", "arg3"},
-		},
-	}
-
-	for _, tst := range tests {
-		out, err := parseCommandLine(tst.In)
-		assert.Equal(tst.Error, err)
-		if err != nil {
-			continue
-		}
-		assert.Equal(tst.Out, out)
-	}
-}
-
 func TestRunCommand(t *testing.T) {
 	assert := require.New(t)
 
@@ -149,7 +125,7 @@ func TestMetaData(t *testing.T) {
 			assert := require.New(t)
 
 			static = tst.Static
-			commands = tst.Commands
+			cmnds = tst.Commands
 
 			runCommands()
 

@@ -110,6 +110,13 @@ type Config struct {
 			Commands             map[string]string `mapstructure:"commands"`
 		} `mapstructure:"dynamic"`
 	} `mapstructure:"meta_data"`
+
+	Commands struct {
+		Commands map[string]struct {
+			MaxExecutionDuration time.Duration `mapstructure:"max_execution_duration"`
+			Command              string        `mapstructure:"command"`
+		} `mapstructure:"commands"`
+	} `mapstructure:"commands"`
 }
 
 // C holds the global configuration.
