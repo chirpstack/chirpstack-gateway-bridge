@@ -10,6 +10,22 @@ description: Lists the changes per LoRa Gateway Bridge release, including steps 
 
 # Changelog
 
+## v3.2.0
+
+### Features
+
+#### NetID and JoinEUI filters
+
+Configuration options have been implemented to filter uplink messages on netID
+and JoinEUI. This makes it possible to ignore messages from neighboring
+to save on bandwidth usage (e.g. when the gateway is using a cellular backhaul).
+
+#### Execute commands
+
+This feature makes it possible to execute commands on the gateway (when the
+LoRa Gateway Bridge is running on the gateway). Note: commands must be
+pre-configured in the LoRa Gateway Bridge configuration file.
+
 ## v3.1.0
 
 ### Features
