@@ -55,8 +55,6 @@ type Backend struct {
 	joinEUIs     [][2]lorawan.EUI64
 	frequencyMin uint32
 	frequencyMax uint32
-
-	verifyCN bool
 }
 
 // NewBackend creates a new Backend.
@@ -81,8 +79,6 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		region:       band.Name(conf.Backend.BasicStation.Region),
 		frequencyMin: conf.Backend.BasicStation.FrequencyMin,
 		frequencyMax: conf.Backend.BasicStation.FrequencyMax,
-
-		verifyCN: conf.Backend.BasicStation.VerifyCN,
 	}
 
 	for _, n := range conf.Filters.NetIDs {
@@ -255,7 +251,7 @@ func (b *Backend) handleRouterInfo(r *http.Request, c *websocket.Conn) {
 		URI:    fmt.Sprintf("%s://%s/gateway/%s", b.scheme, r.Host, lorawan.EUI64(req.Router)),
 	}
 
-	if b.verifyCN && r.TLS != nil {
+	if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 		var cn lorawan.EUI64
 
 		if err := cn.UnmarshalText([]byte(r.TLS.PeerCertificates[0].Subject.CommonName)); err != nil || cn != lorawan.EUI64(req.Router) {
@@ -292,7 +288,7 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 		return
 	}
 
-	if b.verifyCN && r.TLS != nil {
+	if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
 		var cn lorawan.EUI64
 		if err := cn.UnmarshalText([]byte(r.TLS.PeerCertificates[0].Subject.CommonName)); err != nil || cn != gatewayID {
 			log.WithFields(log.Fields{
