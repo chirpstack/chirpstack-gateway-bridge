@@ -112,6 +112,12 @@ type="{{ .Backend.Type }}"
   # certificate of the gateway has been signed by this CA certificate.
   ca_cert="{{ .Backend.BasicStation.CACert }}"
 
+  # Verify client vertificate CommonName
+  #
+  # Require that the CommonName on the client certificate matches
+  # the EUI that the gateway is claiming to be.
+  verify_cn={{ .Backend.BasicStation.VerifyCN }}
+
   # Ping interval.
   ping_interval="{{ .Backend.BasicStation.PingInterval }}"
 

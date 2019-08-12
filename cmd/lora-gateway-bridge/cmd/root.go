@@ -40,6 +40,7 @@ func init() {
 	viper.SetDefault("backend.semtech_udp.udp_bind", "0.0.0.0:1700")
 
 	viper.SetDefault("backend.basic_station.bind", ":3001")
+	viper.SetDefault("backend.basic_station.verify_cn", false)
 	viper.SetDefault("backend.basic_station.ping_interval", time.Minute)
 	viper.SetDefault("backend.basic_station.read_timeout", time.Minute+(5*time.Second))
 	viper.SetDefault("backend.basic_station.write_timeout", time.Second)

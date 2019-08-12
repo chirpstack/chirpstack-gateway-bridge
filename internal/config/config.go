@@ -35,6 +35,7 @@ type Config struct {
 			TLSCert      string        `mapstructure:"tls_cert"`
 			TLSKey       string        `mapstructure:"tls_key"`
 			CACert       string        `mapstructure:"ca_cert"`
+			VerifyCN     bool          `mapstructure:"verify_cn"`
 			PingInterval time.Duration `mapstructure:"ping_interval"`
 			ReadTimeout  time.Duration `mapstructure:"read_timeout"`
 			WriteTimeout time.Duration `mapstructure:"write_timeout"`
