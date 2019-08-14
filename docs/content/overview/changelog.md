@@ -26,6 +26,12 @@ This feature makes it possible to execute commands on the gateway (when the
 LoRa Gateway Bridge is running on the gateway). Note: commands must be
 pre-configured in the LoRa Gateway Bridge configuration file.
 
+### Improvements
+
+#### Basic Station backend
+
+* Verify Common Name when using client certificates. ([#129](https://github.com/brocaar/lora-gateway-bridge/pull/129))
+
 ## v3.1.0
 
 ### Features
