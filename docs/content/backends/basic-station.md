@@ -12,11 +12,28 @@ The [Semtech Basic Station](https://doc.sm.tc/station/) backend implements
 the [LNS protocol](https://doc.sm.tc/station/tcproto.html). It exposes a
 websocket handler to which Basic Station powered gateways can connect.
 
-It supports the following authentication modes:
+## Authentication modes
 
-* No Authentication
-* TLS Server Authentication
-* TLS Server and Client Authentication
+### No Authentication
+
+The LoRa Gateway Bridge will not perform any authentication or authorization
+and all connections are accepted.
+
+### TLS Server Authentication
+
+The `basic_station` backend [Configuration]({{<ref "install/config.md">}}) must
+be configured with a `tls_cert` and `tls_key`. The CA certificate used to sign
+the server TLS certificates must be provided to the Basic Station so that the
+gateway is able to authenticate the LoRa Gateway Bridge.
+
+### TLS Server and Client Authentication
+
+Added to the _TLS Server Authentication_, the `basic_station` backend [Configuration]({{<relref "install/config.md">}})
+must be configured with the `ca_cert` used to sign the used Basic Station
+client certificates.
+
+**Important:** The _Common Name (CN)_ must contain the _Gateway ID_ (64 bits)
+of each gateway as a HEX encoded string, e.g. `0102030405060708`. 
 
 ## Channel-plan / `router_config`
 
