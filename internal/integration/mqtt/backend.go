@@ -334,7 +334,7 @@ func (b *Backend) handleGatewayCommandExecRequest(c paho.Client, msg paho.Messag
 
 	var gatewayCommandExecRequest gw.GatewayCommandExecRequest
 	if err := b.unmarshal(msg.Payload(), &gatewayCommandExecRequest); err != nil {
-		log.WithError(err).Error("integration/mqtt: unmarshal gateway command exeqution request error")
+		log.WithError(err).Error("integration/mqtt: unmarshal gateway command execution request error")
 		return
 	}
 
