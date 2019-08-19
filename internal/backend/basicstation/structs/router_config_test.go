@@ -264,7 +264,7 @@ func TestRouterConfig(t *testing.T) {
 							Enable:          true,
 							Radio:           1,
 							IF:              -200000,
-							Bandwidth:       250,
+							Bandwidth:       250000,
 							SpreadingFactor: 7,
 						},
 						ChanMultiSF0: SX1301ConfChanMultiSF{
@@ -452,7 +452,7 @@ func TestRouterConfig(t *testing.T) {
 							Enable:          true,
 							Radio:           0,
 							IF:              300000,
-							Bandwidth:       500,
+							Bandwidth:       500000,
 							SpreadingFactor: 8,
 						},
 						ChanMultiSF0: SX1301ConfChanMultiSF{
