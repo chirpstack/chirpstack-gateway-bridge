@@ -166,7 +166,7 @@ func GetRouterConfig(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lor
 					Enable:          true,
 					Radio:           r,
 					IF:              int(channel.Frequency) - int(radioFrequencies[r]),
-					Bandwidth:       modInfo.Bandwidth,
+					Bandwidth:       modInfo.Bandwidth * 1000,
 					SpreadingFactor: modInfo.SpreadingFactors[0],
 				}
 
