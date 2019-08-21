@@ -10,6 +10,13 @@ description: Lists the changes per LoRa Gateway Bridge release, including steps 
 
 # Changelog
 
+## v3.2.1
+
+### Bugfixes
+
+* Fix NetID 3 & 4 filter according to the [errata](https://lora-alliance.org/resource-hub/nwkid-length-fix-type-3-and-type-4-netids-errata-lorawan-backend-10-specification) published by the LoRa Alliance.
+* Fix Basic Station bandwidth for LoRa Std channel (from kHz to Hz). ([#130](https://github.com/brocaar/lora-gateway-bridge/pull/130))
+
 ## v3.2.0
 
 ### Features
