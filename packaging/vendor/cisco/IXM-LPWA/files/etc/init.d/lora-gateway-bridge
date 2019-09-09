@@ -1,0 +1,43 @@
+#!/bin/sh
+
+start() {
+  echo "Starting lora-gateway-bridge"
+  start-stop-daemon \
+  	--start \
+	--background \
+	--make-pidfile \
+	--pidfile /var/run/lora-gateway-bridge.pid \
+	--exec /tmp/mdm/pktfwd/firmware/opt/lora-gateway-bridge/lora-gateway-bridge -- -c /etc/lora-gateway-bridge/lora-gateway-bridge.toml
+}
+
+stop() {
+  echo "Stopping lora-gateway-bridge"
+  start-stop-daemon \
+  	--stop \
+	--oknodo \
+	--quiet \
+	--pidfile /var/run/lora-gateway-bridge.pid
+}
+
+restart() {
+  stop
+  sleep 1
+  start
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart|reload)
+    restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?

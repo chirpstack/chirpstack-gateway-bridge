@@ -1,0 +1,59 @@
+# This configuration provides a Semtech UDP packet-forwarder backend and
+# integrates with a MQTT broker. Many options and defaults have been omitted
+# for simplicity.
+#
+# See https://www.loraserver.io/lora-gateway-bridge/install/config/ for a full
+# configuration example and documentation.
+
+
+# Gateway backend configuration.
+[backend]
+# Backend type.
+type="semtech_udp"
+
+  # Semtech UDP packet-forwarder backend.
+  [backend.semtech_udp]
+
+  # ip:port to bind the UDP listener to
+  #
+  # Example: 0.0.0.0:1700 to listen on port 1700 for all network interfaces.
+  # This is the listeren to which the packet-forwarder forwards its data
+  # so make sure the 'serv_port_up' and 'serv_port_down' from your
+  # packet-forwarder matches this port.
+  udp_bind = "0.0.0.0:1700"
+
+
+# Integration configuration.
+[integration]
+# Payload marshaler.
+#
+# This defines how the MQTT payloads are encoded. Valid options are:
+# * protobuf:  Protobuf encoding (this will become the LoRa Gateway Bridge v3 default)
+# * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
+marshaler="protobuf"
+
+  # MQTT integration configuration.
+  [integration.mqtt]
+  # Event topic template.
+  event_topic_template="gateway/{{ .GatewayID }}/event/{{ .EventType }}"
+
+  # Command topic template.
+  command_topic_template="gateway/{{ .GatewayID }}/command/#"
+
+  # MQTT authentication.
+  [integration.mqtt.auth]
+  # Type defines the MQTT authentication type to use.
+  #
+  # Set this to the name of one of the sections below.
+  type="generic"
+
+    # Generic MQTT authentication.
+    [integration.mqtt.auth.generic]
+    # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
+    server="tcp://127.0.0.1:1883"
+
+    # Connect with the given username (optional)
+    username=""
+
+    # Connect with the given password (optional)
+    password=""

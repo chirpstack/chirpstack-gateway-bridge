@@ -18,6 +18,9 @@
 
 # build folders
 /packaging/vendor/*/*/package
+/packaging/vendor/*/*/temp
+/packaging/vendor/*/*/*.tar.gz
+/packaging/vendor/*/*/key
 
 # dependencies
 /vendor

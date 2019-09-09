@@ -1,0 +1,152 @@
+{
+    "SX1301_array_conf":[
+    {
+        "board_type": "MASTER",
+        "board_rx_freq": 866500000, /* radio RX central frequency in Hz */
+        "board_rx_bw": 7000000, /* radio RX bandwidth in Hz */
+        "full_duplex": false, /* radio mode */
+        "rf_chain_conf":[
+        {
+            /* RX */
+            "rx_enable": true,
+            "rssi_offset": -202.5,
+            "rssi_offset_coeff_a": 20,
+            "rssi_offset_coeff_b": 2925,
+            /* TX */
+            "tx_enable": true,
+            "tx_freq_min": 863000000,
+            "tx_freq_max": 870000000,
+            "tx_lut":[
+                { "rf_power":  2, "fpga_dig_gain": 4, "ad9361_atten": 125, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -19, "ad9361_tcomp_coeff_b": 752 },
+                { "rf_power":  5, "fpga_dig_gain": 4, "ad9361_atten": 112, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -19, "ad9361_tcomp_coeff_b": 752 },
+                { "rf_power":  7, "fpga_dig_gain": 4, "ad9361_atten": 105, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -19, "ad9361_tcomp_coeff_b": 752 },
+                { "rf_power":  9, "fpga_dig_gain": 4, "ad9361_atten":  98, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -18, "ad9361_tcomp_coeff_b": 573 },
+                { "rf_power": 11, "fpga_dig_gain": 4, "ad9361_atten":  90, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -17, "ad9361_tcomp_coeff_b": 477 },
+                { "rf_power": 12, "fpga_dig_gain": 4, "ad9361_atten":  86, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -16, "ad9361_tcomp_coeff_b": 264 },
+                { "rf_power": 13, "fpga_dig_gain": 4, "ad9361_atten":  83, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -16, "ad9361_tcomp_coeff_b": 179 },
+                { "rf_power": 14, "fpga_dig_gain": 4, "ad9361_atten":  77, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -15, "ad9361_tcomp_coeff_b": 0 },
+                { "rf_power": 16, "fpga_dig_gain": 4, "ad9361_atten":  68, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -14, "ad9361_tcomp_coeff_b": -141 },
+                { "rf_power": 18, "fpga_dig_gain": 4, "ad9361_atten":  59, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -13, "ad9361_tcomp_coeff_b": -550 },
+                { "rf_power": 20, "fpga_dig_gain": 4, "ad9361_atten":  51, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -13, "ad9361_tcomp_coeff_b": -718 },
+                { "rf_power": 22, "fpga_dig_gain": 4, "ad9361_atten":  44, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -11, "ad9361_tcomp_coeff_b": -1195 },
+                { "rf_power": 24, "fpga_dig_gain": 4, "ad9361_atten":  34, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -11, "ad9361_tcomp_coeff_b": -1268 },
+                { "rf_power": 25, "fpga_dig_gain": 4, "ad9361_atten":  30, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -9, "ad9361_tcomp_coeff_b": -1662 },
+                { "rf_power": 26, "fpga_dig_gain": 4, "ad9361_atten":  24, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -9, "ad9361_tcomp_coeff_b": -1865 },
+                { "rf_power": 27, "fpga_dig_gain": 4, "ad9361_atten":  20, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -7, "ad9361_tcomp_coeff_b": -2102 }]
+        },{
+            /* RX */
+            "rx_enable": true,
+            "rssi_offset": -202.5,
+            "rssi_offset_coeff_a": 20,
+            "rssi_offset_coeff_b": 2925,
+            /* TX */
+            "tx_enable": true,
+            "tx_freq_min": 863000000,
+            "tx_freq_max": 870000000,
+            "tx_lut":[
+                { "rf_power":  2, "fpga_dig_gain": 4, "ad9361_atten": 125, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -19, "ad9361_tcomp_coeff_b": 752 },
+                { "rf_power":  5, "fpga_dig_gain": 4, "ad9361_atten": 112, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -19, "ad9361_tcomp_coeff_b": 752 },
+                { "rf_power":  7, "fpga_dig_gain": 4, "ad9361_atten": 105, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -19, "ad9361_tcomp_coeff_b": 752 },
+                { "rf_power":  9, "fpga_dig_gain": 4, "ad9361_atten":  98, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -18, "ad9361_tcomp_coeff_b": 573 },
+                { "rf_power": 11, "fpga_dig_gain": 4, "ad9361_atten":  90, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -17, "ad9361_tcomp_coeff_b": 477 },
+                { "rf_power": 12, "fpga_dig_gain": 4, "ad9361_atten":  86, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -16, "ad9361_tcomp_coeff_b": 264 },
+                { "rf_power": 13, "fpga_dig_gain": 4, "ad9361_atten":  83, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -16, "ad9361_tcomp_coeff_b": 179 },
+                { "rf_power": 14, "fpga_dig_gain": 4, "ad9361_atten":  77, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -15, "ad9361_tcomp_coeff_b": 0 },
+                { "rf_power": 16, "fpga_dig_gain": 4, "ad9361_atten":  68, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -14, "ad9361_tcomp_coeff_b": -141 },
+                { "rf_power": 18, "fpga_dig_gain": 4, "ad9361_atten":  59, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -13, "ad9361_tcomp_coeff_b": -550 },
+                { "rf_power": 20, "fpga_dig_gain": 4, "ad9361_atten":  51, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -13, "ad9361_tcomp_coeff_b": -718 },
+                { "rf_power": 22, "fpga_dig_gain": 4, "ad9361_atten":  44, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -11, "ad9361_tcomp_coeff_b": -1195 },
+                { "rf_power": 24, "fpga_dig_gain": 4, "ad9361_atten":  34, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -11, "ad9361_tcomp_coeff_b": -1268 },
+                { "rf_power": 25, "fpga_dig_gain": 4, "ad9361_atten":  30, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -9, "ad9361_tcomp_coeff_b": -1662 },
+                { "rf_power": 26, "fpga_dig_gain": 4, "ad9361_atten":  24, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -9, "ad9361_tcomp_coeff_b": -1865 },
+                { "rf_power": 27, "fpga_dig_gain": 4, "ad9361_atten":  20, "ad9361_auxdac_vref": 3, "ad9361_auxdac_word": 770, "ad9361_tcomp_coeff_a": -7, "ad9361_tcomp_coeff_b": -2102 }]
+        }],
+        "SX1301_conf":[
+        {
+            "chip_enable": true,
+            "chip_center_freq": 868000000,
+            "chip_rf_chain": 0,
+            "chan_multiSF_0": { "chan_rx_freq": 867100000, "spread_factor": "7-12" },
+            "chan_multiSF_1": { "chan_rx_freq": 867300000, "spread_factor": "7-12" },
+            "chan_multiSF_2": { "chan_rx_freq": 867500000, "spread_factor": "7-12" },
+            "chan_multiSF_3": { "chan_rx_freq": 867700000, "spread_factor": "7-12" },
+            "chan_multiSF_4": { "chan_rx_freq": 867900000, "spread_factor": "7-12" },
+            "chan_multiSF_5": { "chan_rx_freq": 868100000, "spread_factor": "7-12" },
+            "chan_multiSF_6": { "chan_rx_freq": 868300000, "spread_factor": "7-12" },
+            "chan_multiSF_7": { "chan_rx_freq": 868500000, "spread_factor": "7-12" },
+            "chan_LoRa_std" : { "chan_rx_freq": 868300000, "bandwidth": 250000, "spread_factor": 7 },
+            "chan_FSK"      : { "chan_rx_freq": 868800000, "bandwidth": 125000, "bit_rate": 50000 }
+        },{
+            "chip_enable": true,
+            "chip_center_freq": 868000000,
+            "chip_rf_chain": 1,
+            "chan_multiSF_0": { "chan_rx_freq": 867100000, "spread_factor": "7-12" },
+            "chan_multiSF_1": { "chan_rx_freq": 867300000, "spread_factor": "7-12" },
+            "chan_multiSF_2": { "chan_rx_freq": 867500000, "spread_factor": "7-12" },
+            "chan_multiSF_3": { "chan_rx_freq": 867700000, "spread_factor": "7-12" },
+            "chan_multiSF_4": { "chan_rx_freq": 867900000, "spread_factor": "7-12" },
+            "chan_multiSF_5": { "chan_rx_freq": 868100000, "spread_factor": "7-12" },
+            "chan_multiSF_6": { "chan_rx_freq": 868300000, "spread_factor": "7-12" },
+            "chan_multiSF_7": { "chan_rx_freq": 868500000, "spread_factor": "7-12" },
+            "chan_LoRa_std" : { "chan_rx_freq": 868300000, "bandwidth": 250000, "spread_factor": 7 },
+            "chan_FSK"      : { "chan_rx_freq": 868800000, "bandwidth": 125000, "bit_rate": 50000 }
+        }],
+        "lbt_conf":{
+            "enable": false,
+            "rssi_target": -80, /* dBm */
+            "rssi_shift": 142,
+            "chan_cfg":[ /* 16 channels maximum */
+                { "freq_hz": 867100000, "scan_time_us": 128, "transmit_time_ms": 400 },
+                { "freq_hz": 867300000, "scan_time_us": 128, "transmit_time_ms": 400 },
+                { "freq_hz": 867500000, "scan_time_us": 128, "transmit_time_ms": 400 },
+                { "freq_hz": 867700000, "scan_time_us": 128, "transmit_time_ms": 400 },
+                { "freq_hz": 867900000, "scan_time_us": 128, "transmit_time_ms": 400 },
+                { "freq_hz": 868100000, "scan_time_us": 128, "transmit_time_ms": 400 },
+                { "freq_hz": 868300000, "scan_time_us": 128, "transmit_time_ms": 400 },
+                { "freq_hz": 868500000, "scan_time_us": 128, "transmit_time_ms": 400 },
+                { "freq_hz": 869525000, "scan_time_us": 5000, "transmit_time_ms": 4000 }
+            ]
+        },
+        "FSK_sync": "C194C1",
+        "loramac_public": true,
+        "nb_dsp": 1,
+        "dsp_stat_interval": 10,
+        "aes_key": "ABCDEF0123456789ABCDEF0123456789",
+        "calibration_temperature_celsius_room": 22,
+        "calibration_temperature_code_ad9361": 77,
+        "fts_version": 1,
+        "fts_match_crc_error": false
+    }],
+    "gateway_conf": {
+        "gateway_ID": "00AEAEFFFE000000",
+        /* change with default server address/ports */
+        "server_address": "localhost",
+        "serv_port_up": 1700,
+        "serv_port_down": 1700,
+        /* adjust the following parameters for your network */
+        "keepalive_interval": 10,
+        "stat_interval": 30,
+        "push_timeout_ms": 100,
+        /* forward only valid packets */
+        "forward_crc_valid": true,
+        "forward_crc_error": false,
+        "forward_crc_disabled": false,
+        /* link testing mote */
+        "link_mote": "00CC01AF",
+        /* Beaconing parameters */
+        "beacon_conf":{
+            "period": 128,
+            "freq_hz": 869525000,
+            "datarate": 9,
+            "bw_hz": 125000,
+            "power": 14,
+            "infodesc": 0
+        }
+    },
+    "gps_conf": {
+        "gw_latitude": 0,
+        "gw_longitude": 0,
+        "gw_altitude": 0,
+        "fixed_altitude": false
+    }
+}

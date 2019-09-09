@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/tmp/mdm/pktfwd/firmware/opt/lora-gateway-bridge/lora-gateway-bridge version

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+
+/etc/init.d/lora-packet-forwarder start
+/etc/init.d/lora-gateway-bridge start
