@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -136,6 +137,10 @@ func (ts *BackendTestSuite) TestUplinkDataFrame() {
 	assert.NoError(ts.wsClient.WriteJSON(upf))
 
 	uplinkFrame := <-ts.backend.GetUplinkFrameChan()
+
+	assert.Len(uplinkFrame.RxInfo.UplinkId, 16)
+	uplinkFrame.RxInfo.UplinkId = nil
+
 	assert.Equal(gw.UplinkFrame{
 		PhyPayload: []byte{0x40, 0xf6, 0xff, 0xff, 0x0ff, 0x80, 0x90, 0x01, 0x01, 0x02, 0xec, 0xff, 0xff, 0xff},
 		TxInfo: &gw.UplinkTXInfo{
@@ -184,6 +189,10 @@ func (ts *BackendTestSuite) TestJoinRequest() {
 	assert.NoError(ts.wsClient.WriteJSON(jr))
 
 	uplinkFrame := <-ts.backend.GetUplinkFrameChan()
+
+	assert.Len(uplinkFrame.RxInfo.UplinkId, 16)
+	uplinkFrame.RxInfo.UplinkId = nil
+
 	assert.Equal(gw.UplinkFrame{
 		PhyPayload: []byte{0x00, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x02, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x03, 0x14, 0x00, 0xf6, 0xff, 0xff, 0xff},
 		TxInfo: &gw.UplinkTXInfo{
@@ -227,6 +236,10 @@ func (ts *BackendTestSuite) TestProprietaryDataFrame() {
 	assert.NoError(ts.wsClient.WriteJSON(propf))
 
 	uplinkFrame := <-ts.backend.GetUplinkFrameChan()
+
+	assert.Len(uplinkFrame.RxInfo.UplinkId, 16)
+	uplinkFrame.RxInfo.UplinkId = nil
+
 	assert.Equal(gw.UplinkFrame{
 		PhyPayload: []byte{0x01, 0x02, 0x03, 0x04},
 		TxInfo: &gw.UplinkTXInfo{
@@ -251,6 +264,10 @@ func (ts *BackendTestSuite) TestProprietaryDataFrame() {
 
 func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
+
+	ts.backend.diidMap[12345] = id[:]
 
 	dtx := structs.DownlinkTransmitted{
 		MessageType: structs.DownlinkTransmittedMessage,
@@ -260,9 +277,11 @@ func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 	assert.NoError(ts.wsClient.WriteJSON(dtx))
 
 	txAck := <-ts.backend.GetDownlinkTXAckChan()
+
 	assert.Equal(gw.DownlinkTXAck{
-		GatewayId: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-		Token:     12345,
+		GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+		Token:      12345,
+		DownlinkId: id[:],
 	}, txAck)
 }
 
@@ -359,8 +378,10 @@ func (ts *BackendTestSuite) TestApplyConfiguration() {
 
 func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
 
-	err := ts.backend.SendDownlinkFrame(gw.DownlinkFrame{
+	err = ts.backend.SendDownlinkFrame(gw.DownlinkFrame{
 		PhyPayload: []byte{1, 2, 3, 4},
 		TxInfo: &gw.DownlinkTXInfo{
 			GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
@@ -383,9 +404,12 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 			},
 			Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 		},
-		Token: 1234,
+		Token:      1234,
+		DownlinkId: id[:],
 	})
 	assert.NoError(err)
+
+	assert.Equal(id[:], ts.backend.diidMap[1234])
 
 	var df structs.DownlinkFrame
 	assert.NoError(ts.wsClient.ReadJSON(&df))

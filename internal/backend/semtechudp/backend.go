@@ -1,7 +1,9 @@
 package semtechudp
 
 import (
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -36,6 +38,11 @@ type pfConfiguration struct {
 // Backend implements a Semtech packet-forwarder (UDP) gateway backend.
 type Backend struct {
 	sync.RWMutex
+
+	// tokenMap stores the token to UUID mapping. This should take ~ 1MB of
+	// memory. Optionaly this could be optimized by letting keys expire after
+	// a given time.
+	tokenMap map[uint16][]byte
 
 	downlinkTXAckChan chan gw.DownlinkTXAck
 	uplinkFrameChan   chan gw.UplinkFrame
@@ -77,6 +84,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		},
 		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
 		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,
+		tokenMap:     make(map[uint16][]byte),
 	}
 
 	for _, pfConf := range conf.Backend.SemtechUDP.Configuration {
@@ -167,8 +175,24 @@ func (b *Backend) GetDisconnectChan() chan lorawan.EUI64 {
 
 // SendDownlinkFrame sends the given downlink frame to the gateway.
 func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
+	// mutex is needed in order to write to tokenMap
+	b.Lock()
+	defer b.Unlock()
+
+	// if Token == 0, generate it in order to be backwards compatible.
+	if frame.Token == 0 {
+		tokenB := make([]byte, 2)
+		if _, err := rand.Read(tokenB); err != nil {
+			return errors.Wrap(err, "read random bytes error")
+		}
+		frame.Token = uint32(binary.BigEndian.Uint16(tokenB))
+	}
+
+	// store token to UUID mapping
+	b.tokenMap[uint16(frame.Token)] = frame.DownlinkId
+
 	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], frame.TxInfo.GatewayId)
+	copy(gatewayID[:], frame.GetTxInfo().GetGatewayId())
 
 	gw, err := b.gateways.get(gatewayID)
 	if err != nil {
@@ -398,16 +422,23 @@ func (b *Backend) handleTXACK(up udpPacket) error {
 		return err
 	}
 
+	b.RLock()
+	defer b.RUnlock()
+
+	downID := b.tokenMap[p.RandomToken]
+
 	if p.Payload != nil && p.Payload.TXPKACK.Error != "" && p.Payload.TXPKACK.Error != "NONE" {
 		b.downlinkTXAckChan <- gw.DownlinkTXAck{
-			GatewayId: p.GatewayMAC[:],
-			Token:     uint32(p.RandomToken),
-			Error:     p.Payload.TXPKACK.Error,
+			GatewayId:  p.GatewayMAC[:],
+			Token:      uint32(p.RandomToken),
+			DownlinkId: downID,
+			Error:      p.Payload.TXPKACK.Error,
 		}
 	} else {
 		b.downlinkTXAckChan <- gw.DownlinkTXAck{
-			GatewayId: p.GatewayMAC[:],
-			Token:     uint32(p.RandomToken),
+			GatewayId:  p.GatewayMAC[:],
+			Token:      uint32(p.RandomToken),
+			DownlinkId: downID,
 		}
 	}
 
@@ -467,7 +498,6 @@ func (b *Backend) handlePushData(up udpPacket) error {
 
 func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats gw.GatewayStats) {
 	// set configuration version, if available
-
 	for _, c := range b.configurations {
 		if gatewayID == c.gatewayID {
 			stats.ConfigVersion = c.currentVersion

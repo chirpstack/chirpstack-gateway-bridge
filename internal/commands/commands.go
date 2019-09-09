@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -68,7 +69,7 @@ func executeCommand(cmd gw.GatewayCommandExecRequest) {
 	stdout, stderr, err := execute(cmd.Command, cmd.Stdin, cmd.Environment)
 	resp := gw.GatewayCommandExecResponse{
 		GatewayId: cmd.GatewayId,
-		Token:     cmd.Token,
+		ExecId:    cmd.ExecId,
 		Stdout:    stdout,
 		Stderr:    stderr,
 	}
@@ -76,7 +77,9 @@ func executeCommand(cmd gw.GatewayCommandExecRequest) {
 		resp.Error = err.Error()
 	}
 
-	if err := integration.GetIntegration().PublishEvent(gatewayID, "exec", &resp); err != nil {
+	var id uuid.UUID
+
+	if err := integration.GetIntegration().PublishEvent(gatewayID, "exec", id, &resp); err != nil {
 		log.WithError(err).Error("commands: publish command execution event error")
 	}
 }

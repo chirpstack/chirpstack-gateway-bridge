@@ -1,8 +1,10 @@
 package basicstation
 
 import (
+	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -55,6 +58,11 @@ type Backend struct {
 	joinEUIs     [][2]lorawan.EUI64
 	frequencyMin uint32
 	frequencyMax uint32
+
+	// diidMap stores the mapping of diid to UUIDs. This should take ~ 1MB of
+	// memory. Optionaly this could be optimized by letting keys expire after
+	// a given time.
+	diidMap map[uint16][]byte
 }
 
 // NewBackend creates a new Backend.
@@ -79,6 +87,8 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		region:       band.Name(conf.Backend.BasicStation.Region),
 		frequencyMin: conf.Backend.BasicStation.FrequencyMin,
 		frequencyMax: conf.Backend.BasicStation.FrequencyMax,
+
+		diidMap: make(map[uint16][]byte),
 	}
 
 	for _, n := range conf.Filters.NetIDs {
@@ -191,20 +201,41 @@ func (b *Backend) GetDisconnectChan() chan lorawan.EUI64 {
 }
 
 func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
+	b.Lock()
+	defer b.Unlock()
+
+	// for backwards compatibility
+	if df.Token == 0 {
+		tokenB := make([]byte, 2)
+		if _, err := rand.Read(tokenB); err != nil {
+			return errors.Wrap(err, "read random bytes error")
+		}
+
+		df.Token = uint32(binary.BigEndian.Uint16(tokenB))
+	}
+
 	pl, err := structs.DownlinkFrameFromProto(b.band, df)
 	if err != nil {
 		return errors.Wrap(err, "downlink frame from proto error")
 	}
 
 	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], df.TxInfo.GatewayId)
+	var downID uuid.UUID
+	copy(gatewayID[:], df.GetTxInfo().GetGatewayId())
+	copy(downID[:], df.GetDownlinkId())
+
+	// store token to UUID mapping
+	b.diidMap[uint16(df.Token)] = df.GetDownlinkId()
 
 	websocketSendCounter("dnmsg").Inc()
 	if err := b.sendToGateway(gatewayID, pl); err != nil {
 		return errors.Wrap(err, "send to gateway error")
 	}
 
-	log.WithField("gateway_id", gatewayID).Info("backend/basicstation: downlink-frame message sent to gateway")
+	log.WithFields(log.Fields{
+		"gateway_id":  gatewayID,
+		"downlink_id": downID,
+	}).Info("backend/basicstation: downlink-frame message sent to gateway")
 
 	return nil
 }
@@ -216,7 +247,7 @@ func (b *Backend) ApplyConfiguration(gwConfig gw.GatewayConfiguration) error {
 	}
 
 	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], gwConfig.GatewayId)
+	copy(gatewayID[:], gwConfig.GetGatewayId())
 
 	websocketSendCounter("router_config").Inc()
 	if err := b.sendToGateway(gatewayID, rc); err != nil {
@@ -292,13 +323,12 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 		var cn lorawan.EUI64
 		if err := cn.UnmarshalText([]byte(r.TLS.PeerCertificates[0].Subject.CommonName)); err != nil || cn != gatewayID {
 			log.WithFields(log.Fields{
-				"gateway_id": gatewayID,
+				"gateway_id":  gatewayID,
 				"common_name": r.TLS.PeerCertificates[0].Subject.CommonName,
 			}).Error("backend/basicstation: CommonName verification failed")
 			return
 		}
 	}
-
 
 	// make sure we're not overwriting an existing connection
 	_, err := b.gateways.get(gatewayID)
@@ -459,10 +489,6 @@ func (b *Backend) handleVersion(gatewayID lorawan.EUI64, pl structs.Version) {
 }
 
 func (b *Backend) handleJoinRequest(gatewayID lorawan.EUI64, v structs.JoinRequest) {
-	log.WithFields(log.Fields{
-		"gateway_id": gatewayID,
-	}).Info("backend/basicstation: join-request received")
-
 	uplinkFrame, err := structs.JoinRequestToProto(b.band, gatewayID, v)
 	if err != nil {
 		log.WithError(err).WithFields(log.Fields{
@@ -471,14 +497,25 @@ func (b *Backend) handleJoinRequest(gatewayID lorawan.EUI64, v structs.JoinReque
 		return
 	}
 
+	// set uplink id
+	uplinkID, err := uuid.NewV4()
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"gateway_id": gatewayID,
+		}).Error("backend/basicstation: get random uplink id error")
+		return
+	}
+	uplinkFrame.RxInfo.UplinkId = uplinkID[:]
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"uplink_id":  uplinkID,
+	}).Info("backend/basicstation: join-request received")
+
 	b.uplinkFrameChan <- uplinkFrame
 }
 
 func (b *Backend) handleProprietaryDataFrame(gatewayID lorawan.EUI64, v structs.UplinkProprietaryFrame) {
-	log.WithFields(log.Fields{
-		"gateway_id": gatewayID,
-	}).Info("backend/basicstation: proprietary uplink frame received")
-
 	uplinkFrame, err := structs.UplinkProprietaryFrameToProto(b.band, gatewayID, v)
 	if err != nil {
 		log.WithError(err).WithFields(log.Fields{
@@ -487,13 +524,27 @@ func (b *Backend) handleProprietaryDataFrame(gatewayID lorawan.EUI64, v structs.
 		return
 	}
 
+	// set uplink id
+	uplinkID, err := uuid.NewV4()
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"gateway_id": gatewayID,
+		}).Error("backend/basicstation: get random uplink id error")
+		return
+	}
+	uplinkFrame.RxInfo.UplinkId = uplinkID[:]
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"uplink_id":  uplinkID,
+	}).Info("backend/basicstation: proprietary uplink frame received")
+
 	b.uplinkFrameChan <- uplinkFrame
 }
 
 func (b *Backend) handleDownlinkTransmittedMessage(gatewayID lorawan.EUI64, v structs.DownlinkTransmitted) {
-	log.WithFields(log.Fields{
-		"gateway_id": gatewayID,
-	}).Info("backend/basicstation: downlink transmitted message received")
+	b.RLock()
+	defer b.RUnlock()
 
 	txack, err := structs.DownlinkTransmittedToProto(gatewayID, v)
 	if err != nil {
@@ -502,15 +553,20 @@ func (b *Backend) handleDownlinkTransmittedMessage(gatewayID lorawan.EUI64, v st
 		}).Error("backend/basicstation: error converting downlink transmitted to protobuf message")
 		return
 	}
+	txack.DownlinkId = b.diidMap[uint16(v.DIID)]
+
+	var downID uuid.UUID
+	copy(downID[:], txack.GetDownlinkId())
+
+	log.WithFields(log.Fields{
+		"gateway_id":  gatewayID,
+		"downlink_id": downID,
+	}).Info("backend/basicstation: downlink transmitted message received")
 
 	b.downlinkTXAckChan <- txack
 }
 
 func (b *Backend) handleUplinkDataFrame(gatewayID lorawan.EUI64, v structs.UplinkDataFrame) {
-	log.WithFields(log.Fields{
-		"gateway_id": gatewayID,
-	}).Info("backend/basicstation: uplink frame received")
-
 	uplinkFrame, err := structs.UplinkDataFrameToProto(b.band, gatewayID, v)
 	if err != nil {
 		log.WithError(err).WithFields(log.Fields{
@@ -518,6 +574,21 @@ func (b *Backend) handleUplinkDataFrame(gatewayID lorawan.EUI64, v structs.Uplin
 		}).Error("backend/basicstation: error converting uplink frame to protobuf message")
 		return
 	}
+
+	// set uplink id
+	uplinkID, err := uuid.NewV4()
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"gateway_id": gatewayID,
+		}).Error("backend/basicstation: get random uplink id error")
+		return
+	}
+	uplinkFrame.RxInfo.UplinkId = uplinkID[:]
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"uplink_id":  uplinkID,
+	}).Info("backend/basicstation: uplink frame received")
 
 	b.uplinkFrameChan <- uplinkFrame
 }

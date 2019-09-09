@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
 
@@ -75,6 +76,13 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 		}
 	}
 
+	// set stats id
+	statsID, err := uuid.NewV4()
+	if err != nil {
+		return nil, errors.Wrap(err, "new uuid error")
+	}
+	stats.StatsId = statsID[:]
+
 	return &stats, nil
 }
 
@@ -91,16 +99,32 @@ func (p PushDataPacket) GetUplinkFrames(skipCRCCheck bool, FakeRxInfoTime bool) 
 		if len(p.Payload.RXPK[i].RSig) == 0 {
 			frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i], FakeRxInfoTime)
 			if err != nil {
-				return nil, errors.Wrap(err, "gateway: get uplink frame error")
+				return nil, errors.Wrap(err, "backend/semtechudp/packets: get uplink frame error")
 			}
+
+			// add random uplink id
+			uplinkID, err := uuid.NewV4()
+			if err != nil {
+				return nil, errors.Wrap(err, "backend/semtechudp/packets: get random uplink id error")
+			}
+			frame.RxInfo.UplinkId = uplinkID[:]
+
 			frames = append(frames, frame)
 		} else {
 			for j := range p.Payload.RXPK[i].RSig {
 				frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i], FakeRxInfoTime)
 				if err != nil {
-					return nil, errors.Wrap(err, "gateway: get uplink frame error")
+					return nil, errors.Wrap(err, "backend/semtechudp/packets: get uplink frame error")
 				}
 				frame = setUplinkFrameRSig(frame, p.Payload.RXPK[i], p.Payload.RXPK[i].RSig[j])
+
+				// add random uplink id
+				uplinkID, err := uuid.NewV4()
+				if err != nil {
+					return nil, errors.Wrap(err, "backend/semtechudp/packets: get random uplink id error")
+				}
+				frame.RxInfo.UplinkId = uplinkID[:]
+
 				frames = append(frames, frame)
 			}
 		}
@@ -152,7 +176,7 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 	if rxpk.Time != nil && !time.Time(*rxpk.Time).IsZero() {
 		ts, err := ptypes.TimestampProto(time.Time(*rxpk.Time))
 		if err != nil {
-			return frame, errors.Wrap(err, "gateway: timestamp proto error")
+			return frame, errors.Wrap(err, "backend/semtechudp/packets: timestamp proto error")
 		}
 		frame.RxInfo.Time = ts
 	} else if FakeRxInfoTime {
@@ -173,18 +197,18 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 		match := loRaDataRateRegex.FindStringSubmatch(rxpk.DatR.LoRa)
 		// parse e.g. SF12BW250 into separate variables
 		if len(match) != 3 {
-			return frame, errors.New("gateway: could not parse LoRa data-rate")
+			return frame, errors.New("backend/semtechudp/packets: could not parse LoRa data-rate")
 		}
 
 		// cast variables to ints
 		sf, err := strconv.Atoi(match[1])
 		if err != nil {
-			return frame, errors.Wrap(err, "gateway: could not convert sf to int")
+			return frame, errors.Wrap(err, "backend/semtechudp/packets: could not convert sf to int")
 		}
 
 		bw, err := strconv.Atoi(match[2])
 		if err != nil {
-			return frame, errors.Wrap(err, "gateway: could not parse bandwidth to int")
+			return frame, errors.Wrap(err, "backend/semtechudp/packets: could not parse bandwidth to int")
 		}
 
 		frame.TxInfo.ModulationInfo = &gw.UplinkTXInfo_LoraModulationInfo{
@@ -213,10 +237,10 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 // UnmarshalBinary decodes the packet from Semtech UDP binary form.
 func (p *PushDataPacket) UnmarshalBinary(data []byte) error {
 	if len(data) < 13 {
-		return errors.New("gateway: at least 13 bytes are expected")
+		return errors.New("backend/semtechudp/packets: at least 13 bytes are expected")
 	}
 	if data[3] != byte(PushData) {
-		return errors.New("gateway: identifier mismatch (PUSH_DATA expected)")
+		return errors.New("backend/semtechudp/packets: identifier mismatch (PUSH_DATA expected)")
 	}
 
 	if !protocolSupported(data[0]) {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/gofrs/uuid"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
@@ -211,9 +212,17 @@ func (b *Backend) UnsubscribeGateway(gatewayID lorawan.EUI64) error {
 }
 
 // PublishEvent publishes the given event.
-func (b *Backend) PublishEvent(gatewayID lorawan.EUI64, event string, v proto.Message) error {
+func (b *Backend) PublishEvent(gatewayID lorawan.EUI64, event string, id uuid.UUID, v proto.Message) error {
 	mqttEventCounter(event).Inc()
-	return b.publish(gatewayID, event, v)
+	idPrefix := map[string]string{
+		"up":    "uplink_",
+		"ack":   "downlink_",
+		"stats": "stats_",
+		"exec":  "exec_",
+	}
+	return b.publish(gatewayID, event, log.Fields{
+		idPrefix[event] + "id": id,
+	}, v)
 }
 
 func (b *Backend) connect() error {
@@ -299,15 +308,23 @@ func (b *Backend) onConnectionLost(c paho.Client, err error) {
 }
 
 func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
-	log.WithFields(log.Fields{
-		"topic": msg.Topic(),
-	}).Info("integration/mqtt: downlink frame received")
-
 	var downlinkFrame gw.DownlinkFrame
 	if err := b.unmarshal(msg.Payload(), &downlinkFrame); err != nil {
-		log.WithError(err).Error("integration/mqtt: unmarshal downlink frame error")
+		log.WithFields(log.Fields{
+			"topic": msg.Topic(),
+		}).WithError(err).Error("integration/mqtt: unmarshal downlink frame error")
 		return
 	}
+
+	var gatewayID lorawan.EUI64
+	var downID uuid.UUID
+	copy(gatewayID[:], downlinkFrame.GetTxInfo().GetGatewayId())
+	copy(downID[:], downlinkFrame.GetDownlinkId())
+
+	log.WithFields(log.Fields{
+		"gateway_id":  gatewayID,
+		"downlink_id": downID,
+	}).Info("integration/mqtt: downlink frame received")
 
 	b.downlinkFrameChan <- downlinkFrame
 }
@@ -328,15 +345,23 @@ func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 }
 
 func (b *Backend) handleGatewayCommandExecRequest(c paho.Client, msg paho.Message) {
-	log.WithFields(log.Fields{
-		"topic": msg.Topic(),
-	}).Info("integration/mqtt: gateway command execution request received")
-
 	var gatewayCommandExecRequest gw.GatewayCommandExecRequest
 	if err := b.unmarshal(msg.Payload(), &gatewayCommandExecRequest); err != nil {
-		log.WithError(err).Error("integration/mqtt: unmarshal gateway command execution request error")
+		log.WithFields(log.Fields{
+			"topic": msg.Topic(),
+		}).WithError(err).Error("integration/mqtt: unmarshal gateway command execution request error")
 		return
 	}
+
+	var gatewayID lorawan.EUI64
+	var execID uuid.UUID
+	copy(gatewayID[:], gatewayCommandExecRequest.GetGatewayId())
+	copy(execID[:], gatewayCommandExecRequest.GetExecId())
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"exec_id":    execID,
+	}).Info("integration/mqtt: gateway command execution request received")
 
 	b.gatewayCommandExecRequestChan <- gatewayCommandExecRequest
 }
@@ -357,7 +382,7 @@ func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
 	}
 }
 
-func (b *Backend) publish(gatewayID lorawan.EUI64, event string, msg proto.Message) error {
+func (b *Backend) publish(gatewayID lorawan.EUI64, event string, fields log.Fields, msg proto.Message) error {
 	topic := bytes.NewBuffer(nil)
 	if err := b.eventTopicTemplate.Execute(topic, struct {
 		GatewayID lorawan.EUI64
@@ -371,11 +396,11 @@ func (b *Backend) publish(gatewayID lorawan.EUI64, event string, msg proto.Messa
 		return errors.Wrap(err, "marshal message error")
 	}
 
-	log.WithFields(log.Fields{
-		"topic": topic.String(),
-		"qos":   b.qos,
-		"event": event,
-	}).Info("integration/mqtt: publishing event")
+	fields["topic"] = topic.String()
+	fields["qos"] = b.qos
+	fields["event"] = event
+
+	log.WithFields(fields).Info("integration/mqtt: publishing event")
 	if token := b.conn.Publish(topic.String(), b.qos, false, bytes); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}

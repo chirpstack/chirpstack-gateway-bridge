@@ -47,6 +47,7 @@ func TestPushDataTest(t *testing.T) {
 
 func TestGetGatewayStats(t *testing.T) {
 	assert := assert.New(t)
+
 	lat := float64(1.123)
 	long := float64(2.123)
 	alti := int32(33)
@@ -131,6 +132,12 @@ func TestGetGatewayStats(t *testing.T) {
 	for _, test := range testTable {
 		s, err := test.PushDataPacket.GetGatewayStats()
 		assert.Nil(err)
+
+		if s != nil {
+			assert.Len(s.StatsId, 16)
+			s.StatsId = nil
+		}
+
 		assert.Equal(test.GatewayStats, s)
 	}
 }
@@ -413,6 +420,12 @@ func TestGetUplinkFrame(t *testing.T) {
 			assert := require.New(t)
 			f, err := test.PushDataPacket.GetUplinkFrames(test.SkipCRCCheck, false)
 			assert.Nil(err)
+
+			for _, ff := range f {
+				assert.Len(ff.RxInfo.UplinkId, 16)
+				ff.RxInfo.UplinkId = nil
+			}
+
 			assert.Equal(test.UplinkFrames, f)
 		})
 	}

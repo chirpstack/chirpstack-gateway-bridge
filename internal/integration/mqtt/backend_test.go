@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/brocaar/loraserver/api/gw"
+	"github.com/gofrs/uuid"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 	log "github.com/sirupsen/logrus"
@@ -93,9 +94,14 @@ func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 
 func (ts *MQTTBackendTestSuite) TestPublishUplinkFrame() {
 	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
 
 	uplink := gw.UplinkFrame{
 		PhyPayload: []byte{1, 2, 3, 4},
+		RxInfo: &gw.UplinkRXInfo{
+			UplinkId: id[:],
+		},
 	}
 
 	uplinkFrameChan := make(chan gw.UplinkFrame)
@@ -107,16 +113,19 @@ func (ts *MQTTBackendTestSuite) TestPublishUplinkFrame() {
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "up", &uplink))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "up", id, &uplink))
 	uplinkReceived := <-uplinkFrameChan
 	assert.Equal(uplink, uplinkReceived)
 }
 
 func (ts *MQTTBackendTestSuite) TestGatewayStats() {
 	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
 
 	stats := gw.GatewayStats{
 		GatewayId: ts.gatewayID[:],
+		StatsId:   id[:],
 	}
 
 	statsChan := make(chan gw.GatewayStats)
@@ -128,17 +137,20 @@ func (ts *MQTTBackendTestSuite) TestGatewayStats() {
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "stats", &stats))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "stats", id, &stats))
 	statsReceived := <-statsChan
 	assert.Equal(stats, statsReceived)
 }
 
 func (ts *MQTTBackendTestSuite) TestPublishDownlinkTXAck() {
 	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
 
 	txAck := gw.DownlinkTXAck{
-		GatewayId: ts.gatewayID[:],
-		Token:     1234,
+		GatewayId:  ts.gatewayID[:],
+		Token:      1234,
+		DownlinkId: id[:],
 	}
 
 	txAckChan := make(chan gw.DownlinkTXAck)
@@ -150,7 +162,7 @@ func (ts *MQTTBackendTestSuite) TestPublishDownlinkTXAck() {
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "ack", &txAck))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "ack", id, &txAck))
 	txAckReceived := <-txAckChan
 	assert.Equal(txAck, txAckReceived)
 }
@@ -195,10 +207,12 @@ func (ts *MQTTBackendTestSuite) TestGatewayConfigHandler() {
 
 func (ts *MQTTBackendTestSuite) TestGatewayCommandExecRequest() {
 	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
 
 	execReq := gw.GatewayCommandExecRequest{
 		GatewayId: ts.gatewayID[:],
-		Token:     []byte{0x01, 0x02, 0x03, 0x04},
+		ExecId:    id[:],
 		Command:   "reboot",
 		Environment: map[string]string{
 			"FOO": "bar",

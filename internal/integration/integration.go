@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 
@@ -42,7 +43,7 @@ type Integration interface {
 	UnsubscribeGateway(lorawan.EUI64) error
 
 	// PublishEvent publishes the given event.
-	PublishEvent(lorawan.EUI64, string, proto.Message) error
+	PublishEvent(lorawan.EUI64, string, uuid.UUID, proto.Message) error
 
 	// GetDownlinkFrameChan returns the channel for downlink frames.
 	GetDownlinkFrameChan() chan gw.DownlinkFrame
