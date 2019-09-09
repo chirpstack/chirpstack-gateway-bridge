@@ -37,15 +37,12 @@ of each gateway as a HEX encoded string, e.g. `0102030405060708`.
 
 ## Channel-plan / `router_config`
 
-When using Basic Station powered gateways, assigning a _Gateway Profile_ to a
-gateway within LoRa (App) Server is a requirement. As part of the connection
-handshake, LoRa Gateway Bridge must send the channel-plan configuration to the
-Basic Station. The flow for this is:
+You must configure the gateway channel-plan in the LoRa Gateway Bridge
+[Configuration]({{<ref "/install/config.md">}}) file.
 
-* Basic Station sends a `version` message to the LoRa Gateway Bridge
-* The LoRa Gateway Bridge sends a `stats` [Event]({{<ref "payloads/events.md">}})
-* [LoRa Server](/loraserver/) responds with a `config` [Command]({{<ref "payloads/commands.md">}}), containing the channel-plan from the _Gateway Profile_
-* The LoRa Gateway Bridge forwards this as `router_config` to the Basic Station
+**Note:** In previous versions of the LoRa Gateway Bridge, you had to configure
+a _Gateway Profile_. This has been deprecated if favor of directly configuring
+the channels in the configuration file.
 
 ## Known issues
 

@@ -43,9 +43,10 @@ type Config struct {
 				NetIDs   []string    `mapstructure:"net_ids"`
 				JoinEUIs [][2]string `mapstructure:"join_euis"`
 			} `mapstructure:"filters"`
-			Region       string `mapstructure:"region"`
-			FrequencyMin uint32 `mapstructure:"frequency_min"`
-			FrequencyMax uint32 `mapstructure:"frequency_max"`
+			Region        string                     `mapstructure:"region"`
+			FrequencyMin  uint32                     `mapstructure:"frequency_min"`
+			FrequencyMax  uint32                     `mapstructure:"frequency_max"`
+			Concentrators []BasicStationConcentrator `mapstructure:"concentrators"`
 		} `mapstructure:"basic_station"`
 	} `mapstructure:"backend"`
 
@@ -117,6 +118,30 @@ type Config struct {
 			Command              string        `mapstructure:"command"`
 		} `mapstructure:"commands"`
 	} `mapstructure:"commands"`
+}
+
+// BasicStationConcentrator holds the configuration for a BasicStation concentrator.
+type BasicStationConcentrator struct {
+	MultiSF BasicStationConcentratorMultiSF `mapstructure:"multi_sf"`
+	LoRaSTD BasicStationConcentratorLoRaSTD `mapstructure:"lora_std"`
+	FSK     BasicStationConcentratorFSK     `mapstructure:"fsk"`
+}
+
+// BasicStationConcentratorMultiSF holds the multi-SF channels.
+type BasicStationConcentratorMultiSF struct {
+	Frequencies []uint32 `mapstructure:"frequencies"`
+}
+
+// BasicStationConcentratorLoRaSTD holds the LoRa STD config.
+type BasicStationConcentratorLoRaSTD struct {
+	Frequency       uint32 `mapstructure:"frequency"`
+	Bandwidth       uint32 `mapstrcuture:"bandwidth"`
+	SpreadingFactor uint32 `mapstructure:"spreading_factor"`
+}
+
+// BasicStationConcentratorFSK holds the FSK config.
+type BasicStationConcentratorFSK struct {
+	Frequency uint32 `mapstructure:"frequency"`
 }
 
 // C holds the global configuration.

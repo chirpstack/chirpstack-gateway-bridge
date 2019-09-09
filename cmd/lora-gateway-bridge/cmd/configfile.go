@@ -135,6 +135,59 @@ type="{{ .Backend.Type }}"
   # Maximum frequency (Hz).
   frequency_max={{ .Backend.BasicStation.FrequencyMax }}
 
+  # Concentrator configuration.
+  #
+  # This section contains the configuration for the SX1301 concentrator chips.
+  # Example:
+  # [[backend.basic_station.concentrators]]
+  #
+  #   # Multi-SF channel configuration.
+  #   [backend.basic_station.concentrators.multi_sf]
+  #
+  #   # Frequencies (Hz).
+  #   frequencies=[
+  #     868100000,
+  #     868300000,
+  #     868500000,
+  #     867100000,
+  #     867300000,
+  #     867500000,
+  #     867700000,
+  #     867900000,
+  #   ]
+  #
+  #   # LoRa STD channel.
+  #   [backend.basic_station.concentrators.lora_std]
+  #
+  #   # Frequency (Hz).
+  #   frequency=868300000
+  #
+  #   # Bandwidth (Hz).
+  #   bandwidth=250000
+  #
+  #   # Spreading factor.
+  #   spreading_factor=7
+  #
+  #   # FSK channel.
+  #   [backend.basic_station.concentrators.fsk]
+  #
+  #   # Frequency (Hz).
+  #   frequency=868800000
+{{ range $i, $concentrator := .Backend.BasicStation.Concentrators }}
+    [[backend.basic_station.concentrators]]
+      [backend.basic_station.concentrators.multi_sf]
+      frequencies=[{{ range $index, $elm := $concentrator.MultiSF.Frequencies }}
+		{{ $elm }},{{ end }}
+      ]
+
+      [backend.basic_station.concentrators.lora_std]
+      frequency={{ $concentrator.LoRaSTD.Frequency }}
+      bandwidth={{ $concentrator.LoRaSTD.Bandwidth }}
+      spreading_factor={{ $concentrator.LoRaSTD.SpreadingFactor }}
+
+      [backend.basic_station.concentrators.fsk]
+      frequency={{ $concentrator.FSK.Frequency }}
+{{ end }}
 
 # Integration configuration.
 [integration]

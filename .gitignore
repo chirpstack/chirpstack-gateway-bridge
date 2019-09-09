@@ -1,6 +1,9 @@
 # hidden files
 .*
 
+# Vagrant
+Vagrantfile
+
 # configuration files
 /*.toml
 

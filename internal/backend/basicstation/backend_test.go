@@ -96,8 +96,9 @@ func (ts *BackendTestSuite) TestRouterInfo() {
 	}, resp)
 }
 
-func (ts *BackendTestSuite) TestVersion() {
+func (ts *BackendTestSuite) TestVersionOld() {
 	assert := require.New(ts.T())
+	ts.backend.routerConfig = nil
 
 	ver := structs.Version{
 		MessageType: structs.VersionMessage,
@@ -108,6 +109,25 @@ func (ts *BackendTestSuite) TestVersion() {
 
 	stats := <-ts.backend.GetGatewayStatsChan()
 	assert.Equal([]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, stats.GatewayId)
+}
+
+func (ts *BackendTestSuite) TestVersion() {
+	assert := require.New(ts.T())
+	ts.backend.routerConfig = &structs.RouterConfig{
+		MessageType: structs.RouterConfigMessage,
+	}
+
+	ver := structs.Version{
+		MessageType: structs.VersionMessage,
+		Protocol:    2,
+	}
+
+	assert.NoError(ts.wsClient.WriteJSON(ver))
+
+	var routerConfig structs.RouterConfig
+	assert.NoError(ts.wsClient.ReadJSON(&routerConfig))
+
+	assert.Equal(*ts.backend.routerConfig, routerConfig)
 }
 
 func (ts *BackendTestSuite) TestUplinkDataFrame() {

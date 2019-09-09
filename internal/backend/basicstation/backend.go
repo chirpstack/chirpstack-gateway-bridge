@@ -58,6 +58,7 @@ type Backend struct {
 	joinEUIs     [][2]lorawan.EUI64
 	frequencyMin uint32
 	frequencyMax uint32
+	routerConfig *structs.RouterConfig
 
 	// diidMap stores the mapping of diid to UUIDs. This should take ~ 1MB of
 	// memory. Optionaly this could be optimized by letting keys expire after
@@ -115,6 +116,15 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	b.band, err = band.GetConfig(b.region, false, lorawan.DwellTimeNoLimit)
 	if err != nil {
 		return nil, errors.Wrap(err, "get band config error")
+	}
+
+	if len(conf.Backend.BasicStation.Concentrators) != 0 {
+		conf, err := structs.GetRouterConfig(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, conf.Backend.BasicStation.Concentrators)
+		if err != nil {
+			return nil, errors.Wrap(err, "get router config error")
+		}
+
+		b.routerConfig = &conf
 	}
 
 	mux := http.NewServeMux()
@@ -241,7 +251,7 @@ func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 }
 
 func (b *Backend) ApplyConfiguration(gwConfig gw.GatewayConfiguration) error {
-	rc, err := structs.GetRouterConfig(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, gwConfig)
+	rc, err := structs.GetRouterConfigOld(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, gwConfig)
 	if err != nil {
 		return errors.Wrap(err, "get router config error")
 	}
@@ -480,12 +490,25 @@ func (b *Backend) handleVersion(gatewayID lorawan.EUI64, pl structs.Version) {
 		return
 	}
 
-	b.gatewayStatsChan <- gw.GatewayStats{
-		GatewayId:     gatewayID[:],
-		Ip:            g.conn.RemoteAddr().String(),
-		Time:          ts,
-		ConfigVersion: g.configVersion,
+	// TODO: remove this in the next major release
+	if b.routerConfig == nil {
+		b.gatewayStatsChan <- gw.GatewayStats{
+			GatewayId:     gatewayID[:],
+			Ip:            g.conn.RemoteAddr().String(),
+			Time:          ts,
+			ConfigVersion: g.configVersion,
+		}
+
+		return
 	}
+
+	websocketSendCounter("router_config").Inc()
+	if err := b.sendToGateway(gatewayID, *b.routerConfig); err != nil {
+		log.WithError(err).Error("backend/basicstation: send to gateway error")
+		return
+	}
+
+	log.WithField("gateway_id", gatewayID).Info("backend/basicstation: router-config message sent to gateway")
 }
 
 func (b *Backend) handleJoinRequest(gatewayID lorawan.EUI64, v structs.JoinRequest) {

@@ -179,6 +179,45 @@ type="semtech_udp"
   # Maximum frequency (Hz).
   frequency_max=870000000
 
+  # Concentrator configuration.
+  #
+  # This section contains the configuration for the SX1301 concentrator chips.
+  # Example:
+  # [[backend.basic_station.concentrators]]
+  #
+  #   # Multi-SF channel configuration.
+  #   [backend.basic_station.concentrators.multi_sf]
+  #
+  #   # Frequencies (Hz).
+  #   frequencies=[
+  #     868100000,
+  #     868300000,
+  #     868500000,
+  #     867100000,
+  #     867300000,
+  #     867500000,
+  #     867700000,
+  #     867900000,
+  #   ]
+  #
+  #   # LoRa STD channel.
+  #   [backend.basic_station.concentrators.lora_std]
+  #
+  #   # Frequency (Hz).
+  #   frequency=868300000
+  #
+  #   # Bandwidth (Hz).
+  #   bandwidth=250000
+  #
+  #   # Spreading factor.
+  #   spreading_factor=7
+  #
+  #   # FSK channel.
+  #   [backend.basic_station.concentrators.fsk]
+  #
+  #   # Frequency (Hz).
+  #   frequency=868800000
+
 
 # Integration configuration.
 [integration]
