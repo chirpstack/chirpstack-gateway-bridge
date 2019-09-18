@@ -1,11 +1,11 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -88,12 +88,12 @@ func execute(command string, stdin []byte, environment map[string]string) ([]byt
 	mux.RLock()
 	defer mux.RUnlock()
 
-	cmdConfig, ok := commands[command]
+	cmd, ok := commands[command]
 	if !ok {
 		return nil, nil, errors.New("command does not exist")
 	}
 
-	cmdArgs, err := ParseCommandLine(cmdConfig.Command)
+	cmdArgs, err := ParseCommandLine(cmd.Command)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "parse command error")
 	}
@@ -105,27 +105,28 @@ func execute(command string, stdin []byte, environment map[string]string) ([]byt
 		"command":                command,
 		"exec":                   cmdArgs[0],
 		"args":                   cmdArgs[1:],
-		"max_execution_duration": cmdConfig.MaxExecutionDuration,
+		"max_execution_duration": cmd.MaxExecutionDuration,
 	}).Info("commands: executing command")
 
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(cmd.MaxExecutionDuration))
+	defer cancel()
 
+	cmdCtx := exec.CommandContext(ctx, cmdArgs[0], cmdArgs[1:]...)
 	for k, v := range environment {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+		cmdCtx.Env = append(cmdCtx.Env, fmt.Sprintf("%s=%s", k, v))
 	}
 
-	stdinPipe, err := cmd.StdinPipe()
+	stdinPipe, err := cmdCtx.StdinPipe()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "get stdin pipe error")
 	}
 
-	stdoutPipe, err := cmd.StdoutPipe()
+	stdoutPipe, err := cmdCtx.StdoutPipe()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "get stdout pipe error")
 	}
 
-	stderrPipe, err := cmd.StderrPipe()
+	stderrPipe, err := cmdCtx.StderrPipe()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "get stderr pipe error")
 	}
@@ -137,23 +138,14 @@ func execute(command string, stdin []byte, environment map[string]string) ([]byt
 		}
 	}()
 
-	if err := cmd.Start(); err != nil {
+	if err := cmdCtx.Start(); err != nil {
 		return nil, nil, errors.Wrap(err, "starting command error")
 	}
-
-	time.AfterFunc(cmdConfig.MaxExecutionDuration, func() {
-		pgid, err := syscall.Getpgid(cmd.Process.Pid)
-		if err == nil {
-			if err := syscall.Kill(-pgid, syscall.SIGKILL); err != nil {
-				panic(err)
-			}
-		}
-	})
 
 	stdoutB, _ := ioutil.ReadAll(stdoutPipe)
 	stderrB, _ := ioutil.ReadAll(stderrPipe)
 
-	if err := cmd.Wait(); err != nil {
+	if err := cmdCtx.Wait(); err != nil {
 		return nil, nil, errors.Wrap(err, "waiting for command to finish error")
 	}
 
