@@ -10,6 +10,26 @@ description: Lists the changes per LoRa Gateway Bridge release, including steps 
 
 # Changelog
 
+## v3.3.0
+
+### Features
+
+#### Message IDs
+
+This release implements unique message IDs (both for events and commands) that
+can be used for correlation or logging purposes.
+
+#### BasicStation channel-plan configuration
+
+To make it easier to work with the [BasicStation](https://doc.sm.tc/station/)
+Packet Forwarder, this release makes it possible to configure the channel-plan
+inside the LoRa Gateway Bridge configuration file. It is no longer needed to
+configure a Gateway Profile within LoRa App Server. This means that it is also
+possible to use the LoRa Gateway Bridge with BasicStation gateways, without
+the need of installing LoRa Server and LoRa App Server.
+
+### Bugfixes
+
 ## v3.2.1
 
 ### Bugfixes
