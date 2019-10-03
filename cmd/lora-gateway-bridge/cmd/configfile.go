@@ -68,7 +68,7 @@ type="{{ .Backend.Type }}"
   # ip:port to bind the UDP listener to
   #
   # Example: 0.0.0.0:1700 to listen on port 1700 for all network interfaces.
-  # This is the listeren to which the packet-forwarder forwards its data
+  # This is the listener to which the packet-forwarder forwards its data
   # so make sure the 'serv_port_up' and 'serv_port_down' from your
   # packet-forwarder matches this port.
   udp_bind = "{{ .Backend.SemtechUDP.UDPBind }}"
