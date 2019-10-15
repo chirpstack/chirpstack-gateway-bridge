@@ -422,9 +422,6 @@ func (b *Backend) handleTXACK(up udpPacket) error {
 		return err
 	}
 
-	b.RLock()
-	defer b.RUnlock()
-
 	downID := b.tokenMap[p.RandomToken]
 
 	if p.Payload != nil && p.Payload.TXPKACK.Error != "" && p.Payload.TXPKACK.Error != "NONE" {
