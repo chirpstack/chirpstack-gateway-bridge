@@ -9,6 +9,5 @@ hidden: true
 
 # Install LoRa Gateway Bridge on the gateway
 
-Help us making this list complete! Is the gateway that you are using not
-listed? Or are the steps described outdated?
+Help us make this list complete! Is your gateway missing or are the steps described outdated?
 Please help by [Contributing]({{<ref "/community/contribute.md">}}).

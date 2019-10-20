@@ -13,8 +13,8 @@ menu:
 * [Product detail page](https://www.multitech.com/brands/multiconnect-conduit)
 * [Product documentation page](http://www.multitech.net/developer/products/multiconnect-conduit-platform/)
 
-After completing this steps, you have a Multitech Conduit running both the
-packet-forwarder and LoRa Gateway bridge. The packet-forwarder will forwards
+After completing these steps, you will have a Multitech Conduit running both the
+packet-forwarder and LoRa Gateway bridge. The packet-forwarder will forward
 the UDP data to `localhost:1700` and the LoRa Gateway Bridge will forward
 this data over MQTT to a MQTT broker.
 
@@ -104,7 +104,7 @@ opkg update
    wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_3.1.0-r1_arm926ejste.ipk
    {{< /highlight >}}
 
-3. Now this `.ipk` package is stored on the Conduit, you can install it
+3. Now that the `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
    {{<highlight bash>}}
