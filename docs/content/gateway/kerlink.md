@@ -12,7 +12,7 @@ menu:
 
 * [Product detail page](https://www.kerlink.com/product/wirnet-station/)
 
-The Kerlink IOT station has a meganism to start "custom" application on boot.
+The Kerlink IOT station has a mechanism to start "custom" application on boot.
 These steps will install the LoRa Gateway Bridge ARM build on the Kerlink.
 
 1. Create the the directories needed:
