@@ -2,14 +2,12 @@
 
 PACKAGE_NAME="lora-gateway-bridge"
 PACKAGE_VERSION=$1
-REV="r1"
+REV="r2"
 
 
 PACKAGE_URL="https://artifacts.loraserver.io/downloads/lora-gateway-bridge/lora-gateway-bridge_${PACKAGE_VERSION}_linux_armv5.tar.gz"
 DIR=`dirname $0`
 PACKAGE_DIR="${DIR}/package"
-PACKAGE_USER_DIR="${PACKAGE_DIR}/user/${PACKAGE_NAME}"
-PACKAGE_MONIT_DIR="${PACKAGE_DIR}/user/rootfs_rw/etc/monit.d"
 
 # Cleanup
 rm -rf $PACKAGE_DIR
@@ -28,19 +26,21 @@ Description: LoRa Gateway Bridge
 EOF
 
 cat > $PACKAGE_DIR/CONTROL/conffiles << EOF
-/user/lora-gateway-bridge/lora-gateway-bridge.toml
+/user/etc/$PACKAGE_NAME/$PACKAGE_NAME.toml
 EOF
 
 # Files
-mkdir -p $PACKAGE_MONIT_DIR
-mkdir -p $PACKAGE_USER_DIR
+mkdir -p $PACKAGE_DIR/opt/$PACKAGE_NAME
+mkdir -p $PACKAGE_DIR/user/etc/$PACKAGE_NAME
+mkdir -p $PACKAGE_DIR/etc/monit.d
+mkdir -p $PACKAGE_DIR/etc/init.d
 
-cp files/$PACKAGE_NAME.toml $PACKAGE_USER_DIR
-cp files/$PACKAGE_NAME.monit $PACKAGE_MONIT_DIR/lora-gateway-bridge
-cp files/start.sh $PACKAGE_USER_DIR
-wget -P $PACKAGE_USER_DIR $PACKAGE_URL
-tar zxf $PACKAGE_USER_DIR/*.tar.gz -C $PACKAGE_USER_DIR
-rm $PACKAGE_USER_DIR/*.tar.gz
+cp files/$PACKAGE_NAME.toml $PACKAGE_DIR/user/etc/$PACKAGE_NAME/$PACKAGE_NAME.toml
+cp files/$PACKAGE_NAME.monit $PACKAGE_DIR/etc/monit.d/$PACKAGE_NAME
+cp files/$PACKAGE_NAME.init $PACKAGE_DIR/etc/init.d/$PACKAGE_NAME
+wget -P $PACKAGE_DIR/opt/$PACKAGE_NAME $PACKAGE_URL
+tar zxf $PACKAGE_DIR/opt/$PACKAGE_NAME/*.tar.gz -C $PACKAGE_DIR/opt/$PACKAGE_NAME
+rm $PACKAGE_DIR/opt/$PACKAGE_NAME/*.tar.gz
 
 # Package
 opkg-build -o root -g root $PACKAGE_DIR

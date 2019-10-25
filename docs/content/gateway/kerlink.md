@@ -54,44 +54,49 @@ iptables -A INPUT -p tcp --sport 1883 -j ACCEPT
 
 * [Product detail page: iBTS](https://www.kerlink.com/product/wirnet-ibts/)
 
+**Note:** These steps have been tested using the _KerOS firmware v4.1.6_.
+Please make sure you have this version or later installed. You must also
+install the Kerlink Common Packet Forwarder.
+
 ### SSH into the gateway
 
 The first step is to login into the gateway using ssh:
 
 {{<highlight bash>}}
-sh root@GATEWAY-IP-ADDRESS
+ssh root@GATEWAY-IP-ADDRESS
 {{</highlight>}}
 
-Please refer to the [Kerlink iBTS wiki](http://wikikerlink.fr/wirnet-ibts/)
+Please refer to the [Kerlink wiki](http://wikikerlink.fr/wirnet-productline)
 for login instructions.
 
 ### Install IPK package
 
 Find the latest package at https://artifacts.loraserver.io/vendor/kerlink/ibts/
 and copy the URL to your clipboard. Then on the gateway use `wget` to download
-the package into a folder named `/user/.updates`. Example for `lora-gateway-bridge_3.0.1-r1_klk_lpbs.ipk`:
+the package into a folder named `/user/.updates`. Example for `lora-gateway-bridge_3.3.0-r2_klk_lpbs.ipk`:
 
 {{<highlight bash>}}
 mkdir -p /user/.updates
 cd /user/.updates
-wget https://artifacts.loraserver.io/vendor/kerlink/ibts/lora-gateway-bridge_3.0.1-r1_klk_lpbs.ipk
+wget https://artifacts.loraserver.io/vendor/kerlink/ibts/lora-gateway-bridge_3.3.0-r2_klk_lpbs.ipk
 {{</highlight>}}
 
 To trigger the iBTS gateway to install / update the package, run the following commands:
 
 {{<highlight bash>}}
+sync
 kerosd -u
 reboot
 {{</highlight>}}
 
-Please refer to the [Kerlink iBTS wiki](http://wikikerlink.fr/wirnet-ibts/)
+Please refer to the [Kerlink wiki](http://wikikerlink.fr/wirnet-productline)
 for more information about installing and updating packages.
 
 ### Edit the LoRa Gateway Bridge configuration
 
 To connect the LoRa Gateway Bridge with your MQTT broker, you must update
 the LoRa Gateway Bridge configuration file, which is located at:
-`/user/lora-gateway-bridge/lora-gateway-bridge.toml`.
+`/user/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
 
 ### (Re)start and stop commands
 
@@ -114,20 +119,101 @@ monit restart lora-gateway-bridge
 ### Configure packet-forwarder
 
 You must configure the packet-forwarder on the gateway to forward its data to
-`127.0.0.1` at port `1700`. The file `/user/spf2/etc/config.json` must contain the
-following lines:
+`127.0.0.1` at port `1700`. The file `/user/etc/lorafwd/lorafwd.toml` must contain the
+following lines under the `[ gwmp ]` section:
 
-{{<highlight text>}}
-"server_address": "127.0.0.1",
-"serv_port_up": 1700,
-"serv_port_down": 1700,
+{{<highlight toml>}}
+node = "127.0.0.1"
+service.uplink = 1700
+service.downlink = 1700
+{{</highlight>}}
+
+After updating this configuration file, make sure to restart the `lorafwd` service:
+
+{{<highlight bash>}}
+monit restart lorafwd
 {{</highlight>}}
 
 ## Kerlink iFemtoCell
 
 * [Product detail page](https://www.kerlink.com/product/wirnet-ifemtocell/)
 
-The installation steps to install the LoRa Gateway Bridge component are exactly
-the same as for the iBTS gateway. The only difference is that the packages
-are located at https://artifacts.loraserver.io/vendor/kerlink/ifemtocell/.
+**Note:** These steps have been tested using the _KerOS firmware v4.1.6_.
+Please make sure you have this version or later installed. You must also
+install the Kerlink Common Packet Forwarder.
 
+### SSH into the gateway
+
+The first step is to login into the gateway using ssh:
+
+{{<highlight bash>}}
+ssh root@GATEWAY-IP-ADDRESS
+{{</highlight>}}
+
+Please refer to the [Kerlink wiki](http://wikikerlink.fr/wirnet-productline)
+for login instructions.
+
+### Install IPK package
+
+Find the latest package at https://artifacts.loraserver.io/vendor/kerlink/ifemtocell/
+and copy the URL to your clipboard. Then on the gateway use `wget` to download
+the package into a folder named `/user/.updates`. Example for `lora-gateway-bridge_3.3.0-r2_klk_wifc.ipk`:
+
+{{<highlight bash>}}
+mkdir -p /user/.updates
+cd /user/.updates
+wget https://artifacts.loraserver.io/vendor/kerlink/ifemtocell/loraserver-gateway-bridge_3.3.0-r2_klk_wifc.ipk
+{{</highlight>}}
+
+To trigger the iFemtoCell gateway to install / update the package, run the following commands:
+
+{{<highlight bash>}}
+sync
+kerosd -u
+reboot
+{{</highlight>}}
+
+Please refer to the [Kerlink wiki](http://wikikerlink.fr/wirnet-productline)
+for more information about installing and updating packages.
+
+### Edit the LoRa Gateway Bridge configuration
+
+To connect the LoRa Gateway Bridge with your MQTT broker, you must update
+the LoRa Gateway Bridge configuration file, which is located at:
+`/user/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
+
+### (Re)start and stop commands
+
+Use the following commands to (re)start and stop the LoRa Gateway Bridge Service:
+
+{{<highlight bash>}}
+# status
+monit status lora-gateway-bridge
+
+# start
+monit start lora-gateway-bridge
+
+# stop
+monit stop lora-gateway-bridge
+
+# restart
+monit restart lora-gateway-bridge
+{{</highlight>}}
+
+### Configure packet-forwarder
+
+You must configure the packet-forwarder on the gateway to forward its data to
+`127.0.0.1` at port `1700`. The file `/user/etc/lorafwd/lorafwd.toml` must contain the
+following lines under the `[ gwmp ]` section:
+
+{{<highlight toml>}}
+node = "127.0.0.1"
+service.uplink = 1700
+service.downlink = 1700
+{{</highlight>}}
+
+After updating this configuration file, make sure to restart the `lorafwd` service:
+
+{{<highlight bash>}}
+monit restart lorafwd
+{{</highlight>}}
