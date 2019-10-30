@@ -223,6 +223,12 @@ marshaler="{{ .Integration.Marshaler }}"
     # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
     server="{{ .Integration.MQTT.Auth.Generic.Server }}"
 
+    # MQTT servers (e.g. scheme://host:port where scheme is tcp, ssl or ws)
+    # Allows for multiple broker connections - Overrides server if not empty
+    servers=[{{ range $index, $elm := .Integration.MQTT.Auth.Generic.Servers }}
+      "{{ $elm }}",{{ end }}
+    ]
+
     # Connect with the given username (optional)
     username="{{ .Integration.MQTT.Auth.Generic.Username }}"
 
