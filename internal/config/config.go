@@ -72,6 +72,14 @@ type Config struct {
 					QOS          uint8    `mapstructure:"qos"`
 					CleanSession bool     `mapstructure:"clean_session"`
 					ClientID     string   `mapstructure:"client_id"`
+
+					LWT struct {
+						Enable   bool   `mapstructure:"enable"`
+						Topic    string `mapstructure:"topic"`
+						Payload  string `mapstructure:"payload"`
+						QOS      uint8  `mapstructure:"qos"`
+						Retained bool   `mapstructure:"retained"`
+					} `mapstructure:"lwt"`
 				} `mapstructure:"generic"`
 
 				GCPCloudIoTCore struct {

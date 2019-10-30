@@ -271,6 +271,25 @@ marshaler="{{ .Integration.Marshaler }}"
     # mqtt TLS key file (optional)
     tls_key="{{ .Integration.MQTT.Auth.Generic.TLSKey }}"
 
+      # Last Will and Testament
+      #
+      # A message is pre-queued to the broker and is automatically sent in the event of an ungraceful disconnect
+      [integration.mqtt.auth.generic.lwt]
+      # Enable LWT message
+      enable={{ .Integration.MQTT.Auth.Generic.LWT.Enable }}
+
+      # LWT Message Topic
+      topic="{{ .Integration.MQTT.Auth.Generic.LWT.Topic }}"
+
+      # LWT Message Payload String
+      payload="{{ .Integration.MQTT.Auth.Generic.LWT.Payload }}"
+
+      # Quality of service level
+      qos={{ .Integration.MQTT.Auth.Generic.LWT.QOS }}
+
+      # Retain Message on broker for new subscriptions
+      retained={{ .Integration.MQTT.Auth.Generic.LWT.Retained }}
+
 
     # Google Cloud Platform Cloud IoT Core authentication.
     #

@@ -18,6 +18,12 @@ type GenericAuthentication struct {
 	cleanSession bool
 	clientID     string
 
+	lwtEnable   bool
+	lwtTopic    string
+	lwtPayload  string
+	lwtQOS      uint8
+	lwtRetained bool
+
 	tlsConfig *tls.Config
 }
 
@@ -39,6 +45,12 @@ func NewGenericAuthentication(conf config.Config) (Authentication, error) {
 		password:     conf.Integration.MQTT.Auth.Generic.Password,
 		cleanSession: conf.Integration.MQTT.Auth.Generic.CleanSession,
 		clientID:     conf.Integration.MQTT.Auth.Generic.ClientID,
+
+		lwtEnable:   conf.Integration.MQTT.Auth.Generic.LWT.Enable,
+		lwtTopic:    conf.Integration.MQTT.Auth.Generic.LWT.Topic,
+		lwtPayload:  conf.Integration.MQTT.Auth.Generic.LWT.Payload,
+		lwtQOS:      conf.Integration.MQTT.Auth.Generic.LWT.QOS,
+		lwtRetained: conf.Integration.MQTT.Auth.Generic.LWT.Retained,
 	}, nil
 }
 
@@ -51,6 +63,10 @@ func (a *GenericAuthentication) Init(opts *mqtt.ClientOptions) error {
 	opts.SetPassword(a.password)
 	opts.SetCleanSession(a.cleanSession)
 	opts.SetClientID(a.clientID)
+
+	if a.lwtEnable {
+		opts.SetWill(a.lwtTopic, a.lwtPayload, a.lwtQOS, a.lwtRetained)
+	}
 
 	if a.tlsConfig != nil {
 		opts.SetTLSConfig(a.tlsConfig)
