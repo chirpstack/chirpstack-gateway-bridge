@@ -130,6 +130,9 @@ note that these commands must be pre-configured in the [Configuration file]({{<r
 }
 {{< /highlight >}}
 
+**Note:** the given environment variables will be extended to the environment
+variables that are already exposed to the "main" process.
+
 ### Protobuf
 
 This message is defined by the `GatewayCommandExecRequest` Protobuf message.

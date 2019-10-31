@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"sync"
 	"time"
@@ -112,6 +113,11 @@ func execute(command string, stdin []byte, environment map[string]string) ([]byt
 	defer cancel()
 
 	cmdCtx := exec.CommandContext(ctx, cmdArgs[0], cmdArgs[1:]...)
+
+	// The default is that when cmdCtx.Env is nil, os.Environ() are being used
+	// automatically. As we want to add additional env. variables, we want to
+	// extend this list, thus first need to set them to os.Environ()
+	cmdCtx.Env = os.Environ()
 	for k, v := range environment {
 		cmdCtx.Env = append(cmdCtx.Env, fmt.Sprintf("%s=%s", k, v))
 	}
