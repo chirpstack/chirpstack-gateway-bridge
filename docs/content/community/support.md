@@ -17,4 +17,4 @@ this issue has already been reported. If not, please create an issue:
 
 ## Questions
 
-For support questions, please refer to the [ChirpStack Community Forum](https://community.chirpstack.io/).
+For support questions, please refer to the [ChirpStack Community Forum](https://forum.chirpstack.io/).

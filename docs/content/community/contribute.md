@@ -12,7 +12,7 @@ description: Information how you can contribute to the ChirpStack Gateway Bridge
 There are a couple of ways to get involved:
 
 * Join the discussions:
-    * [ChirpStack Community Forum](https://community.chirpstack.io/)
+    * [ChirpStack Community Forum](https://forum.chirpstack.io/)
 * Report bugs or make feature-requests by opening an issue at [https://github.com/brocaar/chirpstack-gateway-bridge/issues](https://github.com/brocaar/chirpstack-gateway-bridge/issues)
 * Help fixing issues or improve documentation by creating pull-requests
 

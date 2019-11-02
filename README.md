@@ -38,7 +38,7 @@ The following integrations are provided:
 * [Building from source](https://www.chirpstack.io/gateway-bridge/community/source/)
 * [Contributing](https://www.chirpstack.io/gateway-bridge/community/contribute/)
 * Support
-  * [Community forum](https://community.chirpstack.io)
+  * [Community forum](https://forum.chirpstack.io)
   * [Bug or feature requests](https://github.com/brocaar/chirpstack-gateway-bridge/issues)
 
 ## Sponsors

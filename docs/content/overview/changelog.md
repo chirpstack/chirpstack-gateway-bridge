@@ -107,7 +107,7 @@ expose a location in the stats message.
 Documentation (and configuration) references to the managed
 packet-forwarder configuration have been removed. The feature itself is still
 available and will stay available until the next major release.
-Please refer to [this forum discussion](https://community.chirpstack.io/t/who-is-using-the-gateway-profile-how-are-you-using-it/5091)
+Please refer to [this forum discussion](https://forum.chirpstack.io/t/who-is-using-the-gateway-profile-how-are-you-using-it/5091)
 for more background.
 
 ## v3.0.1
