@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-NAME=lora-gateway-bridge
+OLD_NAME=lora-gateway-bridge
+NAME=chirpstack-gateway-bridge
 
 function remove_systemd {
 	systemctl stop $NAME
@@ -12,6 +13,7 @@ function remove_initd {
 	/etc/init.d/$NAME stop
 	update-rc.d -f $NAME remove
 	rm -f /etc/init.d/$NAME
+	rm -f /etc/init.d/$OLD_NAME
 }
 
 which systemctl &>/dev/null

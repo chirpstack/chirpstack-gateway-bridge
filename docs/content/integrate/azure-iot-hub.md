@@ -4,7 +4,7 @@ menu:
   main:
     parent: integrate
     weight: 3
-description: Setting up the LoRa Gateway Bridge using the Azure IoT Hub MQTT protocol.
+description: Setting up the ChirpStack Gateway Bridge using the Azure IoT Hub MQTT protocol.
 ---
 
 # Azure IoT Hub
@@ -16,8 +16,8 @@ authentication thype must be used when connecting with the
 ## Limitations
 
 * As you need to setup the device ID (in this case the device is the gateway)
-  when provisioning the device (LoRa gateway) in Cloud IoT Core,
-  this does not allow to connect multiple LoRa gateways to a single LoRa Gateway
+  when provisioning the device (LoRa<sup>&reg;</sup> Gateway) in Cloud IoT Core,
+  this does not allow to connect multiple LoRa Gateways to a single ChirpStack Gateway
   Bridge instance.
 
 ## Conventions
@@ -29,9 +29,9 @@ It must be entered in lowercase (the IoT Hub Device ID is case-sensitive).
 
 ### MQTT topics
 
-When the Azure IoT Hub authentication type has been configured, LoRa Gateway
+When the Azure IoT Hub authentication type has been configured, ChirpStack Gateway
 Bridge will use MQTT topics which are expected by Azure IoT Hub and will
-ignore the MQTT topic configuration from the `lora-gateway-bridge.toml`
+ignore the MQTT topic configuration from the `chirpstack-gateway-bridge.toml`
 configuration file.
 
 #### Uplink topics

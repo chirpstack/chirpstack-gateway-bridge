@@ -1,6 +1,6 @@
 ---
 title: Cisco
-description: Installation of the LoRa Gateway Bridge on Cisco gateway.
+description: Installation of the ChirpStack Gateway Bridge on Cisco gateway.
 menu:
   main:
     parent: gateway
@@ -254,9 +254,9 @@ To start the Packet Forwarder manually:
 The next time when the Wireless Gateway is (re)started, the Packet Forwarder
 will be started automatically.
 
-### LoRa Gateway Bridge
+### ChirpStack Gateway Bridge
 
-By installing the LoRa Gateway Bridge directly on the Wireless Gateway, it can
+By installing the ChirpStack Gateway Bridge directly on the Wireless Gateway, it can
 be directly connected to a MQTT broker. When you have exited the LXC shell,
 enter it again:
 
@@ -267,15 +267,15 @@ request shell container-console
 
 #### Download
 
-Copy the link to the latest LoRa Gateway Bridge **armv7.tar.gz** package from
+Copy the link to the latest ChirpStack Gateway Bridge **armv7.tar.gz** package from
 the [Downloads]({{<ref "overview/downloads.md">}}) page. Then:
 
 {{<highlight bash>}}
 # Create directories
-mkdir -p /opt/lora-gateway-bridge
+mkdir -p /opt/chirpstack-gateway-bridge
 
-# Download LoRa Gateway Bridge
-cd /opt/lora-gateway-bridge
+# Download ChirpStack Gateway Bridge
+cd /opt/chirpstack-gateway-bridge
 wget <download-link>
 
 # Uncompress archive
@@ -288,15 +288,15 @@ rm *.tar.gz
 
 #### Configuration
 
-The LoRa Gateway Bridge uses a file for configuration. Please refer to
+The ChirpStack Gateway Bridge uses a file for configuration. Please refer to
 [Configuration]({{<ref "install/config.md">}}) for a full example.
 Below you will find a minimal configuration example to get you started.
 
 To create the configuration directory and create the configuration file:
 
 {{<highlight bash>}}
-mkdir /etc/lora-gateway-bridge
-vi /etc/lora-gateway-bridge/lora-gateway-bridge.toml
+mkdir /etc/chirpstack-gateway-bridge
+vi /etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
 {{</highlight>}}
 
 Then paste the following configuration and make modifications where needed:
@@ -324,8 +324,8 @@ type="semtech_udp"
 # Payload marshaler.
 #
 # This defines how the MQTT payloads are encoded. Valid options are:
-# * protobuf:  Protobuf encoding (this will become the LoRa Gateway Bridge v3 default)
-# * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
+# * protobuf:  Protobuf encoding
+# * json:      JSON encoding
 marshaler="protobuf"
 
   # MQTT integration configuration.
@@ -355,19 +355,19 @@ marshaler="protobuf"
     password=""
 {{</highlight>}}
 
-To test the LoRa Gateway Bridge, you can run the following command:
+To test the ChirpStack Gateway Bridge, you can run the following command:
 
 {{<highlight bash>}}
-/opt/lora-gateway-bridge/lora-gateway-bridge -c /etc/lora-gateway-bridge/lora-gateway-bridge.toml
+/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge -c /etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
 {{</highlight>}}
 
 #### Init script
 
-To start the LoRa Gateway Bridge automatically, you need to create an init script.
+To start the ChirpStack Gateway Bridge automatically, you need to create an init script.
 To create this file:
 
 {{<highlight bash>}}
-vi /etc/init.d/S60lora-gateway-bridge
+vi /etc/init.d/S60chirpstack-gateway-bridge
 {{</highlight>}}
 
 Then paste the following content:
@@ -376,22 +376,22 @@ Then paste the following content:
 #!/bin/sh
 
 start() {
-  echo "Starting lora-gateway-bridge"
+  echo "Starting chirpstack-gateway-bridge"
   start-stop-daemon \
   	--start \
 	--background \
 	--make-pidfile \
-	--pidfile /var/run/lora-gateway-bridge.pid \
-	--exec /opt/lora-gateway-bridge/lora-gateway-bridge -- -c /etc/lora-gateway-bridge/lora-gateway-bridge.toml
+	--pidfile /var/run/chirpstack-gateway-bridge.pid \
+	--exec /opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge -- -c /etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
 }
 
 stop() {
-  echo "Stopping lora-gateway-bridge"
+  echo "Stopping chirpstack-gateway-bridge"
   start-stop-daemon \
   	--stop \
 	--oknodo \
 	--quiet \
-	--pidfile /var/run/lora-gateway-bridge.pid
+	--pidfile /var/run/chirpstack-gateway-bridge.pid
 }
 
 restart() {
@@ -421,14 +421,14 @@ exit $?
 Then make the init script executable:
 
 {{<highlight bash>}}
-chmod +x /etc/init.d/S60lora-gateway-bridge
+chmod +x /etc/init.d/S60chirpstack-gateway-bridge
 {{</highlight>}}
 
-To start the LoRa Gateway Bridge manually:
+To start the ChirpStack Gateway Bridge manually:
 
 {{<highlight bash>}}
-/etc/init.d/S60lora-gateway-bridge start
+/etc/init.d/S60chirpstack-gateway-bridge start
 {{</highlight>}}
 
-The next time when the Wireless Gateway is (re)started, the LoRa Gateway Bridge
+The next time when the Wireless Gateway is (re)started, the ChirpStack Gateway Bridge
 will be started automatically.

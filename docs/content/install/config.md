@@ -4,50 +4,50 @@ menu:
     main:
         parent: install
         weight: 5
-description: Instructions and examples how to configure the LoRa Gateway Bridge service.
+description: Instructions and examples how to configure the ChirpStack Gateway Bridge service.
 ---
 
 # Configuration
 
-The `lora-gateway-bridge` has the following command-line flags:
+The `chirpstack-gateway-bridge` has the following command-line flags:
 
 {{<highlight text>}}
-LoRa Gateway Bridge abstracts the packet_forwarder protocol into JSON over MQTT
-        > documentation & support: https://docs.loraserver.io/lora-gateway-bridge
-        > source & copyright information: https://github.com/brocaar/lora-gateway-bridge
+ChirpStack Gateway Bridge abstracts the packet_forwarder protocol into Protobuf or JSON over MQTT
+        > documentation & support: https://www.chirpstack.io/gateway-bridge/
+        > source & copyright information: https://github.com/brocaar/chirpstack-gateway-bridge
 
 Usage:
-  lora-gateway-bridge [flags]
-  lora-gateway-bridge [command]
+  chirpstack-gateway-bridge [flags]
+  chirpstack-gateway-bridge [command]
 
 Available Commands:
-  configfile  Print the LoRa Gateway configuration file
+  configfile  Print the ChirpStack Gateway Bridge configuration file
   help        Help about any command
-  version     Print the LoRa Gateway Bridge version
+  version     Print the ChirpStack Gateway Bridge version
 
 Flags:
   -c, --config string   path to configuration file (optional)
-  -h, --help            help for lora-gateway-bridge
+  -h, --help            help for chirpstack-gateway-bridge
       --log-level int   debug=5, info=4, error=2, fatal=1, panic=0 (default 4)
 
-Use "lora-gateway-bridge [command] --help" for more information about a command.
+Use "chirpstack-gateway-bridge [command] --help" for more information about a command.
 {{< /highlight >}}
 
 ## Configuration file
 
-By default `lora-gateway-bridge` will look in the following order for a
+By default `chirpstack-gateway-bridge` will look in the following order for a
 configuration at the following paths when `--config` / `-c` is not set:
 
-* `lora-gateway-bridge.toml` (current working directory)
-* `$HOME/.config/lora-gateway-bridge/lora-gateway-bridge.toml`
-* `/etc/lora-gateway-bridge/lora-gateway-bridge.toml`
+* `chirpstack-gateway-bridge.toml` (current working directory)
+* `$HOME/.config/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml`
+* `/etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml`
 
 To load configuration from a different location, use the `--config` flag.
 
-To generate a new configuration file `lora-gateway-bridge.toml`, execute the following command:
+To generate a new configuration file `chirpstack-gateway-bridge.toml`, execute the following command:
 
 {{<highlight bash>}}
-lora-gateway-bridge configfile > lora-gateway-bridge.toml
+chirpstack-gateway-bridge configfile > chirpstack-gateway-bridge.toml
 {{< /highlight >}}
 
 Note that this configuration file will be pre-filled with the current configuration
@@ -56,7 +56,7 @@ This makes it possible when new fields get added to upgrade your configuration f
 while preserving your old configuration. Example:
 
 {{<highlight bash>}}
-lora-gateway-bridge configfile --config lora-gateway-bridge-old.toml > lora-gateway-bridge-new.toml
+chirpstack-gateway-bridge configfile --config chirpstack-gateway-bridge-old.toml > chirpstack-gateway-bridge-new.toml
 {{< /highlight >}}
 
 Example configuration file:
@@ -70,8 +70,8 @@ log_level = 4
 # Filters.
 #
 # These can be used to filter LoRaWAN frames to reduce bandwith usage between
-# the gateway and LoRa Gateway Bride. Depending the used backend, filtering
-# will be performed by the Packet Forwarder or LoRa Gateway Bridge.
+# the gateway and ChirpStack Gateway Bride. Depending the used backend, filtering
+# will be performed by the Packet Forwarder or ChirpStack Gateway Bridge.
 [filters]
 
 # NetIDs filters.
@@ -146,13 +146,13 @@ type="semtech_udp"
   # TLS certificate and key files.
   #
   # When set, the websocket listener will use TLS to secure the connections
-  # between the gateways and LoRa Gateway Bridge (optional).
+  # between the gateways and ChirpStack Gateway Bridge (optional).
   tls_cert=""
   tls_key=""
 
   # TLS CA certificate.
   #
-  # When configured, LoRa Gateway Bridge will validate that the client
+  # When configured, ChirpStack Gateway Bridge will validate that the client
   # certificate of the gateway has been signed by this CA certificate.
   ca_cert=""
 
@@ -224,7 +224,7 @@ type="semtech_udp"
 # Payload marshaler.
 #
 # This defines how the MQTT payloads are encoded. Valid options are:
-# * protobuf:  Protobuf encoding (this will become the LoRa Gateway Bridge v3 default)
+# * protobuf:  Protobuf encoding
 # * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
 marshaler="protobuf"
 
@@ -346,7 +346,7 @@ marshaler="protobuf"
 
     # Token expiration (symmetric key authentication).
     #
-    # LoRa Gateway Bridge will generate a SAS token with the given expiration.
+    # ChirpStack Gateway Bridge will generate a SAS token with the given expiration.
     # After the token has expired, it will generate a new one and trigger a
     # re-connect (only for symmetric key authentication).
     sas_token_expiration="24h0m0s"
@@ -377,7 +377,7 @@ marshaler="protobuf"
 
   # Metrics stored in Prometheus.
   #
-  # These metrics expose information about the state of the LoRa Gateway Bridge
+  # These metrics expose information about the state of the ChirpStack Gateway Bridge
   # instance like number of messages processed, number of function calls, etc.
   [metrics.prometheus]
   # Expose Prometheus metrics endpoint.
@@ -390,7 +390,7 @@ marshaler="protobuf"
 
 # Gateway meta-data.
 #
-# The meta-data will be added to every stats message sent by the LoRa Gateway
+# The meta-data will be added to every stats message sent by the ChirpStack Gateway
 # Bridge.
 [meta_data]
 
@@ -430,7 +430,7 @@ marshaler="protobuf"
 # Executable commands.
 #
 # The configured commands can be triggered by sending a message to the
-# LoRa Gateway Bridge.
+# ChirpStack Gateway Bridge.
 [commands]
   # Example:
   # [commands.commands.reboot]

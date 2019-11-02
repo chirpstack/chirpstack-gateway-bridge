@@ -1,13 +1,13 @@
 version: "2"
 services:
-  gatewaybridge:
+  chirpstack-gateway-bridge:
     build:
       context: .
       dockerfile: Dockerfile-devel
     ports:
       - "1700:1700/udp"
     volumes:
-      - ./:/lora-gateway-bridge
+      - ./:/chirpstack-gateway-bridge
     links:
       - mosquitto
     environment:

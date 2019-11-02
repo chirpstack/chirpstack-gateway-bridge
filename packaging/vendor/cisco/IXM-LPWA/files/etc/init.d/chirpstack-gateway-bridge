@@ -1,0 +1,43 @@
+#!/bin/sh
+
+start() {
+  echo "Starting chirpstack-gateway-bridge"
+  start-stop-daemon \
+  	--start \
+	--background \
+	--make-pidfile \
+	--pidfile /var/run/chirpstack-gateway-bridge.pid \
+	--exec /tmp/mdm/pktfwd/firmware/opt/chirpstack-gateway-bridge/chirpstack-gateway-bridge -- -c /etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
+}
+
+stop() {
+  echo "Stopping chirpstack-gateway-bridge"
+  start-stop-daemon \
+  	--stop \
+	--oknodo \
+	--quiet \
+	--pidfile /var/run/chirpstack-gateway-bridge.pid
+}
+
+restart() {
+  stop
+  sleep 1
+  start
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart|reload)
+    restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?

@@ -1,6 +1,6 @@
 ---
 title: Tektelic
-description: Configure the Tektelic Pico IoT Gateway to work with the LoRa Gateway Bridge.
+description: Configure the Tektelic Pico IoT Gateway to work with the ChirpStack Gateway Bridge.
 menu:
   main:
     parent: gateway
@@ -13,9 +13,9 @@ menu:
 * [Product detail page](https://tektelic.com/iot/lorawan-gateways/)
 
 The KONA Pico IoT Gateway is able to run different firmwares, each using a
-different protocol. In order to work together with the LoRa Gateway Brige,
+different protocol. In order to work together with the ChirpStack Gateway Brige,
 you must install the `semtech-vx.xx.bin` firmware. These steps have been tested
-with version 1.2.1. The latest firmware can be [downloaded here](https://artifacts.loraserver.io/vendor/tektelic/kona-pico/).
+with version 1.2.1. The latest firmware can be [downloaded here](https://artifacts.chirpstack.io/vendor/tektelic/kona-pico/).
 
 1. After turning on the gateway, find the IP that has been assigned to it
    (eg. by listing the devices connected to your router). In the examples below
@@ -33,7 +33,7 @@ with version 1.2.1. The latest firmware can be [downloaded here](https://artifac
    Note: the tftp command is invoked from the same directory as where the
    `lorawan_conf.json` is stored.
 
-3. Upload the configuration file containing the IP of the LoRa Gateway Bridge
+3. Upload the configuration file containing the IP of the ChirpStack Gateway Bridge
    instance and the used ports.
    {{<highlight text>}}
    $ tftp 192.168.1.10
@@ -125,7 +125,7 @@ This configuration file contains exactly the same radio configuration as
 #### customer_conf.json
 
 The IP or hostname of the `network_server` key must match the IP or hostname
-of the machine on which LoRa Gateway Bridge is running.
+of the machine on which ChirpStack Gateway Bridge is running.
 
 {{<highlight json>}}
 {
@@ -152,13 +152,13 @@ the back of the gateway (the 9 characters above the 12V = 1A line).
 
 ### Download IPK package
 
-Find the latest package at https://artifacts.loraserver.io/vendor/tektelic/kona-micro/
+Find the latest package at https://artifacts.chirpstack.io/vendor/tektelic/kona-micro/
 and copy the URL to your clipboard. Then on the gateway use `curl` and use the link
-as argument. Example for `lora-gateway-bridge_3.0.1-r1_kona_micro.ipk`:
+as argument. Example for `chirpstack-gateway-bridge_3.0.1-r1_kona_micro.ipk`:
 
 {{<highlight bash>}}
-# curl URL --output lora-gateway-bridge.ipk
-curl https://artifacts.loraserver.io/vendor/tektelic/kona-micro/lora-gateway-bridge_3.0.1-r1_kona_micro.ipk --output lora-gateway-bridge.ipk
+# curl URL --output chirpstack-gateway-bridge.ipk
+curl https://artifacts.chirpstack.io/vendor/tektelic/kona-micro/chirpstack-gateway-bridge_3.0.1-r1_kona_micro.ipk --output chirpstack-gateway-bridge.ipk
 {{</highlight>}}
 
 ### Install IPK package
@@ -166,31 +166,31 @@ curl https://artifacts.loraserver.io/vendor/tektelic/kona-micro/lora-gateway-bri
 Use the `opkg` package-manager to install the downloaded package. Example:
 
 {{<highlight bash>}}
-opkg install lora-gateway-bridge.ipk
+opkg install chirpstack-gateway-bridge.ipk
 {{</highlight>}}
 
-### Edit the LoRa Gateway Bridge configuration
+### Edit the ChirpStack Gateway Bridge configuration
 
-To connect the LoRa Gateway Bridge with your MQTT broker, you must update
-the LoRa Gateway Bridge configuration file, which is located at:
-`/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
+To connect the ChirpStack Gateway Bridge with your MQTT broker, you must update
+the ChirpStack Gateway Bridge configuration file, which is located at:
+`/etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml`.
 
 ### (Re)start and stop commands
 
-Use the following commands to (re)start and stop the LoRa Gateway Bridge Service:
+Use the following commands to (re)start and stop the ChirpStack Gateway Bridge Service:
 
 {{<highlight bash>}}
 # status
-monit status lora-gateway-bridge
+monit status chirpstack-gateway-bridge
 
 # start
-monit start lora-gateway-bridge
+monit start chirpstack-gateway-bridge
 
 # stop
-monit stop lora-gateway-bridge
+monit stop chirpstack-gateway-bridge
 
 # restart
-monit restart lora-gateway-bridge
+monit restart chirpstack-gateway-bridge
 {{</highlight>}}
 
 ### Configure packet-forwarder
@@ -224,13 +224,13 @@ the back of the gateway (the 9 characters above the 48V = 0.6A line).
 
 ### Download IPK package
 
-Find the latest package at https://artifacts.loraserver.io/vendor/tektelic/kona-macro/
+Find the latest package at https://artifacts.chirpstack.io/vendor/tektelic/kona-macro/
 and copy the URL to your clipboard. Then on the gateway use `curl` and use the link
-as argument. Example for `lora-gateway-bridge_3.0.1-r1_kona_macro.ipk`:
+as argument. Example for `chirpstack-gateway-bridge_3.0.1-r1_kona_macro.ipk`:
 
 {{<highlight bash>}}
-# curl URL --output lora-gateway-bridge.ipk
-curl https://artifacts.loraserver.io/vendor/tektelic/kona-macro/lora-gateway-bridge_3.0.1-r1_kona_macro.ipk --output lora-gateway-bridge.ipk
+# curl URL --output chirpstack-gateway-bridge.ipk
+curl https://artifacts.chirpstack.io/vendor/tektelic/kona-macro/chirpstack-gateway-bridge_3.0.1-r1_kona_macro.ipk --output chirpstack-gateway-bridge.ipk
 {{</highlight>}}
 
 ### Install IPK package
@@ -238,31 +238,31 @@ curl https://artifacts.loraserver.io/vendor/tektelic/kona-macro/lora-gateway-bri
 Use the `opkg` package-manager to install the downloaded package. Example:
 
 {{<highlight bash>}}
-opkg install lora-gateway-bridge.ipk
+opkg install chirpstack-gateway-bridge.ipk
 {{</highlight>}}
 
-### Edit the LoRa Gateway Bridge configuration
+### Edit the ChirpStack Gateway Bridge configuration
 
-To connect the LoRa Gateway Bridge with your MQTT broker, you must update
-the LoRa Gateway Bridge configuration file, which is located at:
-`/etc/lora-gateway-bridge/lora-gateway-bridge.toml`.
+To connect the ChirpStack Gateway Bridge with your MQTT broker, you must update
+the ChirpStack Gateway Bridge configuration file, which is located at:
+`/etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml`.
 
 ### (Re)start and stop commands
 
-Use the following commands to (re)start and stop the LoRa Gateway Bridge Service:
+Use the following commands to (re)start and stop the ChirpStack Gateway Bridge Service:
 
 {{<highlight bash>}}
 # status
-monit status lora-gateway-bridge
+monit status chirpstack-gateway-bridge
 
 # start
-monit start lora-gateway-bridge
+monit start chirpstack-gateway-bridge
 
 # stop
-monit stop lora-gateway-bridge
+monit stop chirpstack-gateway-bridge
 
 # restart
-monit restart lora-gateway-bridge
+monit restart chirpstack-gateway-bridge
 {{</highlight>}}
 
 ### Configure packet-forwarder

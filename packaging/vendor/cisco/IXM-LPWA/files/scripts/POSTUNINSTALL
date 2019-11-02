@@ -2,4 +2,4 @@
 
 # remove symlinks
 rm /etc/init.d/lora-packet-forwarder
-rm /etc/init.d/lora-gateway-bridge
+rm /etc/init.d/chirpstack-gateway-bridge

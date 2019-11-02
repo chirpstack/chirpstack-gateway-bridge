@@ -1,6 +1,6 @@
 ---
 title: Wifx
-description: Installation of the LoRa Gateway Bridge on Wifx gateways (e.g. LORIX One).
+description: Installation of the ChirpStack Gateway Bridge on Wifx gateways (e.g. LORIX One).
 menu:
   main:
     parent: gateway
@@ -10,7 +10,7 @@ menu:
 
 ## LORIX One
 
-**[LORIX One product page](https://www.lorixone.io/)**.
+* [LORIX One product page](https://www.lorixone.io/)
 
-The LORIX One gateway is supported by the [LoRa Gateway OS](/lora-gateway-os/).
-Please refer the LoRa Gateway OS documentation for installation instructions.
+The LORIX One gateway is supported by the [ChirpStack Gateway OS](/gateway-os/).
+Please refer the ChirpStack Gateway OS documentation for installation instructions.

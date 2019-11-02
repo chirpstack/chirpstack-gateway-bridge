@@ -23,7 +23,7 @@ It is compatible with:
 When the `semtech_udp` backend has been enabled, make sure your packet-forwarder
 `global_conf.json` or `local_conf.json` is configured correctly, under `gateway_conf`,
 the `server_address`, `serv_port_up` and `serv_port_down` must be configured so
-that data is forwarded to the LoRa Gateway Bridge instance.
+that data is forwarded to the ChirpStack Gateway Bridge instance.
 
 {{<highlight text>}}
 "gateway_conf": {
@@ -37,11 +37,11 @@ that data is forwarded to the LoRa Gateway Bridge instance.
 
 ## Deployment
 
-The LoRa Gateway Bridge can be deployed either on the gateway (recommended)
+The ChirpStack Gateway Bridge can be deployed either on the gateway (recommended)
 and "in the cloud". In the latter case, multiple gateways can connect to the
-same LoRa Gateway Bridge instance.
+same ChirpStack Gateway Bridge instance.
 
-When the LoRa Gateway Bridge is deployed on the gateway, you will benefit from
+When the ChirpStack Gateway Bridge is deployed on the gateway, you will benefit from
 the MQTT authentication / authorization layer and optional TLS.
 
 ## Prometheus metrics

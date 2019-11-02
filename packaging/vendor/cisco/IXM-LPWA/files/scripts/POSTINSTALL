@@ -7,13 +7,13 @@ if [ ! -L /etc/init.d/lora-packet-forwarder ]; then
 	ln -s /tmp/mdm/pktfwd/firmware/etc/init.d/lora-packet-forwarder /etc/init.d/lora-packet-forwarder
 fi
 
-if [ ! -L /etc/init.d/lora-gateway-bridge ]; then
-	echo "Install lora-gateway-bridge init script"
-	ln -s /tmp/mdm/pktfwd/firmware/etc/init.d/lora-gateway-bridge /etc/init.d/lora-gateway-bridge
+if [ ! -L /etc/init.d/chirpstack-gateway-bridge ]; then
+	echo "Install chirpstack-gateway-bridge init script"
+	ln -s /tmp/mdm/pktfwd/firmware/etc/init.d/chirpstack-gateway-bridge /etc/init.d/chirpstack-gateway-bridge
 fi
 
-if [ ! -d /etc/lora-gateway-bridge ]; then
-	mkdir /etc/lora-gateway-bridge
+if [ ! -d /etc/chirpstack-gateway-bridge ]; then
+	mkdir /etc/chirpstack-gateway-bridge
 fi
 
 if [ ! -d /etc/lora-packet-forwarder ]; then
@@ -29,6 +29,6 @@ if [ ! -f /etc/lora-packet-forwarder/config.json ]; then
 	sed -i 's/\(^\s*"gateway_ID":\s*"\).\{16\}"\s*\(,\?\).*$/\1'${GWID_BEGIN}${GWID_MIDFIX}${GWID_END}'"\2/' /etc/lora-packet-forwarder/config.json
 fi
 
-if [ ! -f /etc/lora-gateway-bridge/lora-gateway-bridge.toml ]; then
-	cp /tmp/mdm/pktfwd/firmware/etc/lora-gateway-bridge/lora-gateway-bridge.toml /etc/lora-gateway-bridge/lora-gateway-bridge.toml
+if [ ! -f /etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml ]; then
+	cp /tmp/mdm/pktfwd/firmware/etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml /etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml
 fi

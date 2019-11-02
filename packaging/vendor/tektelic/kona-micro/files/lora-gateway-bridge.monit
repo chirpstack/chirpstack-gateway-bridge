@@ -1,4 +1,0 @@
-check process lora-gateway-bridge pidfile /var/run/lora-gateway-bridge.pid
-	start program = "/bin/bash -c '/etc/init.d/lora-gateway-bridge start'"
-	stop program = "/bin/bash -c '/etc/init.d/lora-gateway-bridge stop'"
-

@@ -3,8 +3,8 @@
 There are a couple of ways to get involved:
 
 * Join the discussions:
-    * LoRa Server project forum [https://forum.loraserver.io/](https://forum.loraserver.io/)
-* Report bugs or make feature-requests by opening an issue at [https://github.com/brocaar/lora-gateway-bridge/issues](https://github.com/brocaar/lora-gateway-bridge/issues)
+    * LoRa Server project forum [https://community.chirpstack.io/](https://community.chirpstack.io/)
+* Report bugs or make feature-requests by opening an issue at [https://github.com/brocaar/chirpstack-gateway-bridge/issues](https://github.com/brocaar/chirpstack-gateway-bridge/issues)
 * Help fixing issues or improve documentation by creating pull-requests
 
 

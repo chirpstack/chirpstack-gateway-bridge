@@ -4,7 +4,7 @@ menu:
     main:
         parent: integrate
         weight: 2
-description: Setting up the LoRa Gateway Bridge using a generic MQTT broker.
+description: Setting up the ChirpStack Gateway Bridge using a generic MQTT broker.
 ---
 
 # Generic MQTT authentication

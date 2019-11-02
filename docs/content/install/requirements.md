@@ -4,16 +4,16 @@ menu:
     main:
         parent: install
         weight: 1
-description: Instructions how to setup the LoRa Gateway Bridge requirements.
+description: Instructions on how to setup the ChirpStack Gateway Bridge requirements.
 ---
 
 # Requirements
 
 ## MQTT broker
 
-LoRa Gateway Bridge makes use of MQTT for publishing and receivng application
-payloads. [Mosquitto](http://mosquitto.org/) is a popular open-source MQTT
-server, but any MQTT broker implementing MQTT 3.1.1 should work. 
+ChirpStack Gateway Bridge makes use of MQTT for publishing events and receiving
+commands. [Mosquitto](http://mosquitto.org/) is a popular open-source MQTT
+broker, but any MQTT broker implementing MQTT 3.1.1 should work. 
 In case you install Mosquitto, make sure you install a **recent** version.
 
 ### Install

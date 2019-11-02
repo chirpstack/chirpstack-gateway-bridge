@@ -1,6 +1,6 @@
 ---
 title: Multitech
-description: Installation of the LoRa Gateway Bridge service on the Multitech Conduit gateway.
+description: Installation of the ChirpStack Gateway Bridge service on the Multitech Conduit gateway.
 menu:
   main:
     parent: gateway
@@ -14,8 +14,8 @@ menu:
 * [Product documentation page](http://www.multitech.net/developer/products/multiconnect-conduit-platform/)
 
 After completing these steps, you will have a Multitech Conduit running both the
-packet-forwarder and LoRa Gateway bridge. The packet-forwarder will forward
-the UDP data to `localhost:1700` and the LoRa Gateway Bridge will forward
+packet-forwarder and ChirpStack Gateway Bridge. The packet-forwarder will forward
+the UDP data to `localhost:1700` and the ChirpStack Gateway Bridge will forward
 this data over MQTT to a MQTT broker.
 
 There are two different Multitech Conduit firmware versions: mLinux and AEP.
@@ -60,7 +60,7 @@ as outlined above.
 
 ### Upgrading / migrating from AEP to the latest mLinux
 
-The suggested way to setup the packet-forwarder and LoRa Gateway Bridge on a
+The suggested way to setup the packet-forwarder and ChirpStack Gateway Bridge on a
 Multitech Conduit is by using the base mLinux firmware image
 (`mlinux-base-*.jffs2`). This firmware
 image installs the minimal amount of software needed to boot the Conduit,
@@ -93,32 +93,32 @@ Then after the reboot update the `opkg` cache:
 opkg update
 {{< /highlight >}}
 
-### Setting up the LoRa Gateway Bridge
+### Setting up the ChirpStack Gateway Bridge
 
 1. Log in using SSH or use the USB to serial interface.
 
-2. Download the latest `lora-gateway-bridge` `.ipk` package from:
-   [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
-   Example (assuming you want to install `lora-gateway-bridge_3.1.0-r1_arm926ejste.ipk`):
+2. Download the latest `chirpstack-gateway-bridge` `.ipk` package from:
+   [https://artifacts.chirpstack.io/vendor/multitech/conduit/](https://artifacts.chirpstack.io/vendor/multitech/conduit/).
+   Example (assuming you want to install `chirpstack-gateway-bridge_3.1.0-r1_arm926ejste.ipk`):
    {{<highlight bash>}}
-   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-gateway-bridge_3.1.0-r1_arm926ejste.ipk
+   wget https://artifacts.chirpstack.io/vendor/multitech/conduit/chirpstack-gateway-bridge_3.1.0-r1_arm926ejste.ipk
    {{< /highlight >}}
 
 3. Now that the `.ipk` package is stored on the Conduit, you can install it
    using the `opkg` package-manager utility. Example (assuming the same
    `.ipk` file):
    {{<highlight bash>}}
-   opkg install lora-gateway-bridge_3.1.0-r1_arm926ejste.ipk
+   opkg install chirpstack-gateway-bridge_3.1.0-r1_arm926ejste.ipk
    {{< /highlight >}}
 
-4. Update the MQTT connection details so that LoRa Gateway Bridge is able to
+4. Update the MQTT connection details so that ChirpStack Gateway Bridge is able to
    connect to your MQTT broker. You will find the configuration file in the
-   `/var/config/lora-gateway-bridge` directory.
+   `/var/config/chirpstack-gateway-bridge` directory.
 
-5. Start LoRa Gateway Bridge and ensure it will be started on boot.
+5. Start ChirpStack Gateway Bridge and ensure it will be started on boot.
    Example:
    {{<highlight bash>}}
-   /etc/init.d/lora-gateway-bridge start
+   /etc/init.d/chirpstack-gateway-bridge start
    {{< /highlight >}}
 
 ### Setting up the packet-forwarder
@@ -150,10 +150,10 @@ card which uses the SPI interface.
 1. Log in using SSH or use the USB to serial interface.
 
 2. Download the latest `lora-packet-forwarder` `*.ipk` package
-   from [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
+   from [https://artifacts.chirpstack.io/vendor/multitech/conduit/](https://artifacts.chirpstack.io/vendor/multitech/conduit/).
    Example:
    {{<highlight bash>}}
-   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
+   wget https://artifacts.chirpstack.io/vendor/multitech/conduit/lora-packet-forwarder_4.0.1-r5.0_mtcdt.ipk
    {{< /highlight >}}
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
@@ -190,7 +190,7 @@ card which uses the SPI interface.
    the first start.
 
    The build recipe of the `.ipk` package can be found at:
-   [https://github.com/brocaar/loraserver-yocto](https://github.com/brocaar/loraserver-yocto).
+   [https://github.com/brocaar/chirpstack-yocto](https://github.com/brocaar/chirpstack-yocto).
 
 #### mLinux with MTAC-LORA-915 or MTAC-LORA-868
 
@@ -200,10 +200,10 @@ card which uses the FTDI interface.
 1. Log in using SSH or use the USB to serial interface.
 
 2. Download the latest `lora-packet-forwarder-usb` `*.ipk` package
-   from [https://artifacts.loraserver.io/vendor/multitech/conduit/](https://artifacts.loraserver.io/vendor/multitech/conduit/).
+   from [https://artifacts.chirpstack.io/vendor/multitech/conduit/](https://artifacts.chirpstack.io/vendor/multitech/conduit/).
    Example:
    {{<highlight bash>}}
-   wget https://artifacts.loraserver.io/vendor/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
+   wget https://artifacts.chirpstack.io/vendor/multitech/conduit/lora-packet-forwarder-usb_1.4.1-r2.0_arm926ejste.ipk
    {{< /highlight >}}
 
 3. Now this `.ipk` package is stored on the Conduit, you can install it
@@ -235,7 +235,7 @@ card which uses the FTDI interface.
    and can be modified after the first start.
 
    The build recipe of the `.ipk` package can be found at:
-   [https://github.com/brocaar/loraserver-yocto](https://github.com/brocaar/loraserver-yocto).
+   [https://github.com/brocaar/chirpstack-yocto](https://github.com/brocaar/chirpstack-yocto).
 
 #### AEP: Setting up the packet-forwarder
 
@@ -288,13 +288,12 @@ signed certificate.  Accept the certificate to proceed.
     }
     {{< /highlight >}}
     Note that the serv_port_up and serv_port_down represent the ports used to 
-    communicate with the lora-gateway-bridge, usually on localhost (the 
+    communicate with the chirpstack-gateway-bridge, usually on localhost (the 
     server_address parameter).  See the image above.
     
 15. Select “Submit”.
 16. Select the “Save and Restart” option on the left menu.
 
-5. Be sure to add the gateway to the lora-app-server.  See [here](/lora-app-server/use/gateways/).
+5. Be sure to add the gateway to the ChirpStack Application Server.  See [here](/application-server/use/gateways/).
 
 6. Finally, restart the system to get everything running.
-

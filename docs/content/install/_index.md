@@ -1,5 +1,5 @@
 ---
-title: LoRa Gateway Bridge installation
+title: ChirpStack Gateway Bridge installation
 menu:
     main:
         parent: install
@@ -7,4 +7,4 @@ menu:
 hidden: true
 ---
 
-# LoRa Gateway Bridge installation
+# ChirpStack Gateway Bridge installation

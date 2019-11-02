@@ -4,18 +4,18 @@ menu:
     main:
         parent: install
         weight: 2
-description: Information on different LoRa Gateway Bridge deployment strategies.
+description: Information on different ChirpStack Gateway Bridge deployment strategies.
 ---
 
 # Deployment strategies
 
-There are multiple ways that you can deploy the LoRa Gateway Bridge:
+There are multiple ways that you can deploy the ChirpStack Gateway Bridge:
 
 ## Single instance
 
 The most basic strategy is to connect all your gateways to a single instance
-of the LoRa Gateway Bridge. This is the easiest option, as installing the
-LoRa Gateway Bridge on the gateway might involve some additional steps.
+of the ChirpStack Gateway Bridge. This is the easiest option, as installing the
+ChirpStack Gateway Bridge on the gateway might involve some additional steps.
 Please note that from a security perspective, it is the least secure option.
 The UDP protocol implemented by most gateways don't support any
 form of authorization and checks that the received data is authentic. It is
@@ -23,17 +23,17 @@ however an easy way to get started.
 
 ## Multiple instances
 
-For performance and to make the LoRa Gateway Bridge highly available, you
-can run LoRa Gateway Bridge on multiple servers, each connecting to the same
+For performance and to make the ChirpStack Gateway Bridge highly available, you
+can run ChirpStack Gateway Bridge on multiple servers, each connecting to the same
 MQTT broker.
 
-**Important:** In case you put a load-balancer in front of the LoRa Gateway
+**Important:** In case you put a load-balancer in front of the ChirpStack Gateway
 Bridge cluster, make sure that each gateway connection is always routed to the
 same instance!
 
 ## On each gateway
 
-Depending on the capabilities of your gateway, you can deploy the LoRa Gateway
+Depending on the capabilities of your gateway, you can deploy the ChirpStack Gateway
 Bridge on each of your gateways. This might require a few additional steps in
 the setup, but has the following advantages:
 

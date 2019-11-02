@@ -1,6 +1,6 @@
 ---
 title: Raspberry Pi
-description: Installation of the LoRa Gateway Bridge on Raspberry Pi based gateways.
+description: Installation of the ChirpStack Gateway Bridge on Raspberry Pi based gateways.
 menu:
   main:
     parent: gateway
@@ -9,5 +9,5 @@ menu:
 # Raspberry Pi
 
 Rasberry Pi based gateways are supported by the
-[LoRa Gateway OS](/lora-gateway-os/) images.
-Please refer the LoRa Gateway OS documentation for installation instructions.
+[ChirpStack Gateway OS](/gateway-os/) images.
+Please refer the ChirpStack Gateway OS documentation for installation instructions.

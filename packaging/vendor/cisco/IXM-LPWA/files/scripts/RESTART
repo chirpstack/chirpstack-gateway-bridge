@@ -3,4 +3,4 @@
 set -e
 
 /etc/init.d/lora-packet-forwarder restart
-/etc/init.d/lora-gateway-bridge restart
+/etc/init.d/chirpstack-gateway-bridge restart

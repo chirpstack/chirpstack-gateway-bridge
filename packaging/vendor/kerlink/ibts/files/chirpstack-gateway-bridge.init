@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+NAME="chirpstack-gateway-bridge"
+DESC="ChirpStack Gateway Bridge"
+DAEMON_BIN=/opt/$NAME/$NAME
+DAEMON_CONF=/user/etc/$NAME/$NAME.toml
+DAEMON_PID=/var/run/$NAME.pid
+
+function iptables_accept {
+    [ -n "${1}" ] || exit 1
+    local RULE="OUTPUT -t filter -p tcp --dport ${1} -j ACCEPT"
+    iptables -C ${RULE} 2> /dev/null || iptables -I ${RULE}
+    local RULE="INPUT -t filter -p tcp --sport ${1} -j ACCEPT"
+    iptables -C ${RULE} 2> /dev/null || iptables -I ${RULE}
+}
+
+function do_start {
+    echo "Starting $NAME"
+    iptables_accept 1883
+    iptables_accept 8883
+
+	start-stop-daemon \
+        --start \
+        --background \
+        --make-pidfile \
+        --pidfile $DAEMON_PID \
+        --exec $DAEMON_BIN -- --config $DAEMON_CONF
+}
+
+function do_stop {
+    echo "Stopping $NAME"
+    start-stop-daemon \
+        --stop \
+        --oknodo \
+        --quiet \
+        --pidfile $DAEMON_PID
+}
+
+case "$1" in
+    "start")
+        do_start
+        ;;
+    "stop")
+        do_stop
+        ;;
+    "restart")
+        do_stop
+        do_start
+        ;;
+    *)
+        echo "Usage: $1 {start|stop|restart}"
+        exit 1
+        ;;
+esac

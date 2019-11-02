@@ -1,0 +1,8 @@
+/var/log/chirpstack-gateway-bridge/chirpstack-gateway-bridge.log {
+    daily
+    rotate 7
+    missingok
+    dateext
+    copytruncate
+    compress
+}

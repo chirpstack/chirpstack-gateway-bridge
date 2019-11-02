@@ -4,7 +4,7 @@ menu:
     main:
         parent: integrate
         weight: 3
-description: Setting up the LoRa Gateway Bridge using the GCP Cloud IoT Core MQTT Bridge.
+description: Setting up the ChirpStack Gateway Bridge using the GCP Cloud IoT Core MQTT Bridge.
 ---
 
 # Google Cloud Platform Cloud IoT Core
@@ -12,7 +12,7 @@ description: Setting up the LoRa Gateway Bridge using the GCP Cloud IoT Core MQT
 The Google Cloud Platform [Cloud IoT Core](https://cloud.google.com/iot-core/)
 authentication type must be used when connecting to the
 [Cloud IoT Core MQTT Bridge](https://cloud.google.com/iot/docs/how-tos/mqtt-bridge).
-Cloud IoT Core will publish the received events from the LoRa gateway to
+Cloud IoT Core will publish the received events from the LoRa<sup>&reg;</sup> Gateway to
 a Google Cloud Platform [Cloud Pub/Sub topic](https://cloud.google.com/pubsub/).
 
 ## Limitations
@@ -20,8 +20,8 @@ a Google Cloud Platform [Cloud Pub/Sub topic](https://cloud.google.com/pubsub/).
 * Please note that this authentication type is only available for the `json` or
   `protobuf` marshaler.
 * As you need to setup the device ID (in this case the device is the gateway)
-  when provisioning the device (LoRa gateway) in Cloud IoT Core,
-  this does not allow to connect multiple LoRa gateways to a single LoRa Gateway
+  when provisioning the device (LoRa Gateway) in Cloud IoT Core,
+  this does not allow to connect multiple LoRa Gateways to a single ChirpStack Gateway
   Bridge instance.
 
 ## Conventions
@@ -35,9 +35,9 @@ equals to `0102030405060708`, then your Cloud IoT Core device ID equals to
 ### MQTT topics
 
 When the Google Cloud Platform Cloud IoT Core authentication type has been
-configured, LoRa Gateway Bridge will use MQTT topics which are expected by
+configured, ChirpStack Gateway Bridge will use MQTT topics which are expected by
 Cloud IoT Core and will ignore the MQTT topics as configured in the
-`lora-gateway-bridge.toml` configuration file.
+`chirpstack-gateway-bridge.toml` configuration file.
 
 #### Uplink topics
 
@@ -50,16 +50,16 @@ Cloud IoT Core and will ignore the MQTT topics as configured in the
 * `/devices/gw-[GATEWAY_ID]/commands/down`: scheduling downlink frame transmission
 * `/devices/gw-[GATEWAY_ID]/commands/config`: gateway configuration
 
-## Sending commands to the LoRa gateway
+## Sending commands to the LoRa Gateway
 
-For sending commands to the LoRa gateway (e.g. scheduling a downlink transmission
+For sending commands to the LoRa Gateway (e.g. scheduling a downlink transmission
 or reconfigure the channel-plan), you can use the Cloud IoT Core
 [sendCommandToDevice](https://cloud.google.com/iot/docs/reference/rest/) API method.
 
 ### Cloud Function
 
 When you would like to use a Pub/Sub topic for sending commands to the
-LoRa gateway, you could use Cloud Function to trigger the `sendCommandToDevice`
+LoRa Gateway, you could use Cloud Function to trigger the `sendCommandToDevice`
 API method. Example:
 
 #### `index.js`
@@ -77,7 +77,7 @@ const {google} = require('googleapis');
 
 // configuration options
 const REGION = 'europe-west1';
-const PROJECT_ID = 'loraserver';
+const PROJECT_ID = 'example-project';
 const REGISTRY_ID = 'eu868-gateways';
 
 
@@ -159,7 +159,7 @@ exports.sendMessage = (event, context, callback) => {
 Besides the `json` or `protobuf` message, the above Cloud Function expects the
 following attributes:
 
-* `deviceId`:  the LoRa gateway ID (e.g. `gw-0102030405060708`)
+* `deviceId`:  the LoRa Gateway ID (e.g. `gw-0102030405060708`)
 * `subFolder`: the command type
    * `down`: for scheduling downlink frames
    * `config`: for sending gateway configuration

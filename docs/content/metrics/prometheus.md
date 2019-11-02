@@ -9,8 +9,8 @@ description: Read metrics from the Prometheus metrics endpoint.
 
 # Prometheus metrics
 
-LoRa Geo Server provides a [Prometheus](https://prometheus.io/) metrics endpoint
-for monitoring the performance of the LoRa Geo Server service. Please refer to
+ChirpStack Gateway Bridge provides a [Prometheus](https://prometheus.io/) metrics endpoint
+for monitoring the performance of the ChirpStack Gateway Bridge service. Please refer to
 the [Prometheus](https://prometheus.io/) website for more information on
 setting up and using Prometheus.
 
@@ -41,4 +41,4 @@ These metrics are prefixed with `integration_mqtt_` and provide:
 
 ### Backends
 
-Please refer to [Backends](/lora-gateway-bridge/backends/) for the provided metrics per backend.
+Please refer to [Backends](/gateway-bridge/backends/) for the provided metrics per backend.

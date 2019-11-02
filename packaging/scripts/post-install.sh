@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 
-NAME=lora-gateway-bridge
+OLD_NAME=lora-gateway-bridge
+NAME=chirpstack-gateway-bridge
 BIN_DIR=/usr/bin
-SCRIPT_DIR=/usr/lib/lora-gateway-bridge/scripts
-LOG_DIR=/var/log/lora-gateway-bridge
+SCRIPT_DIR=/usr/lib/chirpstack-gateway-bridge/scripts
+LOG_DIR=/var/log/chirpstack-gateway-bridge
 DAEMON_USER=gatewaybridge
 DAEMON_GROUP=gatewaybridge
 
 function install_init {
 	cp -f $SCRIPT_DIR/$NAME.init /etc/init.d/$NAME
 	chmod +x /etc/init.d/$NAME
+	ln -s /etc/init.d/$NAME /etc/init.d/$OLD_NAME
 	update-rc.d $NAME defaults
 }
 

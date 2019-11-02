@@ -4,7 +4,7 @@ menu:
     main:
         parent: community
         weight: 2
-description: Information how you can contribute to the LoRa Gateway Bridge component.
+description: Information how you can contribute to the ChirpStack Gateway Bridge component.
 ---
 
 # Contribute
@@ -12,8 +12,8 @@ description: Information how you can contribute to the LoRa Gateway Bridge compo
 There are a couple of ways to get involved:
 
 * Join the discussions:
-    * LoRa Server project forum [https://forum.loraserver.io/](https://forum.loraserver.io/)
-* Report bugs or make feature-requests by opening an issue at [https://github.com/brocaar/lora-gateway-bridge/issues](https://github.com/brocaar/lora-gateway-bridge/issues)
+    * [ChirpStack Community Forum](https://community.chirpstack.io/)
+* Report bugs or make feature-requests by opening an issue at [https://github.com/brocaar/chirpstack-gateway-bridge/issues](https://github.com/brocaar/chirpstack-gateway-bridge/issues)
 * Help fixing issues or improve documentation by creating pull-requests
 
 

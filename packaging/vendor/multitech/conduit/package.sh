@@ -1,11 +1,11 @@
 #!/bin/env bash
 
-PACKAGE_NAME="lora-gateway-bridge"
+PACKAGE_NAME="chirpstack-gateway-bridge"
 PACKAGE_VERSION=$1
 REV="r1"
 
 
-PACKAGE_URL="https://artifacts.loraserver.io/downloads/lora-gateway-bridge/lora-gateway-bridge_${PACKAGE_VERSION}_linux_armv5.tar.gz"
+PACKAGE_URL="https://artifacts.chirpstack.io/downloads/chirpstack-gateway-bridge/chirpstack-gateway-bridge_${PACKAGE_VERSION}_linux_armv5.tar.gz"
 DIR=`dirname $0`
 PACKAGE_DIR="${DIR}/package"
 
@@ -22,11 +22,11 @@ Maintainer: Orne Brocaar <info@brocaar.com>
 Priority: optional
 Section: network
 Source: N/A
-Description: LoRa Gateway Bridge
+Description: ChirpStack Gateway Bridge
 EOF
 
 cat > $PACKAGE_DIR/CONTROL/postinst << EOF
-update-rc.d lora-gateway-bridge defaults
+update-rc.d chirpstack-gateway-bridge defaults
 EOF
 chmod 755 $PACKAGE_DIR/CONTROL/postinst
 

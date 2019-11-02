@@ -1,8 +1,8 @@
-project_name: lora-gateway-bridge
+project_name: chirpstack-gateway-bridge
 
 builds:
-  - main: cmd/lora-gateway-bridge/main.go
-    binary: lora-gateway-bridge
+  - main: cmd/chirpstack-gateway-bridge/main.go
+    binary: chirpstack-gateway-bridge
     goos:
       - windows
       - darwin
@@ -24,20 +24,21 @@ release:
   disable: true
 
 nfpm:
-  vendor: LoRa Server project
-  homepage: https://www.loraserver.io/
+  vendor: ChirpStack
+  homepage: https://www.chirpstack.io/
   maintainer: Orne Brocaar <info@brocaar.com>
-  description: LoRa Gateway Bridge
+  description: ChirpStack Gateway Bridge
   license: MIT
   formats:
     - deb
   bindir: /usr/bin
   files:
-    "packaging/files/lora-gateway-bridge.rotate": "/etc/logrotate.d/lora-gateway-bridge"
-    "packaging/files/lora-gateway-bridge.init": "/usr/lib/lora-gateway-bridge/scripts/lora-gateway-bridge.init"
-    "packaging/files/lora-gateway-bridge.service": "/usr/lib/lora-gateway-bridge/scripts/lora-gateway-bridge.service"
+    "packaging/files/chirpstack-gateway-bridge.rotate": "/etc/logrotate.d/chirpstack-gateway-bridge"
+    "packaging/files/chirpstack-gateway-bridge.init": "/usr/lib/chirpstack-gateway-bridge/scripts/chirpstack-gateway-bridge.init"
+    "packaging/files/chirpstack-gateway-bridge.service": "/usr/lib/chirpstack-gateway-bridge/scripts/chirpstack-gateway-bridge.service"
   config_files:
-    "packaging/files/lora-gateway-bridge.toml": "/etc/lora-gateway-bridge/lora-gateway-bridge.toml"
+    "packaging/files/chirpstack-gateway-bridge.toml": "/etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml"
   scripts:
+    preinstall: "packaging/scripts/pre-install.sh"
     postinstall: "packaging/scripts/post-install.sh"
     postremove: "packaging/scripts/post-remove.sh"

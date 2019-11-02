@@ -2,11 +2,11 @@
 
 set -e
 
-PACKAGE_NAME="lora-gateway-bridge"
+PACKAGE_NAME="chirpstack-gateway-bridge"
 PACKAGE_VERSION=$1
 REV="r1"
 
-PACKAGE_URL="https://artifacts.loraserver.io/downloads/lora-gateway-bridge/lora-gateway-bridge_${PACKAGE_VERSION}_linux_armv5.tar.gz"
+PACKAGE_URL="https://artifacts.chirpstack.io/downloads/chirpstack-gateway-bridge/chirpstack-gateway-bridge_${PACKAGE_VERSION}_linux_armv5.tar.gz"
 DIR=`dirname $0`
 FILES_DIR="${DIR}/files"
 KEY_DIR="${DIR}/key"
@@ -30,7 +30,7 @@ mkdir -p $TMP_DIR/package
 # Copy package files
 cp -R $FILES_DIR/* $PACKAGE_DIR
 
-# LoRa Gateway Bridge binary
+# ChirpStack Gateway Bridge binary
 mkdir -p $PACKAGE_DIR/opt/$PACKAGE_NAME
 wget -P $PACKAGE_DIR/opt/$PACKAGE_NAME $PACKAGE_URL
 tar zxf $PACKAGE_DIR/opt/$PACKAGE_NAME/*.tar.gz -C $PACKAGE_DIR/opt/$PACKAGE_NAME

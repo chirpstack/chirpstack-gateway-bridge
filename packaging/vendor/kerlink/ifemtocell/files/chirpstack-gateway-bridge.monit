@@ -1,0 +1,3 @@
+check process chirpstack-gateway-bridge pidfile /var/run/chirpstack-gateway-bridge.pid
+	start program = "/etc/init.d/chirpstack-gateway-bridge start"
+	stop program = "/etc/init.d/chirpstack-gateway-bridge stop"

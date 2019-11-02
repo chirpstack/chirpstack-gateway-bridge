@@ -1,0 +1,42 @@
+NAME="chirpstack-gateway-bridge"
+DESC="ChirpStack Gateway Bridge"
+DAEMON_BIN=/opt/$NAME/$NAME
+DAEMON_CONF=/etc/$NAME
+DAEMON_PID=/var/run/$NAME.pid
+
+function do_start {
+    echo "Starting $NAME"
+	start-stop-daemon \
+        --start \
+        --background \
+        --make-pidfile \
+        --pidfile $DAEMON_PID \
+        --exec $DAEMON_BIN
+}
+
+function do_stop {
+    echo "Stopping $NAME"
+    start-stop-daemon \
+        --stop \
+        --oknodo \
+        --quiet \
+        --pidfile $DAEMON_PID
+}
+
+case "$1" in
+    "start")
+        do_start
+        ;;
+    "stop")
+        do_stop
+        ;;
+    "restart")
+        do_stop
+        do_start
+        ;;
+    *)
+        echo "Usage: $1 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
