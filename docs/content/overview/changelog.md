@@ -10,6 +10,12 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 # Changelog
 
+## v3.4.1
+
+### Bugfixes
+
+* Fixes init stop script which could cause the ChirpStack Gateway Bridge to not properly stop or restart.
+
 ## v3.4.0
 
 This release renames LoRa Gateway Bridge to ChirpStack Gateway Bridge.
