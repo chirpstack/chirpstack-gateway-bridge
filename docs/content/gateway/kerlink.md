@@ -15,31 +15,80 @@ menu:
 The Kerlink IOT station has a mechanism to start "custom" application on boot.
 These steps will install the LoRa Gateway Bridge ARM build on the Kerlink.
 
-1. Create the the directories needed:
+1. Add the Semtech Packet Forwarder (SPF) depending on version of your Wirnet station.
+
+Semtech Packet Forwarder v3.1.0-klk16 (May 2018):
+This Packet forwarder is only compatible with HAL 4.1.3-klk8, with firmware v3.x and upper and with 27 dBm Wirnet™ stations.
+(dota_spf_3.1.0-klk16_4.1.3-klk8_wirnet.tar.gz)
+
+Semtech Packet Forwarder v3.1.0-klk11 (April 2017):
+Packet forwarder is only compatible with HAL 4.1.3.
+The packet forwarder source code is only compatible with firmware v2.2 and upper. This source is only compatible with 27 dBm Wirnet™ stations.
+Packet Forwarder - DOTA.
+Wirgrid DOTA is for Wirgrid v2.x Firmware (dota_spf_3.1.0-klk11_4.1.3-klk3_wirgrid_31_03_2017.tar.gz).
+Wirnet DOTA is for Wirnet v3.x Firmware (dota_spf_3.1.0-klk11_4.1.3-klk3_wirnet_31_03_2017.tar.gz).
+
+Please refer to the [Kerlink wiki](http://wikikerlink.fr/lora-station/) for the complete procedure as well as to recover the dota_spf_xxx files.
+
+2.Untar the dota_spf_xxx.tar.gz (example):
+{{<highlight bash>}}
+root@Debian02:~# tar -tf dota_spf_3.1.0-klk11_4.1.3-klk3_wirgrid_31_03_2017.tar.gz
+./
+./end_dota.sh
+./mnt/
+./mnt/fsuser-1/
+./mnt/fsuser-1/spf/
+./mnt/fsuser-1/spf/etc/
+./mnt/fsuser-1/spf/etc/global_conf_US903.json
+./mnt/fsuser-1/spf/etc/global_conf_EU868.json
+./mnt/fsuser-1/spf/etc/global_conf_JP923.json
+./mnt/fsuser-1/spf/manifest.xml
+./mnt/fsuser-1/spf/bin/
+./mnt/fsuser-1/spf/bin/execute_spf.sh
+./mnt/fsuser-1/spf/bin/spf
+{{< /highlight >}}
+
+3.Edit global_conf_XXXXX.json and add your gateway conf:
+{
+  "gateway_conf": {
+      "gateway_ID": "0000000000000000",
+      "serv_port_up": 1700,
+      "serv_port_down": 1700,
+      "server_address": "localhost",
+      "forward_crc_valid": true,
+      "forward_crc_error": false,
+      "forward_crc_disabled": true,
+      "gps": true
+  }
+}
+
+4. Create the the directories needed:
 {{<highlight bash>}}
 mkdir -p /mnt/fsuser-1/chirpstack-gateway-bridge/bin
 {{< /highlight >}}
 
-2. Download and extract the ChirpStack Gateway Bridge ARMv5 binary into the above
+5. Download and extract the ChirpStack Gateway Bridge ARMv5 binary into the above
    directory. See [downloads]({{< ref "/overview/downloads.md" >}}).
    Make sure the binary is marked as executable.
 
-3. Save the following content as `/mnt/fsuser-1/chirpstack-gateway-bridge/start.sh`:
+6. Save the following content as `/mnt/fsuser-1/chirpstack-gateway-bridge/start.sh`:
 {{<highlight bash>}}
 #!/bin/bash
 
 LOGGER="logger -p local1.notice"
 
+cd /mnt/fsuser-1/spf/bin/.
+./execute_spf.sh
+
 # mosquitto
 iptables -A INPUT -p tcp --sport 1883 -j ACCEPT
-
-/mnt/fsuser-1/chirpstack-gateway-bridge/bin/chirpstack-gateway-bridge --mqtt-server tcp://YOURSERVER:1883  2>&1 | $LOGGER &
+cd /mnt/fsuser-1/chirpstack-gateway-bridge/bin/.
+./chirpstack-gateway-bridge --config /var/config/chirpstack-gateway-bridge.toml
 {{< /highlight >}}
 
-    Make sure to replace `YOURSERVER` with the hostname / IP of your MQTT
-    broker. Also make sure the file is marked as executable.
+5.Add the chirpstack-gateway-bridge.toml according your setting (https://www.chirpstack.io/gateway-bridge/install/config/) in the /var/config/. directory.
 
-4. Save the following content as `/mnt/fsuser-1/chirpstack-gateway-bridge/manifest.xml`:
+6. Save the following content as `/mnt/fsuser-1/chirpstack-gateway-bridge/manifest.xml`:
 {{<highlight xml>}}
 <?xml version="1.0"?>
 <manifest>
@@ -49,6 +98,8 @@ iptables -A INPUT -p tcp --sport 1883 -j ACCEPT
 	</app>
 </manifest>
 {{< /highlight >}}
+
+Reboot your system.
 
 ## Kerlink iBTS
 
