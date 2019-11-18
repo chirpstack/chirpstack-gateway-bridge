@@ -30,9 +30,9 @@ Wirnet DOTA is for Wirnet v3.x Firmware (dota_spf_3.1.0-klk11_4.1.3-klk3_wirnet_
 
 Please refer to the [Kerlink wiki](http://wikikerlink.fr/lora-station/) for the complete procedure as well as to recover the dota_spf_xxx files.
 
-2.Untar the dota_spf_xxx.tar.gz (example):
+2. Untar the dota_spf_xxx.tar.gz (example):
 {{<highlight bash>}}
-root@Debian02:~# tar -tf dota_spf_3.1.0-klk11_4.1.3-klk3_wirgrid_31_03_2017.tar.gz
+root@Debian02:~# tar zxvf dota_spf_3.1.0-klk11_4.1.3-klk3_wirgrid_31_03_2017.tar.gz
 ./
 ./end_dota.sh
 ./mnt/
