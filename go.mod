@@ -1,6 +1,6 @@
 module github.com/brocaar/chirpstack-gateway-bridge
 
-go 1.12
+go 1.13
 
 require (
 	github.com/brocaar/chirpstack-api/go v0.0.0-20191105130647-2d022ee54ddb
@@ -14,8 +14,6 @@ require (
 	github.com/gorilla/websocket v1.4.0
 	github.com/jacobsa/crypto v0.0.0-20190317225127-9f44e2d11115 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0
 	github.com/sirupsen/logrus v1.4.2
