@@ -11,6 +11,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c // indirect
 	github.com/goreleaser/goreleaser v0.106.0
+	github.com/goreleaser/nfpm v0.11.0
 	github.com/gorilla/websocket v1.4.0
 	github.com/jacobsa/crypto v0.0.0-20190317225127-9f44e2d11115 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
