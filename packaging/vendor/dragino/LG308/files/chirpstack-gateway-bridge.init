@@ -1,0 +1,26 @@
+#!/bin/sh /etc/rc.common
+
+START=100
+STOP=100
+
+NAME="chirpstack-gateway-bridge"
+DAEMON_BIN=/opt/$NAME/$NAME
+DAEMON_CONF=/etc/$NAME/$NAME.toml
+DAEMON_PID=/var/run/$NAME.pid
+
+start() {
+    echo "Starting $NAME"
+	start-stop-daemon \
+		-S \
+		-b \
+		-m \
+		-p $DAEMON_PID \
+		-x $DAEMON_BIN -- --config $DAEMON_CONF
+}
+
+stop() {
+    echo "Stopping $NAME"
+    start-stop-daemon \
+		-K \
+		-p $DAEMON_PID
+}
