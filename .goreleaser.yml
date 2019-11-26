@@ -37,6 +37,7 @@ nfpm:
   license: MIT
   formats:
     - deb
+    - rpm
   bindir: /usr/bin
   files:
     "packaging/files/chirpstack-gateway-bridge.rotate": "/etc/logrotate.d/chirpstack-gateway-bridge"
