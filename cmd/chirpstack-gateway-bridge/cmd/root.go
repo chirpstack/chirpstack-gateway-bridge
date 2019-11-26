@@ -57,7 +57,7 @@ func init() {
 	viper.SetDefault("integration.mqtt.command_topic_template", "gateway/{{ .GatewayID }}/command/#")
 	viper.SetDefault("integration.mqtt.max_reconnect_interval", 10*time.Minute)
 
-	viper.SetDefault("integration.mqtt.auth.generic.server", "tcp://127.0.0.1:1883")
+	viper.SetDefault("integration.mqtt.auth.generic.servers", []string{"tcp://127.0.0.1:1883"})
 	viper.SetDefault("integration.mqtt.auth.generic.clean_session", true)
 
 	viper.SetDefault("integration.mqtt.auth.gcp_cloud_iot_core.server", "ssl://mqtt.googleapis.com:8883")
@@ -126,6 +126,11 @@ func initConfig() {
 	if config.C.Backend.Type == "basic_station" && (len(config.C.Backend.BasicStation.Filters.NetIDs) != 0 || len(config.C.Backend.BasicStation.Filters.JoinEUIs) != 0) {
 		config.C.Filters.NetIDs = config.C.Backend.BasicStation.Filters.NetIDs
 		config.C.Filters.JoinEUIs = config.C.Backend.BasicStation.Filters.JoinEUIs
+	}
+
+	// migrate server to servers
+	if config.C.Integration.MQTT.Auth.Generic.Server != "" {
+		config.C.Integration.MQTT.Auth.Generic.Servers = []string{config.C.Integration.MQTT.Auth.Generic.Server}
 	}
 }
 

@@ -220,8 +220,13 @@ marshaler="{{ .Integration.Marshaler }}"
 
     # Generic MQTT authentication.
     [integration.mqtt.auth.generic]
-    # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
-    server="{{ .Integration.MQTT.Auth.Generic.Server }}"
+    # MQTT servers.
+    #
+    # Configure one or multiple MQTT server to connect to. Each item must be in
+    # the following format: scheme://host:port where scheme is tcp, ssl or ws.
+    servers=[{{ range $index, $elm := .Integration.MQTT.Auth.Generic.Servers }}
+      "{{ $elm }}",{{ end }}
+    ]
 
     # Connect with the given username (optional)
     username="{{ .Integration.MQTT.Auth.Generic.Username }}"

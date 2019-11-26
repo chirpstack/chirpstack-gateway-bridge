@@ -250,8 +250,13 @@ marshaler="protobuf"
 
     # Generic MQTT authentication.
     [integration.mqtt.auth.generic]
-    # MQTT server (e.g. scheme://host:port where scheme is tcp, ssl or ws)
-    server="tcp://127.0.0.1:1883"
+    # MQTT servers.
+    #
+    # Configure one or multiple MQTT server to connect to. Each item must be in
+    # the following format: scheme://host:port where scheme is tcp, ssl or ws.
+    servers=[
+      "tcp://127.0.0.1:1883",
+    ]
 
     # Connect with the given username (optional)
     username=""
