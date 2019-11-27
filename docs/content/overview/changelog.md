@@ -10,6 +10,32 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 # Changelog
 
+## v3.5.0
+
+### Features
+
+#### MIPS builds
+
+This is the first release providing binaries compiled for MIPS. These binaries
+are compiled with `GOMIPS=softfloat` and are compressed with `upx` as MIPS
+based gateways have usually limited storage space available. ([#65](https://github.com/brocaar/chirpstack-gateway-bridge/issues/65))
+
+#### RPM packaging
+
+This is the first release providing .rpm packages for CentOS and RedHat. ([#145](https://github.com/brocaar/chirpstack-gateway-bridge/pull/145))
+
+### Improvements
+
+#### Environment variable configuration
+
+The usage of `.` in environment variables for configuration has been deprecated
+(it will continue to work, but will log a warning). Instead of `.`, use a
+double underscore (`__`). ([#144](https://github.com/brocaar/chirpstack-gateway-bridge/pull/144))
+
+#### Multiple MQTT servers
+
+This release adds support for the configuration of multiple MQTT servers. ([#141](https://github.com/brocaar/chirpstack-gateway-bridge/pull/141))
+
 ## v3.4.1
 
 ### Bugfixes
