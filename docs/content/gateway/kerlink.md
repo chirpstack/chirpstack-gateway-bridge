@@ -49,6 +49,7 @@ root@Debian02:~# tar zxvf dota_spf_3.1.0-klk11_4.1.3-klk3_wirgrid_31_03_2017.tar
 {{< /highlight >}}
 
 3.Edit global_conf_XXXXX.json and add your gateway conf:
+{{<highlight bash>}}
 {
   "gateway_conf": {
       "gateway_ID": "0000000000000000",
@@ -61,6 +62,7 @@ root@Debian02:~# tar zxvf dota_spf_3.1.0-klk11_4.1.3-klk3_wirgrid_31_03_2017.tar
       "gps": true
   }
 }
+{{< /highlight >}}
 
 4. Create the the directories needed:
 {{<highlight bash>}}
@@ -80,15 +82,14 @@ LOGGER="logger -p local1.notice"
 cd /mnt/fsuser-1/spf/bin/.
 ./execute_spf.sh
 
-# mosquitto
 iptables -A INPUT -p tcp --sport 1883 -j ACCEPT
 cd /mnt/fsuser-1/chirpstack-gateway-bridge/bin/.
 ./chirpstack-gateway-bridge --config /var/config/chirpstack-gateway-bridge.toml
 {{< /highlight >}}
 
-5.Add the chirpstack-gateway-bridge.toml according your setting (https://www.chirpstack.io/gateway-bridge/install/config/) in the /var/config/. directory.
+7.Add the chirpstack-gateway-bridge.toml according your setting (https://www.chirpstack.io/gateway-bridge/install/config/) in the /var/config/. directory.
 
-6. Save the following content as `/mnt/fsuser-1/chirpstack-gateway-bridge/manifest.xml`:
+8. Save the following content as `/mnt/fsuser-1/chirpstack-gateway-bridge/manifest.xml`:
 {{<highlight xml>}}
 <?xml version="1.0"?>
 <manifest>
