@@ -15,9 +15,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/brocaar/chirpstack-api/go/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration/mqtt/auth"
-	"github.com/brocaar/chirpstack-api/go/gw"
 	"github.com/brocaar/lorawan"
 )
 
@@ -33,6 +33,7 @@ type Backend struct {
 	gatewayConfigurationChan      chan gw.GatewayConfiguration
 	gatewayCommandExecRequestChan chan gw.GatewayCommandExecRequest
 	gateways                      map[lorawan.EUI64]struct{}
+	terminateOnConnectError       bool
 
 	qos                  uint8
 	eventTopicTemplate   *template.Template
@@ -48,6 +49,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 
 	b := Backend{
 		qos:                           conf.Integration.MQTT.Auth.Generic.QOS,
+		terminateOnConnectError:       conf.Integration.MQTT.TerminateOnConnectError,
 		clientOpts:                    paho.NewClientOptions(),
 		downlinkFrameChan:             make(chan gw.DownlinkFrame),
 		gatewayConfigurationChan:      make(chan gw.GatewayConfiguration),
@@ -245,6 +247,10 @@ func (b *Backend) connect() error {
 func (b *Backend) connectLoop() {
 	for {
 		if err := b.connect(); err != nil {
+			if b.terminateOnConnectError {
+				log.Fatal(err)
+			}
+
 			log.WithError(err).Error("integration/mqtt: connection error")
 			time.Sleep(time.Second * 2)
 

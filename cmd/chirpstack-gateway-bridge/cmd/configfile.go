@@ -210,6 +210,12 @@ marshaler="{{ .Integration.Marshaler }}"
   # Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
   max_reconnect_interval="{{ .Integration.MQTT.MaxReconnectInterval }}"
 
+  # Terminate on connect error.
+  #
+  # When set to true, instead of re-trying to connect, the ChirpStack Gateway Bridge
+  # process will be terminated on a connection error.
+  terminate_on_connect_error={{ .Integration.MQTT.TerminateOnConnectError }}
+
 
   # MQTT authentication.
   [integration.mqtt.auth]

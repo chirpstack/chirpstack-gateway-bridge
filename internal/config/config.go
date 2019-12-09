@@ -54,9 +54,10 @@ type Config struct {
 		Marshaler string `mapstructure:"marshaler"`
 
 		MQTT struct {
-			EventTopicTemplate   string        `mapstructure:"event_topic_template"`
-			CommandTopicTemplate string        `mapstructure:"command_topic_template"`
-			MaxReconnectInterval time.Duration `mapstructure:"max_reconnect_interval"`
+			EventTopicTemplate      string        `mapstructure:"event_topic_template"`
+			CommandTopicTemplate    string        `mapstructure:"command_topic_template"`
+			MaxReconnectInterval    time.Duration `mapstructure:"max_reconnect_interval"`
+			TerminateOnConnectError bool          `mapstructure:"terminate_on_connect_error"`
 
 			Auth struct {
 				Type string `mapstructure:"type"`
