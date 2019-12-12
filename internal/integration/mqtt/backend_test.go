@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/chirpstack-api/go/gw"
+	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/gofrs/uuid"
 
 	paho "github.com/eclipse/paho.mqtt.golang"

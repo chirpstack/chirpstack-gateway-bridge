@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/brocaar/chirpstack-api/go/common"
-	"github.com/brocaar/chirpstack-api/go/gw"
+	"github.com/brocaar/chirpstack-api/go/v3/common"
+	"github.com/brocaar/chirpstack-api/go/v3/gw"
 )
 
 // radioBandwidthPerChannelBandwidth defines the bandwidth that a single radio
