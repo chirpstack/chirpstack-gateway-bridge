@@ -34,7 +34,7 @@ the process like:
 These metrics are prefixed with `integration_mqtt_` and provide:
 
 * The number of gateway events published by the MQTT integration
-* The nubmer of commands received by the MQTT integration
+* The number of commands received by the MQTT integration
 * The number of times the integration connected to the MQTT broker
 * The number of times the integration disconnected from the MQTT broker
 * The number of times the integration reconnected to the MQTT broker
