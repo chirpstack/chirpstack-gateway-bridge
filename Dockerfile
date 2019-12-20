@@ -16,7 +16,6 @@ RUN make
 
 FROM alpine:latest AS production
 
-WORKDIR /root/
 RUN apk --no-cache add ca-certificates
-COPY --from=development /chirpstack-gateway-bridge/build/chirpstack-gateway-bridge .
-ENTRYPOINT ["./chirpstack-gateway-bridge"]
+COPY --from=development /chirpstack-gateway-bridge/build/chirpstack-gateway-bridge /usr/bin/chirpstack-gateway-bridge
+ENTRYPOINT ["/usr/bin/chirpstack-gateway-bridge"]
