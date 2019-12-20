@@ -69,8 +69,6 @@ configure a Gateway Profile within LoRa App Server. This means that it is also
 possible to use the LoRa Gateway Bridge with BasicStation gateways, without
 the need of installing LoRa Server and LoRa App Server.
 
-### Bugfixes
-
 ## v3.2.1
 
 ### Bugfixes
