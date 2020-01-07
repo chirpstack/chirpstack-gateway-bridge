@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation/structs"
-	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-api/go/v3/common"
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation/structs"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
 )
 
@@ -453,6 +453,78 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 		RX1DR:       &dr2,
 		RX1Freq:     &freq,
 	}, df)
+}
+
+func (ts *BackendTestSuite) TestRawPacketForwarderCommand() {
+	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
+
+	ts.T().Run("JSON", func(t *testing.T) {
+		assert := require.New(t)
+		pl := gw.RawPacketForwarderCommand{
+			GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+			RawId:     id[:],
+			Payload:   []byte(`{"foo": "bar"}`),
+		}
+		assert.NoError(ts.backend.RawPacketForwarderCommand(pl))
+
+		mt, msg, err := ts.wsClient.ReadMessage()
+		assert.NoError(err)
+		assert.Equal(websocket.TextMessage, mt)
+		assert.Equal(pl.Payload, msg)
+	})
+
+	ts.T().Run("Binary", func(t *testing.T) {
+		assert := require.New(t)
+		pl := gw.RawPacketForwarderCommand{
+			GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+			RawId:     id[:],
+			Payload:   []byte{0x01, 0x02, 0x03, 0x04},
+		}
+		assert.NoError(ts.backend.RawPacketForwarderCommand(pl))
+
+		mt, msg, err := ts.wsClient.ReadMessage()
+		assert.NoError(err)
+		assert.Equal(websocket.BinaryMessage, mt)
+		assert.Equal(pl.Payload, msg)
+	})
+}
+
+func (ts *BackendTestSuite) TestRawPacketForwarderEvent() {
+	ts.T().Run("Binary", func(t *testing.T) {
+		assert := require.New(t)
+
+		assert.NoError(ts.wsClient.WriteMessage(websocket.BinaryMessage, []byte{0x01, 0x02, 0x03, 0x04}))
+
+		pl := <-ts.backend.GetRawPacketForwarderEventChan()
+		assert.Equal([]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, pl.GatewayId)
+		assert.NotNil(pl.RawId)
+		assert.Equal([]byte{0x01, 0x02, 0x03, 0x04}, pl.Payload)
+	})
+
+	ts.T().Run("JSON rmtsh", func(t *testing.T) {
+		assert := require.New(t)
+
+		jsonMsg := `{
+		  "msgtype"  : "rmtsh",
+		  "rmtsh"    : [
+			{
+			  "user"     : "foo",
+			  "started"  : true,
+			  "age"      : 1,
+			  "pid"      : 2
+			}
+		  ]
+		}`
+
+		assert.NoError(ts.wsClient.WriteMessage(websocket.TextMessage, []byte(jsonMsg)))
+
+		pl := <-ts.backend.GetRawPacketForwarderEventChan()
+		assert.Equal([]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, pl.GatewayId)
+		assert.NotNil(pl.RawId)
+		assert.Equal([]byte(jsonMsg), pl.Payload)
+	})
 }
 
 func TestBackend(t *testing.T) {

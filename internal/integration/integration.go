@@ -5,9 +5,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 
+	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration/mqtt"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 )
 
@@ -16,6 +16,7 @@ const (
 	EventUp    = "up"
 	EventStats = "stats"
 	EventAck   = "ack"
+	EventRaw   = "raw"
 )
 
 var integration Integration
@@ -47,6 +48,9 @@ type Integration interface {
 
 	// GetDownlinkFrameChan returns the channel for downlink frames.
 	GetDownlinkFrameChan() chan gw.DownlinkFrame
+
+	// GetRawPacketForwarderChan returns the channel for raw packet-forwarder commands.
+	GetRawPacketForwarderChan() chan gw.RawPacketForwarderCommand
 
 	// GetGatewayConfigurationChan returns the channel for gateway configuration.
 	GetGatewayConfigurationChan() chan gw.GatewayConfiguration

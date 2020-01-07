@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -20,9 +21,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation/structs"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 )
@@ -48,9 +49,10 @@ type Backend struct {
 
 	gateways gateways
 
-	downlinkTXAckChan chan gw.DownlinkTXAck
-	uplinkFrameChan   chan gw.UplinkFrame
-	gatewayStatsChan  chan gw.GatewayStats
+	downlinkTXAckChan           chan gw.DownlinkTXAck
+	uplinkFrameChan             chan gw.UplinkFrame
+	gatewayStatsChan            chan gw.GatewayStats
+	rawPacketForwarderEventChan chan gw.RawPacketForwarderEvent
 
 	band         band.Band
 	region       band.Name
@@ -77,9 +79,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 			disconnectChan: make(chan lorawan.EUI64),
 		},
 
-		downlinkTXAckChan: make(chan gw.DownlinkTXAck),
-		uplinkFrameChan:   make(chan gw.UplinkFrame),
-		gatewayStatsChan:  make(chan gw.GatewayStats),
+		downlinkTXAckChan:           make(chan gw.DownlinkTXAck),
+		uplinkFrameChan:             make(chan gw.UplinkFrame),
+		gatewayStatsChan:            make(chan gw.GatewayStats),
+		rawPacketForwarderEventChan: make(chan gw.RawPacketForwarderEvent),
 
 		pingInterval: conf.Backend.BasicStation.PingInterval,
 		readTimeout:  conf.Backend.BasicStation.ReadTimeout,
@@ -210,6 +213,11 @@ func (b *Backend) GetDisconnectChan() chan lorawan.EUI64 {
 	return b.gateways.disconnectChan
 }
 
+// GetRawPacketForwarderEventChan returns the raw packet-forwarder command channel.
+func (b *Backend) GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEvent {
+	return b.rawPacketForwarderEventChan
+}
+
 func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 	b.Lock()
 	defer b.Unlock()
@@ -269,6 +277,36 @@ func (b *Backend) ApplyConfiguration(gwConfig gw.GatewayConfiguration) error {
 	return nil
 }
 
+// RawPacketForwarderCommand sends the given raw command to the packet-forwarder.
+func (b *Backend) RawPacketForwarderCommand(pl gw.RawPacketForwarderCommand) error {
+	var gatewayID lorawan.EUI64
+	var rawID uuid.UUID
+
+	copy(gatewayID[:], pl.GatewayId)
+	copy(rawID[:], pl.RawId)
+
+	if len(pl.Payload) == 0 {
+		return errors.New("raw packet-forwarder command payload is empty")
+	}
+
+	mt := websocket.BinaryMessage
+	if strings.HasPrefix(string(pl.Payload), "{") {
+		mt = websocket.TextMessage
+	}
+
+	websocketSendCounter("raw").Inc()
+	if err := b.sendRawToGateway(gatewayID, mt, pl.Payload); err != nil {
+		return errors.Wrap(err, "send raw packet-forwarder command to gateway error")
+	}
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"raw_id":     rawID,
+	}).Info("backend/basicstation: raw packet-forwarder command sent to gateway")
+
+	return nil
+}
+
 // Close closes the backend.
 func (b *Backend) Close() error {
 	b.isClosed = true
@@ -302,8 +340,14 @@ func (b *Backend) handleRouterInfo(r *http.Request, c *websocket.Conn) {
 		}
 	}
 
+	bb, err := json.Marshal(resp)
+	if err != nil {
+		log.WithError(err).Error("backend/basicstation: marshal json error")
+		return
+	}
+
 	c.SetWriteDeadline(time.Now().Add(b.writeTimeout))
-	if err := c.WriteJSON(resp); err != nil {
+	if err := c.WriteMessage(websocket.TextMessage, bb); err != nil {
 		log.WithError(err).Error("backend/basicstation: websocket send message error")
 		return
 	}
@@ -367,7 +411,7 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 
 	// receive data
 	for {
-		_, msg, err := c.ReadMessage()
+		mt, msg, err := c.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.WithField("gateway_id", gatewayID).WithError(err).Error("backend/basicstation: read message error")
@@ -377,6 +421,16 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 
 		// reset the read deadline as the Basic Station doesn't respond to PONG messages (yet)
 		c.SetReadDeadline(time.Now().Add(b.readTimeout))
+
+		if mt == websocket.BinaryMessage {
+			log.WithFields(log.Fields{
+				"gateway_id":     gatewayID,
+				"message_base64": base64.StdEncoding.EncodeToString(msg),
+			}).Debug("backend/basicstation: binary message received")
+
+			b.handleRawPacketForwarderEvent(gatewayID, msg)
+			continue
+		}
 
 		log.WithFields(log.Fields{
 			"gateway_id": gatewayID,
@@ -458,11 +512,7 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 			}
 			b.handleDownlinkTransmittedMessage(gatewayID, pl)
 		default:
-			log.WithFields(log.Fields{
-				"message_type": msgType,
-				"gateway_id":   gatewayID,
-				"payload":      string(msg),
-			}).Warning("backend/basicstation: unexpected message-type")
+			b.handleRawPacketForwarderEvent(gatewayID, msg)
 		}
 	}
 }
@@ -616,14 +666,56 @@ func (b *Backend) handleUplinkDataFrame(gatewayID lorawan.EUI64, v structs.Uplin
 	b.uplinkFrameChan <- uplinkFrame
 }
 
+func (b *Backend) handleRawPacketForwarderEvent(gatewayID lorawan.EUI64, pl []byte) {
+	rawID, err := uuid.NewV4()
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"gateway_id": gatewayID,
+		}).Error("backend/basicstation: get random raw id error")
+		return
+	}
+
+	rawEvent := gw.RawPacketForwarderEvent{
+		GatewayId: gatewayID[:],
+		RawId:     rawID[:],
+		Payload:   pl,
+	}
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"raw_id":     rawID,
+	}).Info("backend/basicstation: raw packet-forwarder event received")
+
+	b.rawPacketForwarderEventChan <- rawEvent
+}
+
 func (b *Backend) sendToGateway(gatewayID lorawan.EUI64, v interface{}) error {
 	gw, err := b.gateways.get(gatewayID)
 	if err != nil {
 		return errors.Wrap(err, "get gateway error")
 	}
 
+	bb, err := json.Marshal(v)
+	if err != nil {
+		return errors.Wrap(err, "marshal json error")
+	}
+
 	gw.conn.SetWriteDeadline(time.Now().Add(b.writeTimeout))
-	if err := gw.conn.WriteJSON(v); err != nil {
+	if err := gw.conn.WriteMessage(websocket.TextMessage, bb); err != nil {
+		return errors.Wrap(err, "send message to gateway error")
+	}
+
+	return nil
+}
+
+func (b *Backend) sendRawToGateway(gatewayID lorawan.EUI64, messageType int, data []byte) error {
+	gw, err := b.gateways.get(gatewayID)
+	if err != nil {
+		return errors.Wrap(err, "get gateway error")
+	}
+
+	gw.conn.SetWriteDeadline(time.Now().Add(b.writeTimeout))
+	if err := gw.conn.WriteMessage(messageType, data); err != nil {
 		return errors.Wrap(err, "send message to gateway error")
 	}
 

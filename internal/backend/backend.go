@@ -5,10 +5,10 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/semtechudp"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 )
 
@@ -53,6 +53,9 @@ type Backend interface {
 	// GetUplinkFrameChan returns the channel for received uplinks.
 	GetUplinkFrameChan() chan gw.UplinkFrame
 
+	// GetRawPacketForwarderEventChan returns the raw packet-forwarder command channel.
+	GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEvent
+
 	// GetConnectChan returns the channel for received gateway connections.
 	GetConnectChan() chan lorawan.EUI64
 
@@ -64,4 +67,7 @@ type Backend interface {
 
 	// ApplyConfiguration applies the given configuration to the gateway.
 	ApplyConfiguration(gw.GatewayConfiguration) error
+
+	// RawPacketForwarderCommand sends the given raw command to the packet-forwarder.
+	RawPacketForwarderCommand(gw.RawPacketForwarderCommand) error
 }

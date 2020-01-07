@@ -230,6 +230,28 @@ func (ts *MQTTBackendTestSuite) TestGatewayCommandExecRequest() {
 	assert.Equal(execReq, receivedExecReq)
 }
 
+func (ts *MQTTBackendTestSuite) TestRawPacketForwarderCommand() {
+	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
+
+	pl := gw.RawPacketForwarderCommand{
+		GatewayId: ts.gatewayID[:],
+		RawId:     id[:],
+		Payload:   []byte{0x01, 0x02, 0x03, 0x04},
+	}
+
+	b, err := ts.backend.marshal(&pl)
+	assert.NoError(err)
+
+	token := ts.mqttClient.Publish("gateway/0807060504030201/command/raw", 0, false, b)
+	token.Wait()
+	assert.NoError(token.Error())
+
+	received := <-ts.backend.GetRawPacketForwarderChan()
+	assert.Equal(pl, received)
+}
+
 func TestMQTTBackend(t *testing.T) {
 	suite.Run(t, new(MQTTBackendTestSuite))
 }

@@ -32,6 +32,7 @@ type Backend struct {
 	downlinkFrameChan             chan gw.DownlinkFrame
 	gatewayConfigurationChan      chan gw.GatewayConfiguration
 	gatewayCommandExecRequestChan chan gw.GatewayCommandExecRequest
+	rawPacketForwarderCommandChan chan gw.RawPacketForwarderCommand
 	gateways                      map[lorawan.EUI64]struct{}
 	terminateOnConnectError       bool
 
@@ -54,6 +55,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		downlinkFrameChan:             make(chan gw.DownlinkFrame),
 		gatewayConfigurationChan:      make(chan gw.GatewayConfiguration),
 		gatewayCommandExecRequestChan: make(chan gw.GatewayCommandExecRequest),
+		rawPacketForwarderCommandChan: make(chan gw.RawPacketForwarderCommand),
 		gateways:                      make(map[lorawan.EUI64]struct{}),
 	}
 
@@ -163,6 +165,11 @@ func (b *Backend) GetGatewayCommandExecRequestChan() chan gw.GatewayCommandExecR
 	return b.gatewayCommandExecRequestChan
 }
 
+// GetRawPacketForwarderChan returns the channel for raw packet-forwarder commands.
+func (b *Backend) GetRawPacketForwarderChan() chan gw.RawPacketForwarderCommand {
+	return b.rawPacketForwarderCommandChan
+}
+
 // SubscribeGateway subscribes a gateway to its topics.
 func (b *Backend) SubscribeGateway(gatewayID lorawan.EUI64) error {
 	b.Lock()
@@ -221,6 +228,7 @@ func (b *Backend) PublishEvent(gatewayID lorawan.EUI64, event string, id uuid.UU
 		"ack":   "downlink_",
 		"stats": "stats_",
 		"exec":  "exec_",
+		"raw":   "raw_",
 	}
 	return b.publish(gatewayID, event, log.Fields{
 		idPrefix[event] + "id": id,
@@ -372,6 +380,28 @@ func (b *Backend) handleGatewayCommandExecRequest(c paho.Client, msg paho.Messag
 	b.gatewayCommandExecRequestChan <- gatewayCommandExecRequest
 }
 
+func (b *Backend) handleRawPacketForwarderCommand(c paho.Client, msg paho.Message) {
+	var rawPacketForwarderCommand gw.RawPacketForwarderCommand
+	if err := b.unmarshal(msg.Payload(), &rawPacketForwarderCommand); err != nil {
+		log.WithFields(log.Fields{
+			"topic": msg.Topic(),
+		}).WithError(err).Error("integration/mqtt: unmarshal raw packet-forwarder command error")
+		return
+	}
+
+	var gatewayID lorawan.EUI64
+	var rawID uuid.UUID
+	copy(gatewayID[:], rawPacketForwarderCommand.GetGatewayId())
+	copy(rawID[:], rawPacketForwarderCommand.GetRawId())
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"raw_id":     rawID,
+	}).Info("integration/mqtt: raw packet-forwarder command received")
+
+	b.rawPacketForwarderCommandChan <- rawPacketForwarderCommand
+}
+
 func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
 	if strings.HasSuffix(msg.Topic(), "down") || strings.Contains(msg.Topic(), "command=down") {
 		mqttCommandCounter("down").Inc()
@@ -381,6 +411,8 @@ func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
 		b.handleGatewayConfiguration(c, msg)
 	} else if strings.HasSuffix(msg.Topic(), "exec") || strings.Contains(msg.Topic(), "command=exec") {
 		b.handleGatewayCommandExecRequest(c, msg)
+	} else if strings.HasSuffix(msg.Topic(), "raw") || strings.Contains(msg.Topic(), "command=raw") {
+		b.handleRawPacketForwarderCommand(c, msg)
 	} else {
 		log.WithFields(log.Fields{
 			"topic": msg.Topic(),

@@ -14,10 +14,10 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/semtechudp/packets"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/filters"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 )
 
@@ -173,6 +173,12 @@ func (b *Backend) GetDisconnectChan() chan lorawan.EUI64 {
 	return b.gateways.disconnectChan
 }
 
+// GetRawPacketForwarderEventChan returns the raw packet-forwarder command channel.
+func (b *Backend) GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEvent {
+	// not provided by the Semtech packet-forwarder.
+	return nil
+}
+
 // SendDownlinkFrame sends the given downlink frame to the gateway.
 func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
 	// mutex is needed in order to write to tokenMap
@@ -236,6 +242,11 @@ func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
 	}
 
 	return b.applyConfiguration(*pfConfig, config)
+}
+
+// RawPacketForwarderCommand sends the given raw command to the packet-forwarder.
+func (b *Backend) RawPacketForwarderCommand(gw.RawPacketForwarderCommand) error {
+	return errors.New("raw packet-forwarder command not implemented by Semtech packet-forwarder")
 }
 
 func (b *Backend) applyConfiguration(pfConfig pfConfiguration, config gw.GatewayConfiguration) error {
