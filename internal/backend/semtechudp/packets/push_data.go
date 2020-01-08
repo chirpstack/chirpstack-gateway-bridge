@@ -226,7 +226,7 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 
 		frame.TxInfo.ModulationInfo = &gw.UplinkTXInfo_FskModulationInfo{
 			FskModulationInfo: &gw.FSKModulationInfo{
-				Bitrate: uint32(rxpk.DatR.FSK),
+				Datarate: uint32(rxpk.DatR.FSK),
 			},
 		}
 	}

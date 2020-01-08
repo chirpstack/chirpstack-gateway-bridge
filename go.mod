@@ -3,7 +3,7 @@ module github.com/brocaar/chirpstack-gateway-bridge
 go 1.13
 
 require (
-	github.com/brocaar/chirpstack-api/go/v3 v3.0.1
+	github.com/brocaar/chirpstack-api/go/v3 v3.0.7
 	github.com/brocaar/lorawan v0.0.0-20190814113539-8eb2a8d6da09
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.2.0

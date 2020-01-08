@@ -17,10 +17,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/semtechudp/packets"
-	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-api/go/v3/common"
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/semtechudp/packets"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
 )
 
@@ -467,7 +467,8 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 					Modulation: common.Modulation_FSK,
 					ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
 						FskModulationInfo: &gw.FSKModulationInfo{
-							Bitrate: 50000,
+							Datarate:           50000,
+							FrequencyDeviation: 25000,
 						},
 					},
 					Board:   1,

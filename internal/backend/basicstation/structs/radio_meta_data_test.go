@@ -75,7 +75,7 @@ func TestSetRadioMetaDataToProto(t *testing.T) {
 					Modulation: common.Modulation_FSK,
 					ModulationInfo: &gw.UplinkTXInfo_FskModulationInfo{
 						FskModulationInfo: &gw.FSKModulationInfo{
-							Bitrate: 50000,
+							Datarate: 50000,
 						},
 					},
 				},

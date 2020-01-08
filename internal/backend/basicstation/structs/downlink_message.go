@@ -86,8 +86,7 @@ func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFr
 		}
 		dr, err = loraBand.GetDataRateIndex(false, band.DataRate{
 			Modulation: band.FSKModulation,
-			Bandwidth:  int(modInfo.Bandwidth),
-			BitRate:    int(modInfo.Bitrate),
+			BitRate:    int(modInfo.Datarate),
 		})
 		if err != nil {
 			return out, errors.Wrap(err, "get data-rate index error")

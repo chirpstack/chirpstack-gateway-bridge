@@ -114,8 +114,8 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 		if modInfo == nil {
 			return packet, errors.New("gateway: fsk_modulation_info must not be nil")
 		}
-		packet.Payload.TXPK.DatR.FSK = modInfo.Bitrate
-		packet.Payload.TXPK.FDev = uint16(modInfo.Bitrate / 2) // TODO: is this correct?!
+		packet.Payload.TXPK.DatR.FSK = modInfo.Datarate
+		packet.Payload.TXPK.FDev = uint16(modInfo.FrequencyDeviation)
 	}
 
 	switch frame.TxInfo.Timing {

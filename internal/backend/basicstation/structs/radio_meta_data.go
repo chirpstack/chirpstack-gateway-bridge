@@ -57,8 +57,7 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 		pb.TxInfo.Modulation = common.Modulation_FSK
 		pb.TxInfo.ModulationInfo = &gw.UplinkTXInfo_FskModulationInfo{
 			FskModulationInfo: &gw.FSKModulationInfo{
-				Bandwidth: uint32(dr.Bandwidth),
-				Bitrate:   uint32(dr.BitRate),
+				Datarate: uint32(dr.BitRate),
 			},
 		}
 	}

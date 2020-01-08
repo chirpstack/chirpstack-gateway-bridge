@@ -79,7 +79,7 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 					Modulation: common.Modulation_FSK,
 					ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
 						FskModulationInfo: &gw.FSKModulationInfo{
-							Bitrate: 50000,
+							Datarate: 50000,
 						},
 					},
 					Timing: gw.DownlinkTiming_DELAY,
