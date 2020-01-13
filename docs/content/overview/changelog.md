@@ -10,6 +10,30 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 # Changelog
 
+## v3.6.0
+
+### Features
+
+#### Raw packet-forwarder events / commands
+
+Using the raw packet-forwarder events and commands, it is possible to use the
+[BasicStation Remote Command](https://doc.sm.tc/station/tcproto.html#remote-command)
+and [BasicStation Remote Shell](https://doc.sm.tc/station/tcproto.html#remote-shell)
+features.
+
+#### Terminate on connect error
+
+The `terminate_on_connect_error` will terminate the ChirpStack Gateway Bridge
+process when it can't connect to the MQTT broker. In some cases this is
+preferred over the retry loop.
+
+### Improvements
+
+#### FSK FDev
+
+Before the frequency deviation was always set to the FSK `datarate / 2`. It
+is now possible to set it manually (falling back on `datarate / 2` when unset).
+
 ## v3.5.0
 
 ### Features

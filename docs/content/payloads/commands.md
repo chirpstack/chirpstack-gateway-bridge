@@ -136,3 +136,25 @@ variables that are already exposed to the "main" process.
 ### Protobuf
 
 This message is defined by the `GatewayCommandExecRequest` Protobuf message.
+
+## `raw` - Raw packet-forwarder command
+
+This payload is used for raw packet-forwarder commands that are not integrated
+with the ChirpStack Gateway Bridge. Currently these are the:
+
+* [BasicStation Remote Command](https://doc.sm.tc/station/tcproto.html#remote-command)
+* [BaiscStation Remote Shell](https://doc.sm.tc/station/tcproto.html#remote-shell)
+
+### JSON
+
+{{<highlight json>}}
+{
+    "gatewayID": "cnb/AC4GLBg=",
+    "rawID": "gsy9FN+rTwOEL8YzJJo+Kw==",
+    "payload": "[BASE64 ENCODED BLOB]"
+}
+{{</highlight>}}
+
+### Protobuf
+
+This message is defined by the `RawPacketForwarderCommand` Protobuf message.
