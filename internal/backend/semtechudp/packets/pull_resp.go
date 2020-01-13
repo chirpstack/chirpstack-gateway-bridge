@@ -116,6 +116,11 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 		}
 		packet.Payload.TXPK.DatR.FSK = modInfo.Datarate
 		packet.Payload.TXPK.FDev = uint16(modInfo.FrequencyDeviation)
+
+		// TODO: cleanup in next major release
+		if packet.Payload.TXPK.FDev == 0 {
+			packet.Payload.TXPK.FDev = uint16(modInfo.Datarate / 2)
+		}
 	}
 
 	switch frame.TxInfo.Timing {
