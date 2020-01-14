@@ -40,7 +40,7 @@ func JoinRequestToProto(loraBand band.Band, gatewayID lorawan.EUI64, jr JoinRequ
 	pb.PhyPayload = append(pb.PhyPayload, joinEUI...)
 
 	// DevEUI (little endian)
-	devEUI := make([]byte, len(jr.JoinEUI))
+	devEUI := make([]byte, len(jr.DevEUI))
 	for i := 0; i < len(jr.DevEUI); i++ {
 		devEUI[len(jr.DevEUI)-1-i] = jr.DevEUI[i]
 	}
