@@ -44,8 +44,6 @@ func init() {
 	viper.SetDefault("backend.basic_station.ping_interval", time.Minute)
 	viper.SetDefault("backend.basic_station.read_timeout", time.Minute+(5*time.Second))
 	viper.SetDefault("backend.basic_station.write_timeout", time.Second)
-	viper.SetDefault("backend.basic_station.filters.net_ids", []string{"000000"})
-	viper.SetDefault("backend.basic_station.filters.join_euis", [][2]string{{"0000000000000000", "ffffffffffffffff"}})
 	viper.SetDefault("backend.basic_station.region", "EU868")
 	viper.SetDefault("backend.basic_station.frequency_min", 863000000)
 	viper.SetDefault("backend.basic_station.frequency_max", 870000000)
