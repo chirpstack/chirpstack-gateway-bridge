@@ -12,5 +12,6 @@ menu:
 
 * [LORIX One product page](https://www.lorixone.io/)
 
-The LORIX One gateway is supported by the [ChirpStack Gateway OS](/gateway-os/).
-Please refer the ChirpStack Gateway OS documentation for installation instructions.
+The new LORIX OS firmware has built-in support for the ChirpStack Gateway Bridge.
+Please refer to the [LORIX OS announcement](https://www.lorixone.io/en/news/new-lorix-os-release-candidate-ready-testing)
+for more information.
