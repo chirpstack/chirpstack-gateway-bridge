@@ -700,6 +700,11 @@ func (b *Backend) sendToGateway(gatewayID lorawan.EUI64, v interface{}) error {
 		return errors.Wrap(err, "marshal json error")
 	}
 
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"message":    string(bb),
+	}).Debug("sending message to gateway")
+
 	gw.conn.SetWriteDeadline(time.Now().Add(b.writeTimeout))
 	if err := gw.conn.WriteMessage(websocket.TextMessage, bb); err != nil {
 		return errors.Wrap(err, "send message to gateway error")
