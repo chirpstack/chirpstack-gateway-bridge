@@ -47,7 +47,10 @@ func (c *gateways) get(mac lorawan.EUI64) (gateway, error) {
 	return gw, nil
 }
 
-// set creates or updates the gateway for the given Gateway ID.
+// Set creates or updates the gateway for the given Gateway ID.
+// Note that set must only be called for PullData frames! The UDP Packet
+// Forwarded uses two UDP sockets and the socket responsible for sending the
+// PullData is used for receiving downlink data.
 func (c *gateways) set(gatewayID lorawan.EUI64, gw gateway) error {
 	c.Lock()
 	defer c.Unlock()
