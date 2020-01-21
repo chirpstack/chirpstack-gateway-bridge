@@ -7,9 +7,9 @@ import (
 
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/semtechudp"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
-	"github.com/brocaar/lorawan"
 )
 
 var backend Backend
@@ -56,11 +56,8 @@ type Backend interface {
 	// GetRawPacketForwarderEventChan returns the raw packet-forwarder command channel.
 	GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEvent
 
-	// GetConnectChan returns the channel for received gateway connections.
-	GetConnectChan() chan lorawan.EUI64
-
-	// GetDisconnectChan returns the channel for disconnected gateway connections.
-	GetDisconnectChan() chan lorawan.EUI64
+	// GetSubscribeEventChan returns the channel for the (un)subscribe events.
+	GetSubscribeEventChan() chan events.Subscribe
 
 	// SendDownlinkFrame sends the given downlink frame.
 	SendDownlinkFrame(gw.DownlinkFrame) error

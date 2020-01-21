@@ -75,13 +75,7 @@ func (ts *BackendTestSuite) SetupTest() {
 
 	go func() {
 		for {
-			<-ts.backend.GetConnectChan()
-		}
-	}()
-
-	go func() {
-		for {
-			<-ts.backend.GetDisconnectChan()
+			<-ts.backend.GetSubscribeEventChan()
 		}
 	}()
 }

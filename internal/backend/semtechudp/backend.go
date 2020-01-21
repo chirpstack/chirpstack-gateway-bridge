@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/semtechudp/packets"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/filters"
@@ -78,9 +79,8 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		gatewayStatsChan:  make(chan gw.GatewayStats),
 		udpSendChan:       make(chan udpPacket),
 		gateways: gateways{
-			gateways:       make(map[lorawan.EUI64]gateway),
-			connectChan:    make(chan lorawan.EUI64),
-			disconnectChan: make(chan lorawan.EUI64),
+			gateways:           make(map[lorawan.EUI64]gateway),
+			subscribeEventChan: make(chan events.Subscribe),
 		},
 		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
 		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,
@@ -163,14 +163,9 @@ func (b *Backend) GetUplinkFrameChan() chan gw.UplinkFrame {
 	return b.uplinkFrameChan
 }
 
-// GetConnectChan returns the channel for received gateway connections.
-func (b *Backend) GetConnectChan() chan lorawan.EUI64 {
-	return b.gateways.connectChan
-}
-
-// GetDisconnectChan returns the channel for disconnected gateway connections.
-func (b *Backend) GetDisconnectChan() chan lorawan.EUI64 {
-	return b.gateways.disconnectChan
+// GetSubscribeEventChan return the (un)subscribe event channel.
+func (b *Backend) GetSubscribeEventChan() chan events.Subscribe {
+	return b.gateways.subscribeEventChan
 }
 
 // GetRawPacketForwarderEventChan returns the raw packet-forwarder command channel.

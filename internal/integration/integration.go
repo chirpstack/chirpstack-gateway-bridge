@@ -37,11 +37,10 @@ func GetIntegration() Integration {
 }
 
 type Integration interface {
-	// SubscribeGateway creates a subscription for the given gateway ID.
-	SubscribeGateway(lorawan.EUI64) error
-
-	// UnsubscribeGateway removes the subscription for the given gateway ID.
-	UnsubscribeGateway(lorawan.EUI64) error
+	// SetGatewaySubscription updates the gateway subscription for the given
+	// gateway ID. The integration must implement this such that it is safe
+	// to call the same action multiple times.
+	SetGatewaySubscription(subscribe bool, gatewayID lorawan.EUI64) error
 
 	// PublishEvent publishes the given event.
 	PublishEvent(lorawan.EUI64, string, uuid.UUID, proto.Message) error

@@ -23,6 +23,7 @@ import (
 
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation/structs"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
@@ -74,9 +75,8 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		scheme: "ws",
 
 		gateways: gateways{
-			gateways:       make(map[lorawan.EUI64]gateway),
-			connectChan:    make(chan lorawan.EUI64),
-			disconnectChan: make(chan lorawan.EUI64),
+			gateways:           make(map[lorawan.EUI64]gateway),
+			subscribeEventChan: make(chan events.Subscribe),
 		},
 
 		downlinkTXAckChan:           make(chan gw.DownlinkTXAck),
@@ -205,12 +205,8 @@ func (b *Backend) GetUplinkFrameChan() chan gw.UplinkFrame {
 	return b.uplinkFrameChan
 }
 
-func (b *Backend) GetConnectChan() chan lorawan.EUI64 {
-	return b.gateways.connectChan
-}
-
-func (b *Backend) GetDisconnectChan() chan lorawan.EUI64 {
-	return b.gateways.disconnectChan
+func (b *Backend) GetSubscribeEventChan() chan events.Subscribe {
+	return b.gateways.subscribeEventChan
 }
 
 // GetRawPacketForwarderEventChan returns the raw packet-forwarder command channel.

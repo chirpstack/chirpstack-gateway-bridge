@@ -33,16 +33,14 @@ func Setup(conf config.Config) error {
 			return errors.Wrap(err, "unmarshal gateway_id error")
 		}
 
-		if err := i.SubscribeGateway(gatewayID); err != nil {
+		if err := i.SetGatewaySubscription(true, gatewayID); err != nil {
 			return errors.Wrap(err, "subscribe gateway error")
 		}
 
 		alwaysSubscribe = append(alwaysSubscribe, gatewayID)
 	}
 
-	go onConnectedLoop()
-	go onDisconnectedLoop()
-
+	go gatewaySubscribeLoop()
 	go forwardUplinkFrameLoop()
 	go forwardGatewayStatsLoop()
 	go forwardDownlinkTxAckLoop()
@@ -54,38 +52,10 @@ func Setup(conf config.Config) error {
 	return nil
 }
 
-func onConnectedLoop() {
-	for gatewayID := range backend.GetBackend().GetConnectChan() {
-		var found bool
-		for _, gwID := range alwaysSubscribe {
-			if gatewayID == gwID {
-				found = true
-			}
-		}
-		if found {
-			break
-		}
-
-		if err := integration.GetIntegration().SubscribeGateway(gatewayID); err != nil {
-			log.WithError(err).Error("subscribe gateway error")
-		}
-	}
-}
-
-func onDisconnectedLoop() {
-	for gatewayID := range backend.GetBackend().GetDisconnectChan() {
-		var found bool
-		for _, gwID := range alwaysSubscribe {
-			if gatewayID == gwID {
-				found = true
-			}
-		}
-		if found {
-			break
-		}
-
-		if err := integration.GetIntegration().UnsubscribeGateway(gatewayID); err != nil {
-			log.WithError(err).Error("unsubscribe gateway error")
+func gatewaySubscribeLoop() {
+	for event := range backend.GetBackend().GetSubscribeEventChan() {
+		if err := integration.GetIntegration().SetGatewaySubscription(event.Subscribe, event.GatewayID); err != nil {
+			log.WithError(err).Error("set gateway subscription error")
 		}
 	}
 }

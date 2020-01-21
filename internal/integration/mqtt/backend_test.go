@@ -65,7 +65,7 @@ func (ts *MQTTBackendTestSuite) SetupSuite() {
 	var err error
 	ts.backend, err = NewBackend(conf)
 	assert.NoError(err)
-	assert.NoError(ts.backend.SubscribeGateway(ts.gatewayID))
+	assert.NoError(ts.backend.SetGatewaySubscription(true, ts.gatewayID))
 	time.Sleep(100 * time.Millisecond)
 }
 
@@ -79,14 +79,14 @@ func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 
 	gatewayID := lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8}
 
-	assert.NoError(ts.backend.SubscribeGateway(gatewayID))
+	assert.NoError(ts.backend.SetGatewaySubscription(true, gatewayID))
 	_, ok := ts.backend.gateways[gatewayID]
 	assert.True(ok)
 
 	ts.T().Run("Unsubscribe", func(t *testing.T) {
 		assert := require.New(t)
 
-		assert.NoError(ts.backend.UnsubscribeGateway(gatewayID))
+		assert.NoError(ts.backend.SetGatewaySubscription(false, gatewayID))
 		_, ok := ts.backend.gateways[gatewayID]
 		assert.False(ok)
 	})

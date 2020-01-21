@@ -170,16 +170,46 @@ func (b *Backend) GetRawPacketForwarderChan() chan gw.RawPacketForwarderCommand 
 	return b.rawPacketForwarderCommandChan
 }
 
-// SubscribeGateway subscribes a gateway to its topics.
-func (b *Backend) SubscribeGateway(gatewayID lorawan.EUI64) error {
+func (b *Backend) SetGatewaySubscription(subscribe bool, gatewayID lorawan.EUI64) error {
 	b.Lock()
 	defer b.Unlock()
 
-	if err := b.subscribeGateway(gatewayID); err != nil {
-		return err
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"subscribe":  subscribe,
+	}).Debug("integration/mqtt: set gateway subscription called")
+
+	_, ok := b.gateways[gatewayID]
+	if ok == subscribe {
+		return nil
 	}
 
-	b.gateways[gatewayID] = struct{}{}
+	for {
+		if subscribe {
+			if err := b.subscribeGateway(gatewayID); err != nil {
+				log.WithError(err).WithFields(log.Fields{
+					"gateway_id": gatewayID,
+				}).Error("integration/mqtt: subscribe gateway error")
+				time.Sleep(time.Second)
+				continue
+			}
+
+			b.gateways[gatewayID] = struct{}{}
+		} else {
+			if err := b.unsubscribeGateway(gatewayID); err != nil {
+				log.WithError(err).WithFields(log.Fields{
+					"gateway_id": gatewayID,
+				}).Error("integration/mqtt: unsubscribe gateway error")
+				time.Sleep(time.Second)
+				continue
+			}
+
+			delete(b.gateways, gatewayID)
+		}
+
+		break
+	}
+
 	return nil
 }
 
@@ -199,24 +229,19 @@ func (b *Backend) subscribeGateway(gatewayID lorawan.EUI64) error {
 	return nil
 }
 
-// UnsubscribeGateway unsubscribes the gateway from its topics.
-func (b *Backend) UnsubscribeGateway(gatewayID lorawan.EUI64) error {
-	b.Lock()
-	defer b.Unlock()
-
+func (b *Backend) unsubscribeGateway(gatewayID lorawan.EUI64) error {
 	topic := bytes.NewBuffer(nil)
 	if err := b.commandTopicTemplate.Execute(topic, struct{ GatewayID lorawan.EUI64 }{gatewayID}); err != nil {
 		return errors.Wrap(err, "execute command topic template error")
 	}
 	log.WithFields(log.Fields{
 		"topic": topic.String(),
-	}).Info("integration/mqtt: unsubscribe topic")
+	}).Info("integration/mqtt: unsubscribing from topic")
 
 	if token := b.conn.Unsubscribe(topic.String()); token.Wait() && token.Error() != nil {
 		return errors.Wrap(token.Error(), "unsubscribe topic error")
 	}
 
-	delete(b.gateways, gatewayID)
 	return nil
 }
 

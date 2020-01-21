@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/lorawan"
 )
 
@@ -30,8 +31,7 @@ type gateways struct {
 	sync.RWMutex
 	gateways map[lorawan.EUI64]gateway
 
-	connectChan    chan lorawan.EUI64
-	disconnectChan chan lorawan.EUI64
+	subscribeEventChan chan events.Subscribe
 }
 
 // get returns the gateway object for the given MAC.
@@ -58,8 +58,9 @@ func (c *gateways) set(gatewayID lorawan.EUI64, gw gateway) error {
 	_, ok := c.gateways[gatewayID]
 	if !ok {
 		connectCounter().Inc()
-		c.connectChan <- gatewayID
 	}
+
+	c.subscribeEventChan <- events.Subscribe{Subscribe: true, GatewayID: gatewayID}
 	c.gateways[gatewayID] = gw
 	return nil
 }
@@ -72,7 +73,7 @@ func (c *gateways) cleanup() error {
 	for gatewayID := range c.gateways {
 		if c.gateways[gatewayID].lastSeen.Before(time.Now().Add(gatewayCleanupDuration)) {
 			disconnectCounter().Inc()
-			c.disconnectChan <- gatewayID
+			c.subscribeEventChan <- events.Subscribe{Subscribe: false, GatewayID: gatewayID}
 			delete(c.gateways, gatewayID)
 		}
 	}

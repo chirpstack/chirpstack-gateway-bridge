@@ -15,6 +15,7 @@ import (
 	"github.com/brocaar/chirpstack-api/go/v3/common"
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation/structs"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
 )
@@ -57,16 +58,16 @@ func (ts *BackendTestSuite) SetupTest() {
 	ts.wsClient, _, err = d.Dial(fmt.Sprintf("ws://%s/gateway/0102030405060708", ts.wsAddr), nil)
 	assert.NoError(err)
 
-	eui := <-ts.backend.GetConnectChan()
-	assert.Equal(lorawan.EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, eui)
+	event := <-ts.backend.GetSubscribeEventChan()
+	assert.Equal(events.Subscribe{Subscribe: true, GatewayID: lorawan.EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}}, event)
 }
 
 func (ts *BackendTestSuite) TearDownTest() {
 	assert := require.New(ts.T())
 	assert.NoError(ts.wsClient.Close())
 
-	eui := <-ts.backend.GetDisconnectChan()
-	assert.Equal(lorawan.EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, eui)
+	event := <-ts.backend.GetSubscribeEventChan()
+	assert.Equal(events.Subscribe{Subscribe: false, GatewayID: lorawan.EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}}, event)
 
 	assert.NoError(ts.backend.Close())
 }
