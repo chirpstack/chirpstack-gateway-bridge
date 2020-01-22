@@ -7,6 +7,7 @@ require (
 	github.com/brocaar/lorawan v0.0.0-20190814113539-8eb2a8d6da09
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.2.0
+	github.com/go-zeromq/zmq4 v0.7.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/protobuf v1.3.2
 	github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c // indirect

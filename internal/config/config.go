@@ -48,6 +48,12 @@ type Config struct {
 			FrequencyMax  uint32                     `mapstructure:"frequency_max"`
 			Concentrators []BasicStationConcentrator `mapstructure:"concentrators"`
 		} `mapstructure:"basic_station"`
+
+		Concentratord struct {
+			EventURL   string `mapstructure:"event_url"`
+			CommandURL string `mapstructure:"command_url"`
+			CRCCheck   bool   `mapstructure:"crc_check"`
+		} `mapstructure:"concentratord"`
 	} `mapstructure:"backend"`
 
 	Integration struct {

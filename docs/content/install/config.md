@@ -108,6 +108,7 @@ join_euis=[
 #
 # Valid options are:
 #   * semtech_udp
+#   * concentratord
 #   * basic_station
 type="semtech_udp"
 
@@ -135,6 +136,19 @@ type="semtech_udp"
   # the time would otherwise be unset.
   fake_rx_time=false
 
+
+
+  # ChirpStack Concentratord backend.
+  [backend.concentratord]
+
+  # Check for CRC OK.
+  crc_check=true
+
+  # Event API URL.
+  event_url="ipc:///tmp/concentratord_event"
+
+  # Command API URL.
+  command_url="ipc:///tmp/concentratord_command"
 
 
   # Basic Station backend.

@@ -58,6 +58,7 @@ join_euis=[{{ range $index, $elm := .Filters.JoinEUIs }}
 #
 # Valid options are:
 #   * semtech_udp
+#   * concentratord
 #   * basic_station
 type="{{ .Backend.Type }}"
 
@@ -92,6 +93,19 @@ type="{{ .Backend.Type }}"
     output_file="{{ $config.OutputFile }}"
     restart_command="{{ $config.RestartCommand }}"
 {{ end }}
+
+  # ChirpStack Concentratord backend.
+  [backend.concentratord]
+
+  # Check for CRC OK.
+  crc_check={{ .Backend.Concentratord.CRCCheck }}
+
+  # Event API URL.
+  event_url="{{ .Backend.Concentratord.EventURL }}"
+
+  # Command API URL.
+  command_url="{{ .Backend.Concentratord.CommandURL }}"
+
 
   # Basic Station backend.
   [backend.basic_station]
