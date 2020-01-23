@@ -10,6 +10,27 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 # Changelog
 
+## v3.7.0
+
+### Features
+
+#### Concentratord backend
+
+The [Concentratord](https://www.chirpstack.io/gateway-bridge/backends/concentratord/) backend is compatible with the
+[ChirpStack Concentratord](https://github.com/brocaar/chirpstack-concentratord)
+daemon. Please note that this backend is experimental.
+
+### Improvements
+
+* Change MQTT max. reconnect interval default value to 1 minute.
+* Refactor MQTT subscribe / unsubscribe logic.
+
+### Bugfixes
+
+* Use DevEUI object length instead of JoinEUI. ([#154](https://github.com/brocaar/chirpstack-gateway-bridge/pull/154))
+* Remove default values for BasicStation filters. ([#157](https://github.com/brocaar/chirpstack-gateway-bridge/issues/157))
+* Fix BasicStation websocket ping loop. ([#156](https://github.com/brocaar/chirpstack-gateway-bridge/issues/156))
+
 ## v3.6.0
 
 ### Features
