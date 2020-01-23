@@ -746,6 +746,7 @@ func (b *Backend) websocketWrap(handler func(*http.Request, *websocket.Conn), w 
 
 	ticker := time.NewTicker(b.pingInterval)
 	defer ticker.Stop()
+	done := make(chan struct{})
 
 	go func() {
 		for {
@@ -756,11 +757,13 @@ func (b *Backend) websocketWrap(handler func(*http.Request, *websocket.Conn), w 
 				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					log.WithError(err).Error("backend/basicstation: send ping message error")
 					conn.Close()
-					return
 				}
+			case <-done:
+				return
 			}
 		}
 	}()
 
 	handler(r, conn)
+	done <- struct{}{}
 }
