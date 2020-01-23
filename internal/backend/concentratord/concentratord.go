@@ -146,6 +146,8 @@ func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
 
 	b.downlinkTXAckChan <- ack
 
+	commandCounter("down").Inc()
+
 	return nil
 }
 
@@ -227,6 +229,8 @@ func (b *Backend) eventLoop() {
 				"event": string(msg.Frames[0]),
 			}).Error("backend/concentratord: handle event error")
 		}
+
+		eventCounter(string(msg.Frames[0])).Inc()
 	}
 }
 
