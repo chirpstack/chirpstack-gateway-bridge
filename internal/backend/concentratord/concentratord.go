@@ -91,27 +91,33 @@ func (b *Backend) getGatewayID() (lorawan.EUI64, error) {
 	return gatewayID, nil
 }
 
+// Close closes the backend.
 func (b *Backend) Close() error {
 	b.eventSock.Close()
 	return nil
 }
 
+// GetDownlinkTXAckChan returns the channel for downlink tx acknowledgements.
 func (b *Backend) GetDownlinkTXAckChan() chan gw.DownlinkTXAck {
 	return b.downlinkTXAckChan
 }
 
+// GetGatewayStatsChan returns the channel for gateway statistics.
 func (b *Backend) GetGatewayStatsChan() chan gw.GatewayStats {
 	return b.gatewayStatsChan
 }
 
+// GetUplinkFrameChan returns the channel for received uplinks.
 func (b *Backend) GetUplinkFrameChan() chan gw.UplinkFrame {
 	return b.uplinkFrameChan
 }
 
+// GetSubscribeEventChan returns the channel for the (un)subscribe events.
 func (b *Backend) GetSubscribeEventChan() chan events.Subscribe {
 	return b.subscribeEventChan
 }
 
+// SendDownlinkFrame sends the given downlink frame.
 func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
 	loRaModInfo := pl.GetTxInfo().GetLoraModulationInfo()
 	if loRaModInfo != nil {
@@ -130,7 +136,7 @@ func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
 		log.WithError(err).Fatal("backend/concentratord: send downlink command error")
 	}
 	if len(bb) == 0 {
-		return errors.New("no reply receieved, check concentratord logs for error!")
+		return errors.New("no reply receieved, check concentratord logs for error")
 	}
 
 	var ack gw.DownlinkTXAck
@@ -143,14 +149,17 @@ func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
 	return nil
 }
 
+// ApplyConfiguration is not implemented.
 func (b *Backend) ApplyConfiguration(gw.GatewayConfiguration) error {
 	return nil
 }
 
+// GetRawPacketForwarderEventChan returns nil.
 func (b *Backend) GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEvent {
 	return nil
 }
 
+// RawPacketForwarderCommand is not implemented.
 func (b *Backend) RawPacketForwarderCommand(gw.RawPacketForwarderCommand) error {
 	return nil
 }

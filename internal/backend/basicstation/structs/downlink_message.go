@@ -14,7 +14,7 @@ import (
 	"github.com/brocaar/lorawan/band"
 )
 
-// DownlinkMessage implements the downlink message.
+// DownlinkFrame implements the downlink message.
 type DownlinkFrame struct {
 	MessageType MessageType `json:"msgtype"`
 

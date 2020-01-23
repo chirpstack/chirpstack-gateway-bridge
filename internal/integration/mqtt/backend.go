@@ -160,7 +160,7 @@ func (b *Backend) GetGatewayConfigurationChan() chan gw.GatewayConfiguration {
 	return b.gatewayConfigurationChan
 }
 
-// GetGatewayCommandExecRequestChan() returns the channel for gateway command execution.
+// GetGatewayCommandExecRequestChan returns the channel for gateway command execution.
 func (b *Backend) GetGatewayCommandExecRequestChan() chan gw.GatewayCommandExecRequest {
 	return b.gatewayCommandExecRequestChan
 }
@@ -170,6 +170,7 @@ func (b *Backend) GetRawPacketForwarderChan() chan gw.RawPacketForwarderCommand 
 	return b.rawPacketForwarderCommandChan
 }
 
+// SetGatewaySubscription (un)subscribes the given gateway.
 func (b *Backend) SetGatewaySubscription(subscribe bool, gatewayID lorawan.EUI64) error {
 	b.Lock()
 	defer b.Unlock()

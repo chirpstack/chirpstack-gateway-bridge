@@ -193,18 +193,22 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	return &b, nil
 }
 
+// GetDownlinkTXAckChan returns the channel for downlink tx acknowledgements.
 func (b *Backend) GetDownlinkTXAckChan() chan gw.DownlinkTXAck {
 	return b.downlinkTXAckChan
 }
 
+// GetGatewayStatsChan returns the channel for gateway statistics.
 func (b *Backend) GetGatewayStatsChan() chan gw.GatewayStats {
 	return b.gatewayStatsChan
 }
 
+// GetUplinkFrameChan returns the channel for received uplinks.
 func (b *Backend) GetUplinkFrameChan() chan gw.UplinkFrame {
 	return b.uplinkFrameChan
 }
 
+// GetSubscribeEventChan returns the channel for the (un)subscribe events.
 func (b *Backend) GetSubscribeEventChan() chan events.Subscribe {
 	return b.gateways.subscribeEventChan
 }
@@ -214,6 +218,7 @@ func (b *Backend) GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEve
 	return b.rawPacketForwarderEventChan
 }
 
+// SendDownlinkFrame sends the given downlink frame.
 func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 	b.Lock()
 	defer b.Unlock()
@@ -254,6 +259,7 @@ func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 	return nil
 }
 
+// ApplyConfiguration applies the given configuration to the gateway.
 func (b *Backend) ApplyConfiguration(gwConfig gw.GatewayConfiguration) error {
 	rc, err := structs.GetRouterConfigOld(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, gwConfig)
 	if err != nil {

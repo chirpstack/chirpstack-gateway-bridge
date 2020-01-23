@@ -13,6 +13,7 @@ import (
 var netIDs []lorawan.NetID
 var joinEUIs [][2]lorawan.EUI64
 
+// Setup configures the filters package.
 func Setup(conf config.Config) error {
 	for _, netIDStr := range conf.Filters.NetIDs {
 		var netID lorawan.NetID

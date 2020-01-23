@@ -15,6 +15,7 @@ import (
 
 var alwaysSubscribe []lorawan.EUI64
 
+// Setup configures the forwarder.
 func Setup(conf config.Config) error {
 	b := backend.GetBackend()
 	i := integration.GetIntegration()

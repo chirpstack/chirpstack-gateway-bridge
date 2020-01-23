@@ -29,6 +29,7 @@ type RadioMetaDataUpInfo struct {
 	SNR     float32 `json:"snr"`
 }
 
+// SetRadioMetaDataToProto sets the given parameters to the given protobuf struct.
 func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd RadioMetaData, pb *gw.UplinkFrame) error {
 	//
 	// TxInfo

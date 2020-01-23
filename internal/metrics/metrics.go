@@ -9,6 +9,7 @@ import (
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 )
 
+// Setup configures the metrics package.
 func Setup(conf config.Config) error {
 	if !conf.Metrics.Prometheus.EndpointEnabled {
 		return nil

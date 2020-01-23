@@ -21,6 +21,7 @@ const (
 
 var integration Integration
 
+// Setup configures the integration.
 func Setup(conf config.Config) error {
 	var err error
 	integration, err = mqtt.NewBackend(conf)
@@ -36,6 +37,7 @@ func GetIntegration() Integration {
 	return integration
 }
 
+// Integration defines the interface that an integration must implement.
 type Integration interface {
 	// SetGatewaySubscription updates the gateway subscription for the given
 	// gateway ID. The integration must implement this such that it is safe

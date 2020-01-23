@@ -13,9 +13,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 )
 
@@ -158,6 +158,7 @@ func execute(command string, stdin []byte, environment map[string]string) ([]byt
 	return stdoutB, stderrB, nil
 }
 
+// ParseCommandLine parses the given command to commands and arguments.
 // source: https://stackoverflow.com/questions/34118732/parse-a-command-line-string-into-flags-and-arguments-in-golang
 func ParseCommandLine(command string) ([]string, error) {
 	var args []string
