@@ -756,6 +756,7 @@ func (b *Backend) websocketWrap(handler func(*http.Request, *websocket.Conn), w 
 				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					log.WithError(err).Error("backend/basicstation: send ping message error")
 					conn.Close()
+					return
 				}
 			}
 		}
