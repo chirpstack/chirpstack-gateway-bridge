@@ -169,6 +169,15 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 		},
 	}
 
+	switch rxpk.Stat {
+	case 1:
+		frame.RxInfo.CrcStatus = gw.CRCStatus_CRC_OK
+	case -1:
+		frame.RxInfo.CrcStatus = gw.CRCStatus_BAD_CRC
+	default:
+		frame.RxInfo.CrcStatus = gw.CRCStatus_NO_CRC
+	}
+
 	// Context
 	binary.BigEndian.PutUint32(frame.RxInfo.Context, rxpk.Tmst)
 

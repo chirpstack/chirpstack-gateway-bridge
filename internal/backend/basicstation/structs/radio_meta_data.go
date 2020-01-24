@@ -70,6 +70,7 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 		GatewayId: gatewayID[:],
 		Rssi:      int32(rmd.UpInfo.RSSI),
 		LoraSnr:   float64(rmd.UpInfo.SNR),
+		CrcStatus: gw.CRCStatus_CRC_OK,
 	}
 
 	if gpsTime := rmd.UpInfo.GPSTime; gpsTime != 0 {
