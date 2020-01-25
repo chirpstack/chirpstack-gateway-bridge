@@ -20,6 +20,11 @@ The [Concentratord](https://www.chirpstack.io/gateway-bridge/backends/concentrat
 [ChirpStack Concentratord](https://github.com/brocaar/chirpstack-concentratord)
 daemon. Please note that this backend is experimental.
 
+#### Syslog output
+
+When `log_to_syslog` is enabled in the configuration file, the log output will
+be written to syslog.
+
 ### Improvements
 
 * Change MQTT max. reconnect interval default value to 1 minute.
