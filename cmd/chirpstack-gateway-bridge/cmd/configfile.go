@@ -12,7 +12,12 @@ import (
 // when updating this template, don't forget to update config.md!
 const configTemplate = `[general]
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
-log_level = {{ .General.LogLevel }}
+log_level={{ .General.LogLevel }}
+
+# Log to syslog.
+#
+# When set to true, log messages are being written to syslog.
+log_to_syslog={{ .General.LogToSyslog }}
 
 
 # Filters.

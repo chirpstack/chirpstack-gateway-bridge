@@ -64,7 +64,12 @@ Example configuration file:
 {{<highlight toml>}}
 [general]
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
-log_level = 4
+log_level=4
+
+# Log to syslog.
+#
+# When set to true, log messages are being written to syslog.
+log_to_syslog=false
 
 
 # Filters.
@@ -145,10 +150,10 @@ type="semtech_udp"
   crc_check=true
 
   # Event API URL.
-  event_url="ipc:///tmp/concentratord_event"
+  event_url="icp:///tmp/concentratord_event"
 
   # Command API URL.
-  command_url="ipc:///tmp/concentratord_command"
+  command_url="icp:///tmp/concentratord_command"
 
 
   # Basic Station backend.
