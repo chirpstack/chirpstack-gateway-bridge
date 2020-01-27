@@ -1,14 +1,12 @@
 package cmd
 
 import (
-	"log/syslog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	lsyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/spf13/cobra"
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend"
@@ -52,38 +50,6 @@ func run(cmd *cobra.Command, args []string) error {
 
 func setLogLevel() error {
 	log.SetLevel(log.Level(uint8(config.C.General.LogLevel)))
-	return nil
-}
-
-func setSyslog() error {
-	if !config.C.General.LogToSyslog {
-		return nil
-	}
-
-	var prio syslog.Priority
-
-	switch log.StandardLogger().Level {
-	case log.DebugLevel:
-		prio = syslog.LOG_USER | syslog.LOG_DEBUG
-	case log.InfoLevel:
-		prio = syslog.LOG_USER | syslog.LOG_INFO
-	case log.WarnLevel:
-		prio = syslog.LOG_USER | syslog.LOG_WARNING
-	case log.ErrorLevel:
-		prio = syslog.LOG_USER | syslog.LOG_ERR
-	case log.FatalLevel:
-		prio = syslog.LOG_USER | syslog.LOG_CRIT
-	case log.PanicLevel:
-		prio = syslog.LOG_USER | syslog.LOG_CRIT
-	}
-
-	hook, err := lsyslog.NewSyslogHook("", "", prio, "chirpstack-gateway-bridge")
-	if err != nil {
-		return errors.Wrap(err, "get syslog hook error")
-	}
-
-	log.AddHook(hook)
-
 	return nil
 }
 
