@@ -19,9 +19,11 @@ import (
 
 // Backend implements a ConcentratorD backend.
 type Backend struct {
-	eventSock   zmq4.Socket
-	commandSock zmq4.Socket
-	commandMux  sync.Mutex
+	eventSockCancel   func()
+	commandSockCancel func()
+	eventSock         zmq4.Socket
+	commandSock       zmq4.Socket
+	commandMux        sync.Mutex
 
 	downlinkTXAckChan  chan gw.DownlinkTXAck
 	uplinkFrameChan    chan gw.UplinkFrame
@@ -45,9 +47,6 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	}).Info("backend/concentratord: setting up backend")
 
 	b := Backend{
-		eventSock:   zmq4.NewSub(context.Background()),
-		commandSock: zmq4.NewReq(context.Background()),
-
 		downlinkTXAckChan:  make(chan gw.DownlinkTXAck, 1),
 		uplinkFrameChan:    make(chan gw.UplinkFrame, 1),
 		gatewayStatsChan:   make(chan gw.GatewayStats, 1),
@@ -62,6 +61,12 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	b.dialEventSockLoop()
 	b.dialCommandSockLoop()
 
+	var err error
+	b.gatewayID, err = b.getGatewayID()
+	if err != nil {
+		return nil, errors.Wrap(err, "get gateway id error")
+	}
+
 	b.subscribeEventChan <- events.Subscribe{Subscribe: true, GatewayID: b.gatewayID}
 
 	go b.eventLoop()
@@ -70,6 +75,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 }
 
 func (b *Backend) dialEventSock() error {
+	ctx := context.Background()
+	ctx, b.eventSockCancel = context.WithCancel(ctx)
+
+	b.eventSock = zmq4.NewSub(ctx)
 	err := b.eventSock.Dial(b.eventURL)
 	if err != nil {
 		return errors.Wrap(err, "dial event api url error")
@@ -80,19 +89,26 @@ func (b *Backend) dialEventSock() error {
 		return errors.Wrap(err, "set event option error")
 	}
 
+	log.WithFields(log.Fields{
+		"event_url": b.eventURL,
+	}).Info("backend/concentratord: connected to event socket")
+
 	return nil
 }
 
 func (b *Backend) dialCommandSock() error {
+	ctx := context.Background()
+	ctx, b.commandSockCancel = context.WithCancel(ctx)
+
+	b.commandSock = zmq4.NewReq(ctx)
 	err := b.commandSock.Dial(b.commandURL)
 	if err != nil {
 		return errors.Wrap(err, "dial command api url error")
 	}
 
-	b.gatewayID, err = b.getGatewayID()
-	if err != nil {
-		return errors.Wrap(err, "get gateway id error")
-	}
+	log.WithFields(log.Fields{
+		"command_url": b.eventURL,
+	}).Info("backend/concentratord: connected to command socket")
 
 	return nil
 }
@@ -135,6 +151,11 @@ func (b *Backend) getGatewayID() (lorawan.EUI64, error) {
 // Close closes the backend.
 func (b *Backend) Close() error {
 	b.eventSock.Close()
+	b.commandSock.Close()
+
+	b.eventSockCancel()
+	b.commandSockCancel()
+
 	return nil
 }
 
@@ -223,12 +244,14 @@ func (b *Backend) commandRequest(command string, v proto.Message) ([]byte, error
 
 	msg := zmq4.NewMsgFrom([]byte(command), bb)
 	if err = b.commandSock.SendMulti(msg); err != nil {
+		b.commandSockCancel()
 		b.dialCommandSock()
 		return nil, errors.Wrap(err, "send command request error")
 	}
 
 	reply, err := b.commandSock.Recv()
 	if err != nil {
+		b.commandSockCancel()
 		b.dialCommandSock()
 		return nil, errors.Wrap(err, "receive command request reply error")
 	}
@@ -241,7 +264,17 @@ func (b *Backend) eventLoop() {
 		msg, err := b.eventSock.Recv()
 		if err != nil {
 			log.WithError(err).Error("backend/concentratord: receive event message error")
-			b.dialEventSockLoop()
+
+			// We need to recover both the event and command sockets.
+			func() {
+				b.commandMux.Lock()
+				defer b.commandMux.Unlock()
+
+				b.eventSockCancel()
+				b.commandSockCancel()
+				b.dialEventSockLoop()
+				b.dialCommandSockLoop()
+			}()
 			continue
 		}
 
