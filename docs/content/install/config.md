@@ -75,7 +75,7 @@ log_to_syslog=false
 # Filters.
 #
 # These can be used to filter LoRaWAN frames to reduce bandwith usage between
-# the gateway and ChirpStack Gateway Bride. Depending the used backend, filtering
+# the gateway and ChirpStack Gateway Bridge. Depending the used backend, filtering
 # will be performed by the Packet Forwarder or ChirpStack Gateway Bridge.
 [filters]
 
