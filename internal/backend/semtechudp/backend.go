@@ -109,8 +109,9 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		}
 	}()
 
+	// Add the waitgroups before the goroutines or a race occurs with closing
+	b.wg.Add(2)
 	go func() {
-		b.wg.Add(1)
 		err := b.readPackets()
 		if !b.isClosed() {
 			log.WithError(err).Error("backend/semtechudp: read udp packets error")
@@ -119,7 +120,6 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	}()
 
 	go func() {
-		b.wg.Add(1)
 		err := b.sendPackets()
 		if !b.isClosed() {
 			log.WithError(err).Error("backend/semtechudp: send udp packets error")
