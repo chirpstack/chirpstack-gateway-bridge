@@ -14,7 +14,7 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 ### Bugfixes
 
-* Fix dupliated configuration in Tektelic config example.
+* Fix duplicated configuration in the Tektelic config example.
 * Fix / improve ZMQ socket re-connect for Concentratord backend.
 
 ## v3.7.0
