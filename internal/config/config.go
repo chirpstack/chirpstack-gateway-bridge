@@ -9,7 +9,7 @@ type Config struct {
 	General struct {
 		LogLevel    int  `mapstructure:"log_level"`
 		LogToSyslog bool `mapstructure:"log_to_syslog"`
-	}
+	} `mapstructure:"general"`
 
 	Filters struct {
 		NetIDs   []string    `mapstructure:"net_ids"`
@@ -109,8 +109,8 @@ type Config struct {
 		Prometheus struct {
 			EndpointEnabled bool   `mapstructure:"endpoint_enabled"`
 			Bind            string `mapstructure:"bind"`
-		}
-	}
+		} `mapstructure:"prometheus"`
+	}	`mapstructure:"metrics"`
 
 	MetaData struct {
 		Static  map[string]string `mapstructure:"static"`
