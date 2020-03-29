@@ -150,10 +150,10 @@ type="semtech_udp"
   crc_check=true
 
   # Event API URL.
-  event_url="icp:///tmp/concentratord_event"
+  event_url="ipc:///tmp/concentratord_event"
 
   # Command API URL.
-  command_url="icp:///tmp/concentratord_command"
+  command_url="ipc:///tmp/concentratord_command"
 
 
   # Basic Station backend.
