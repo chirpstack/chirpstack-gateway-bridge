@@ -67,6 +67,7 @@ func init() {
 
 	viper.SetDefault("integration.mqtt.auth.azure_iot_hub.sas_token_expiration", 24*time.Hour)
 
+	viper.SetDefault("meta_data.dynamic.split_delimiter", "=")
 	viper.SetDefault("meta_data.dynamic.execution_interval", time.Minute)
 	viper.SetDefault("meta_data.dynamic.max_execution_duration", time.Second)
 

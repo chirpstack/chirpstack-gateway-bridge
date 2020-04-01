@@ -418,6 +418,15 @@ marshaler="{{ .Integration.Marshaler }}"
   # Max. execution duration.
   max_execution_duration="{{ .MetaData.Dynamic.MaxExecutionDuration }}"
 
+  # Split delimiter.
+  #
+  # When the output of a command returns multiple lines, ChirpStack Gateway Bridge
+  # assumes multiple values are returned. In this case it will split by the given delimiter
+  # to obtain the key / value of each row. The key will be prefixed with the name of the
+  # configured command.
+  split_delimiter="{{ .MetaData.Dynamic.SplitDelimiter }}"
+
+
   # Commands to execute.
   #
   # The value of the stdout will be used as the key value (string).

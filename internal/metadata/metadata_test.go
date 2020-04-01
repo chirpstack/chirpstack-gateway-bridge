@@ -116,9 +116,20 @@ func TestMetaData(t *testing.T) {
 				"bar": "test2",
 			},
 		},
+		{
+			Name: "command returns multiple rows",
+			Commands: map[string]string{
+				"bar": `echo -e "foo=bar\nalice=bob"`,
+			},
+			Expected: map[string]string{
+				"bar_foo":   "bar",
+				"bar_alice": "bob",
+			},
+		},
 	}
 
 	maxExecution = time.Second
+	splitDelimiter = "="
 
 	for _, tst := range tests {
 		t.Run(tst.Name, func(t *testing.T) {

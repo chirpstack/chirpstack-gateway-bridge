@@ -110,13 +110,14 @@ type Config struct {
 			EndpointEnabled bool   `mapstructure:"endpoint_enabled"`
 			Bind            string `mapstructure:"bind"`
 		} `mapstructure:"prometheus"`
-	}	`mapstructure:"metrics"`
+	} `mapstructure:"metrics"`
 
 	MetaData struct {
 		Static  map[string]string `mapstructure:"static"`
 		Dynamic struct {
 			ExecutionInterval    time.Duration     `mapstructure:"execution_interval"`
 			MaxExecutionDuration time.Duration     `mapstructure:"max_execution_duration"`
+			SplitDelimiter       string            `mapstructure:"split_delimiter"`
 			Commands             map[string]string `mapstructure:"commands"`
 		} `mapstructure:"dynamic"`
 	} `mapstructure:"meta_data"`
