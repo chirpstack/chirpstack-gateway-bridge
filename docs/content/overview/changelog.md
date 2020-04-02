@@ -10,6 +10,20 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 # Changelog
 
+## v3.8.0
+
+### Features
+
+#### Multi-line meta-data commands
+
+This makes it possible to let a meta-data command return multiple lines of
+values. In case of multi-line output, ChirpStack Gateway Bridge will split
+each line by a configured delimiter to obtain the key / value pairs.
+
+### Bugfixes
+
+* Fix race condition in Semtech UDP Packet Forwarder backend. ([#162](https://github.com/brocaar/chirpstack-gateway-bridge))
+
 ## v3.7.1
 
 ### Bugfixes
