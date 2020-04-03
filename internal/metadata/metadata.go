@@ -76,7 +76,7 @@ func runCommands() {
 		if strings.Contains(out, "\n") {
 			rows := strings.Split(out, "\n")
 			for _, row := range rows {
-				kv := strings.Split(row, splitDelimiter)
+				kv := strings.SplitN(row, splitDelimiter, 2)
 				if len(kv) != 2 {
 					log.WithFields(log.Fields{
 						"row":             row,

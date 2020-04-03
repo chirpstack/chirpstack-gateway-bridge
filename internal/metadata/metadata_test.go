@@ -119,11 +119,12 @@ func TestMetaData(t *testing.T) {
 		{
 			Name: "command returns multiple rows",
 			Commands: map[string]string{
-				"bar": `echo -e "foo=bar\nalice=bob"`,
+				"bar": `echo -e "foo=bar\nalice=bob\nsum=1+2=3"`,
 			},
 			Expected: map[string]string{
 				"bar_foo":   "bar",
 				"bar_alice": "bob",
+				"bar_sum":   "1+2=3",
 			},
 		},
 	}
