@@ -5,7 +5,7 @@ PACKAGE_VERSION=$1
 REV="r2"
 
 
-PACKAGE_URL="https://artifacts.chirpstack.io/downloads/chirpstack-gateway-bridge/chirpstack-gateway-bridge_${PACKAGE_VERSION}_linux_armv5.tar.gz"
+PACKAGE_URL="https://artifacts.chirpstack.io/downloads/chirpstack-gateway-bridge/chirpstack-gateway-bridge_${PACKAGE_VERSION}_linux_armv7.tar.gz"
 DIR=`dirname $0`
 PACKAGE_DIR="${DIR}/package"
 
@@ -17,7 +17,7 @@ mkdir -p $PACKAGE_DIR/CONTROL
 cat > $PACKAGE_DIR/CONTROL/control << EOF
 Package: $PACKAGE_NAME
 Version: $PACKAGE_VERSION-$REV
-Architecture: klk_wifc
+Architecture: klkgw
 Maintainer: Orne Brocaar <info@brocaar.com>
 Priority: optional
 Section: network

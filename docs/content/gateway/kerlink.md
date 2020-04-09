@@ -125,12 +125,12 @@ for login instructions.
 
 Find the latest package at https://artifacts.chirpstack.io/vendor/kerlink/ibts/
 and copy the URL to your clipboard. Then on the gateway use `wget` to download
-the package into a folder named `/user/.updates`. Example for `chirpstack-gateway-bridge_3.4.0-r1_klk_lpbs.ipk`:
+the package into a folder named `/user/.updates`. Example for `chirpstack-gateway-bridge_3.8.0-r1_klkgw.ipk`:
 
 {{<highlight bash>}}
 mkdir -p /user/.updates
 cd /user/.updates
-wget https://artifacts.chirpstack.io/vendor/kerlink/ibts/chirpstack-gateway-bridge_3.4.0-r1_klk_lpbs.ipk
+wget https://artifacts.chirpstack.io/vendor/kerlink/ibts/chirpstack-gateway-bridge_3.8.0-r1_klkgw.ipk
 {{</highlight>}}
 
 To trigger the iBTS gateway to install / update the package, run the following commands:
@@ -209,15 +209,97 @@ for login instructions.
 
 Find the latest package at https://artifacts.chirpstack.io/vendor/kerlink/ifemtocell/
 and copy the URL to your clipboard. Then on the gateway use `wget` to download
-the package into a folder named `/user/.updates`. Example for `chirpstack-gateway-bridge_3.4.0-r1_klk_wifc.ipk`:
+the package into a folder named `/user/.updates`. Example for `chirpstack-gateway-bridge_3.8.0-r1_klkgw.ipk`:
 
 {{<highlight bash>}}
 mkdir -p /user/.updates
 cd /user/.updates
-wget https://artifacts.chirpstack.io/vendor/kerlink/ifemtocell/chirpstack-gateway-bridge_3.4.0-r1_klk_wifc.ipk
+wget https://artifacts.chirpstack.io/vendor/kerlink/ifemtocell/chirpstack-gateway-bridge_3.8.0-r1_klkgw.ipk
 {{</highlight>}}
 
 To trigger the iFemtoCell gateway to install / update the package, run the following commands:
+
+{{<highlight bash>}}
+sync
+kerosd -u
+reboot
+{{</highlight>}}
+
+Please refer to the [Kerlink wiki](http://wikikerlink.fr/wirnet-productline)
+for more information about installing and updating packages.
+
+### Edit the ChirpStack Gateway Bridge configuration
+
+To connect the ChirpStack Gateway Bridge with your MQTT broker, you must update
+the ChirpStack Gateway Bridge configuration file, which is located at:
+`/user/etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml`.
+
+### (Re)start and stop commands
+
+Use the following commands to (re)start and stop the ChirpStack Gateway Bridge Service:
+
+{{<highlight bash>}}
+# status
+monit status chirpstack-gateway-bridge
+
+# start
+monit start chirpstack-gateway-bridge
+
+# stop
+monit stop chirpstack-gateway-bridge
+
+# restart
+monit restart chirpstack-gateway-bridge
+{{</highlight>}}
+
+### Configure packet-forwarder
+
+You must configure the packet-forwarder on the gateway to forward its data to
+`127.0.0.1` at port `1700`. The file `/user/etc/lorafwd/lorafwd.toml` must contain the
+following lines under the `[ gwmp ]` section:
+
+{{<highlight toml>}}
+node = "127.0.0.1"
+service.uplink = 1700
+service.downlink = 1700
+{{</highlight>}}
+
+After updating this configuration file, make sure to restart the `lorafwd` service:
+
+{{<highlight bash>}}
+monit restart lorafwd
+{{</highlight>}}
+
+## Kerlink iStation
+
+* [Product detail page](https://www.kerlink.com/product/wirnet-istation/)
+
+**Note:** You must also install the Kerlink Common Packet Forwarder.
+
+### SSH into the gateway
+
+The first step is to login into the gateway using ssh:
+
+{{<highlight bash>}}
+ssh root@GATEWAY-IP-ADDRESS
+{{</highlight>}}
+
+Please refer to the [Kerlink wiki](http://wikikerlink.fr/wirnet-productline)
+for login instructions.
+
+### Install IPK package
+
+Find the latest package at https://artifacts.chirpstack.io/vendor/kerlink/istation/
+and copy the URL to your clipboard. Then on the gateway use `wget` to download
+the package into a folder named `/user/.updates`. Example for `chirpstack-gateway-bridge_3.8.0-r1_klkgw.ipk`:
+
+{{<highlight bash>}}
+mkdir -p /user/.updates
+cd /user/.updates
+wget https://artifacts.chirpstack.io/vendor/kerlink/ifemtocell/chirpstack-gateway-bridge_3.8.0-r1_klkgw.ipk
+{{</highlight>}}
+
+To trigger the iStation gateway to install / update the package, run the following commands:
 
 {{<highlight bash>}}
 sync
