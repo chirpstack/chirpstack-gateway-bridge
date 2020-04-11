@@ -214,7 +214,30 @@ func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
 }
 
 // ApplyConfiguration is not implemented.
-func (b *Backend) ApplyConfiguration(gw.GatewayConfiguration) error {
+func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
+	for i := range config.Channels {
+		loRaModConfig := config.Channels[i].GetLoraModulationConfig()
+		if loRaModConfig != nil {
+			loRaModConfig.Bandwidth = loRaModConfig.Bandwidth * 1000
+		}
+
+		fskModConfig := config.Channels[i].GetFskModulationConfig()
+		if fskModConfig != nil {
+			fskModConfig.Bandwidth = fskModConfig.Bandwidth * 1000
+		}
+	}
+
+	log.WithFields(log.Fields{
+		"version": config.Version,
+	}).Info("backend/concentratord: forwarding configuration command")
+
+	_, err := b.commandRequest("config", &config)
+	if err != nil {
+		log.WithError(err).Fatal("backend/concentratord: send configuration command error")
+	}
+
+	commandCounter("config").Inc()
+
 	return nil
 }
 

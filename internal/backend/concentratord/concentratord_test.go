@@ -152,6 +152,27 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	assert.True(proto.Equal(&ack, &recv))
 }
 
+func (ts *BackendTestSuite) TestApplyConfiguration() {
+	assert := require.New(ts.T())
+
+	config := gw.GatewayConfiguration{
+		GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Version:   "config-a",
+	}
+	configB, err := proto.Marshal(&config)
+	assert.NoError(err)
+
+	go func() {
+		msg, err := ts.repSock.Recv()
+		assert.NoError(err)
+		assert.Equal("config", string(msg.Frames[0]))
+		assert.Equal(configB, msg.Frames[1])
+		assert.NoError(ts.repSock.Send(zmq4.NewMsg([]byte{})))
+	}()
+
+	assert.NoError(ts.backend.ApplyConfiguration(config))
+}
+
 func TestBackend(t *testing.T) {
 	suite.Run(t, new(BackendTestSuite))
 }
