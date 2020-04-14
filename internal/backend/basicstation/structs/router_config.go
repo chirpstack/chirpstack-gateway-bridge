@@ -4,10 +4,10 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
-	"github.com/brocaar/chirpstack-gateway-bridge/internal/config/sx1301v1"
 	"github.com/brocaar/chirpstack-api/go/v3/common"
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/config/sx1301v1"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 	"github.com/pkg/errors"
@@ -79,134 +79,6 @@ type SX1301ConfChanMultiSF struct {
 	Enable bool `json:"enable"`
 	Radio  int  `json:"radio"`
 	IF     int  `json:"if"`
-}
-
-// GetRouterConfigOld returns the router-config message.
-// Currently only 8 multi SF + 1 single + 1 FSK channels are supported.
-func GetRouterConfigOld(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lorawan.EUI64, freqMin, freqMax uint32, config gw.GatewayConfiguration) (RouterConfig, error) {
-	c := RouterConfig{
-		MessageType: RouterConfigMessage,
-		Region:      regionNameMapping[region],
-		HWSpec:      fmt.Sprintf("sx1301/%d", 1),
-		FreqRange:   []uint32{freqMin, freqMax},
-		SX1301Conf:  make([]SX1301Conf, 1),
-	}
-
-	// set NetID filter
-	for _, netID := range netIDs {
-		c.NetID = append(c.NetID, binary.BigEndian.Uint32(append([]byte{0x00}, netID[:]...)))
-	}
-
-	// Set JoinEUI filter
-	for _, set := range joinEUIs {
-		c.JoinEui = append(c.JoinEui, []uint64{
-			binary.BigEndian.Uint64(set[0][:]),
-			binary.BigEndian.Uint64(set[1][:]),
-		})
-	}
-
-	// Set data-rates
-	b, err := band.GetConfig(region, false, lorawan.DwellTimeNoLimit)
-	if err != nil {
-		return c, errors.Wrap(err, "get band config error")
-	}
-	for i := 0; i < 16; i++ {
-		dr, err := b.GetDataRate(i)
-		if err != nil {
-			c.DRs = append(c.DRs, []int{-1, 0, 0})
-			continue
-		}
-
-		var dnOnly int
-		if _, err := b.GetDataRateIndex(true, dr); err != nil {
-			dnOnly = 1
-		}
-
-		c.DRs = append(c.DRs, []int{
-			dr.SpreadFactor,
-			dr.Bandwidth,
-			dnOnly,
-		})
-	}
-
-	// Get radio frequencies
-	radioFrequencies, err := sx1301v1.GetRadioFrequencies(config.Channels)
-	if err != nil {
-		return c, errors.Wrap(err, "get radio frequencies error")
-	}
-
-	// set radios
-	for i, f := range radioFrequencies {
-		switch i {
-		case 0:
-			c.SX1301Conf[0].Radio0.Enable = f != 0
-			c.SX1301Conf[0].Radio0.Freq = f
-		case 1:
-			c.SX1301Conf[0].Radio1.Enable = f != 0
-			c.SX1301Conf[0].Radio1.Freq = f
-		}
-	}
-
-	// set channels
-	var channelI int
-	for _, channel := range config.Channels {
-		r, err := sx1301v1.GetRadioForChannel(radioFrequencies, channel)
-		if err != nil {
-			return c, errors.Wrap(err, "get radio for channel error")
-		}
-
-		switch channel.Modulation {
-		case common.Modulation_LORA:
-			modInfo := channel.GetLoraModulationConfig()
-			if modInfo == nil {
-				continue
-			}
-
-			if len(modInfo.SpreadingFactors) == 1 {
-				c.SX1301Conf[0].ChanLoRaStd = SX1301ConfChanLoRaStd{
-					Enable:          true,
-					Radio:           r,
-					IF:              int(channel.Frequency) - int(radioFrequencies[r]),
-					Bandwidth:       modInfo.Bandwidth * 1000,
-					SpreadingFactor: modInfo.SpreadingFactors[0],
-				}
-
-			} else {
-				multiFSChan := SX1301ConfChanMultiSF{
-					Enable: true,
-					Radio:  r,
-					IF:     int(channel.Frequency) - int(radioFrequencies[r]),
-				}
-
-				switch channelI {
-				case 0:
-					c.SX1301Conf[0].ChanMultiSF0 = multiFSChan
-				case 1:
-					c.SX1301Conf[0].ChanMultiSF1 = multiFSChan
-				case 2:
-					c.SX1301Conf[0].ChanMultiSF2 = multiFSChan
-				case 3:
-					c.SX1301Conf[0].ChanMultiSF3 = multiFSChan
-				case 4:
-					c.SX1301Conf[0].ChanMultiSF4 = multiFSChan
-				case 5:
-					c.SX1301Conf[0].ChanMultiSF5 = multiFSChan
-				case 6:
-					c.SX1301Conf[0].ChanMultiSF6 = multiFSChan
-				case 7:
-					c.SX1301Conf[0].ChanMultiSF7 = multiFSChan
-				}
-
-				channelI++
-			}
-		case common.Modulation_FSK:
-			c.SX1301Conf[0].ChanFSK = SX1301ConfChanFSK{
-				Enable: true,
-			}
-		}
-	}
-
-	return c, nil
 }
 
 // GetRouterConfig returns the router-config message.

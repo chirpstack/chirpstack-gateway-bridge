@@ -4,9 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"sync"
 	"time"
@@ -28,14 +26,6 @@ type udpPacket struct {
 	data []byte
 }
 
-type pfConfiguration struct {
-	gatewayID      lorawan.EUI64
-	baseFile       string
-	outputFile     string
-	restartCommand string
-	currentVersion string
-}
-
 // Backend implements a Semtech packet-forwarder (UDP) gateway backend.
 type Backend struct {
 	sync.RWMutex
@@ -50,13 +40,12 @@ type Backend struct {
 	gatewayStatsChan  chan gw.GatewayStats
 	udpSendChan       chan udpPacket
 
-	wg             sync.WaitGroup
-	conn           *net.UDPConn
-	closed         bool
-	gateways       gateways
-	fakeRxTime     bool
-	configurations []pfConfiguration
-	skipCRCCheck   bool
+	wg           sync.WaitGroup
+	conn         *net.UDPConn
+	closed       bool
+	gateways     gateways
+	fakeRxTime   bool
+	skipCRCCheck bool
 }
 
 // NewBackend creates a new backend.
@@ -85,18 +74,6 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
 		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,
 		tokenMap:     make(map[uint16][]byte),
-	}
-
-	for _, pfConf := range conf.Backend.SemtechUDP.Configuration {
-		c := pfConfiguration{
-			baseFile:       pfConf.BaseFile,
-			outputFile:     pfConf.OutputFile,
-			restartCommand: pfConf.RestartCommand,
-		}
-		if err := c.gatewayID.UnmarshalText([]byte(pfConf.GatewayID)); err != nil {
-			return nil, errors.Wrap(err, "unmarshal gateway id error")
-		}
-		b.configurations = append(b.configurations, c)
 	}
 
 	go func() {
@@ -217,82 +194,14 @@ func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
 	return nil
 }
 
-// ApplyConfiguration applies the given configuration to the gateway
-// (packet-forwarder).
+// ApplyConfiguration is not implemented.
 func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
-	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], config.GatewayId)
-
-	b.Lock()
-	var pfConfig *pfConfiguration
-	for i := range b.configurations {
-		if b.configurations[i].gatewayID == gatewayID {
-			pfConfig = &b.configurations[i]
-		}
-	}
-	b.Unlock()
-
-	if pfConfig == nil {
-		return nil
-	}
-
-	return b.applyConfiguration(*pfConfig, config)
+	return nil
 }
 
 // RawPacketForwarderCommand sends the given raw command to the packet-forwarder.
 func (b *Backend) RawPacketForwarderCommand(gw.RawPacketForwarderCommand) error {
 	return errors.New("raw packet-forwarder command not implemented by Semtech packet-forwarder")
-}
-
-func (b *Backend) applyConfiguration(pfConfig pfConfiguration, config gw.GatewayConfiguration) error {
-	gwConfig, err := getGatewayConfig(config)
-	if err != nil {
-		return errors.Wrap(err, "get gateway config error")
-	}
-
-	baseConfig, err := loadConfigFile(pfConfig.baseFile)
-	if err != nil {
-		return errors.Wrap(err, "load config file error")
-	}
-
-	if err = mergeConfig(pfConfig.gatewayID, baseConfig, gwConfig); err != nil {
-		return errors.Wrap(err, "merge config error")
-	}
-
-	// generate config json
-	bb, err := json.Marshal(baseConfig)
-	if err != nil {
-		return errors.Wrap(err, "marshal json error")
-	}
-
-	// write new config file to disk
-	if err = ioutil.WriteFile(pfConfig.outputFile, bb, 0644); err != nil {
-		return errors.Wrap(err, "write config file error")
-	}
-	log.WithFields(log.Fields{
-		"gateway_id": pfConfig.gatewayID,
-		"file":       pfConfig.outputFile,
-	}).Info("backend/semtechudp: new configuration file written")
-
-	// invoke restart command
-	if err = invokePFRestart(pfConfig.restartCommand); err != nil {
-		return errors.Wrap(err, "invoke packet-forwarder restart error")
-	}
-	log.WithFields(log.Fields{
-		"gateway_id": pfConfig.gatewayID,
-		"cmd":        pfConfig.restartCommand,
-	}).Info("backend/semtechudp: packet-forwarder restart command invoked")
-
-	b.Lock()
-	defer b.Unlock()
-
-	for i := range b.configurations {
-		if b.configurations[i].gatewayID == pfConfig.gatewayID {
-			b.configurations[i].currentVersion = config.Version
-		}
-	}
-
-	return nil
 }
 
 func (b *Backend) isClosed() bool {
@@ -500,13 +409,6 @@ func (b *Backend) handlePushData(up udpPacket) error {
 }
 
 func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats gw.GatewayStats) {
-	// set configuration version, if available
-	for _, c := range b.configurations {
-		if gatewayID == c.gatewayID {
-			stats.ConfigVersion = c.currentVersion
-		}
-	}
-
 	b.gatewayStatsChan <- stats
 }
 

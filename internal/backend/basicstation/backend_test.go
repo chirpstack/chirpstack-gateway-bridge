@@ -97,24 +97,9 @@ func (ts *BackendTestSuite) TestRouterInfo() {
 	}, resp)
 }
 
-func (ts *BackendTestSuite) TestVersionOld() {
-	assert := require.New(ts.T())
-	ts.backend.routerConfig = nil
-
-	ver := structs.Version{
-		MessageType: structs.VersionMessage,
-		Protocol:    2,
-	}
-
-	assert.NoError(ts.wsClient.WriteJSON(ver))
-
-	stats := <-ts.backend.GetGatewayStatsChan()
-	assert.Equal([]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, stats.GatewayId)
-}
-
 func (ts *BackendTestSuite) TestVersion() {
 	assert := require.New(ts.T())
-	ts.backend.routerConfig = &structs.RouterConfig{
+	ts.backend.routerConfig = structs.RouterConfig{
 		MessageType: structs.RouterConfigMessage,
 	}
 
@@ -128,7 +113,7 @@ func (ts *BackendTestSuite) TestVersion() {
 	var routerConfig structs.RouterConfig
 	assert.NoError(ts.wsClient.ReadJSON(&routerConfig))
 
-	assert.Equal(*ts.backend.routerConfig, routerConfig)
+	assert.Equal(ts.backend.routerConfig, routerConfig)
 }
 
 func (ts *BackendTestSuite) TestUplinkDataFrame() {
@@ -307,97 +292,6 @@ func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 		Token:      12345,
 		DownlinkId: id[:],
 	}, txAck)
-}
-
-func (ts *BackendTestSuite) TestApplyConfiguration() {
-	assert := require.New(ts.T())
-
-	gwConf := gw.GatewayConfiguration{
-		GatewayId: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-		Channels: []*gw.ChannelConfiguration{
-			{
-				Frequency:  868100000,
-				Modulation: common.Modulation_LORA,
-				ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-					LoraModulationConfig: &gw.LoRaModulationConfig{
-						Bandwidth: 125,
-					},
-				},
-			},
-			{
-				Frequency:  868300000,
-				Modulation: common.Modulation_LORA,
-				ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-					LoraModulationConfig: &gw.LoRaModulationConfig{
-						Bandwidth: 125,
-					},
-				},
-			},
-			{
-				Frequency:  868500000,
-				Modulation: common.Modulation_LORA,
-				ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-					LoraModulationConfig: &gw.LoRaModulationConfig{
-						Bandwidth: 125,
-					},
-				},
-			},
-		},
-	}
-	assert.NoError(ts.backend.ApplyConfiguration(gwConf))
-
-	var routerConfig structs.RouterConfig
-	assert.NoError(ts.wsClient.ReadJSON(&routerConfig))
-
-	assert.Equal(structs.RouterConfig{
-		MessageType: structs.RouterConfigMessage,
-		NetID:       []uint32{66051},
-		JoinEui:     [][]uint64{{0, 72623859790382856}},
-		Region:      "EU863",
-		HWSpec:      "sx1301/1",
-		FreqRange:   []uint32{867000000, 869000000},
-		DRs: [][]int{
-			{12, 125, 0},
-			{11, 125, 0},
-			{10, 125, 0},
-			{9, 125, 0},
-			{8, 125, 0},
-			{7, 125, 0},
-			{7, 250, 0},
-			{0, 0, 0}, // FSK
-			{-1, 0, 0},
-			{-1, 0, 0},
-			{-1, 0, 0},
-			{-1, 0, 0},
-			{-1, 0, 0},
-			{-1, 0, 0},
-			{-1, 0, 0},
-			{-1, 0, 0},
-		},
-		SX1301Conf: []structs.SX1301Conf{
-			{
-				Radio0: structs.SX1301ConfRadio{
-					Enable: true,
-					Freq:   868500000,
-				},
-				ChanMultiSF0: structs.SX1301ConfChanMultiSF{
-					Enable: true,
-					Radio:  0,
-					IF:     -400000,
-				},
-				ChanMultiSF1: structs.SX1301ConfChanMultiSF{
-					Enable: true,
-					Radio:  0,
-					IF:     -200000,
-				},
-				ChanMultiSF2: structs.SX1301ConfChanMultiSF{
-					Enable: true,
-					Radio:  0,
-					IF:     0,
-				},
-			},
-		},
-	}, routerConfig)
 }
 
 func (ts *BackendTestSuite) TestSendDownlinkFrame() {

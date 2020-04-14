@@ -91,13 +91,6 @@ type="{{ .Backend.Type }}"
   # the time would otherwise be unset.
   fake_rx_time={{ .Backend.SemtechUDP.FakeRxTime }}
 
-{{ range $i, $config := .Backend.SemtechUDP.Configuration }}
-    [[backend.semtech_udp.configuration]]
-    gateway_id="{{ $config.GatewayID }}"
-    base_file="{{ $config.BaseFile }}"
-    output_file="{{ $config.OutputFile }}"
-    restart_command="{{ $config.RestartCommand }}"
-{{ end }}
 
   # ChirpStack Concentratord backend.
   [backend.concentratord]

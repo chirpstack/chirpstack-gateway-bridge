@@ -20,15 +20,9 @@ type Config struct {
 		Type string `mapstructure:"type"`
 
 		SemtechUDP struct {
-			UDPBind       string `mapstructure:"udp_bind"`
-			SkipCRCCheck  bool   `mapstructure:"skip_crc_check"`
-			FakeRxTime    bool   `mapstructure:"fake_rx_time"`
-			Configuration []struct {
-				GatewayID      string `mapstructure:"gateway_id"`
-				BaseFile       string `mapstructure:"base_file"`
-				OutputFile     string `mapstructure:"output_file"`
-				RestartCommand string `mapstructure:"restart_command"`
-			} `mapstructure:"configuration"`
+			UDPBind      string `mapstructure:"udp_bind"`
+			SkipCRCCheck bool   `mapstructure:"skip_crc_check"`
+			FakeRxTime   bool   `mapstructure:"fake_rx_time"`
 		} `mapstructure:"semtech_udp"`
 
 		BasicStation struct {

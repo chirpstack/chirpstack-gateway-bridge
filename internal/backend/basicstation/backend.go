@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -61,7 +60,7 @@ type Backend struct {
 	joinEUIs     [][2]lorawan.EUI64
 	frequencyMin uint32
 	frequencyMax uint32
-	routerConfig *structs.RouterConfig
+	routerConfig structs.RouterConfig
 
 	// diidMap stores the mapping of diid to UUIDs. This should take ~ 1MB of
 	// memory. Optionaly this could be optimized by letting keys expire after
@@ -121,13 +120,9 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		return nil, errors.Wrap(err, "get band config error")
 	}
 
-	if len(conf.Backend.BasicStation.Concentrators) != 0 {
-		conf, err := structs.GetRouterConfig(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, conf.Backend.BasicStation.Concentrators)
-		if err != nil {
-			return nil, errors.Wrap(err, "get router config error")
-		}
-
-		b.routerConfig = &conf
+	b.routerConfig, err = structs.GetRouterConfig(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, conf.Backend.BasicStation.Concentrators)
+	if err != nil {
+		return nil, errors.Wrap(err, "get router config error")
 	}
 
 	mux := http.NewServeMux()
@@ -259,23 +254,8 @@ func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 	return nil
 }
 
-// ApplyConfiguration applies the given configuration to the gateway.
+// ApplyConfiguration is not implemented.
 func (b *Backend) ApplyConfiguration(gwConfig gw.GatewayConfiguration) error {
-	rc, err := structs.GetRouterConfigOld(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, gwConfig)
-	if err != nil {
-		return errors.Wrap(err, "get router config error")
-	}
-
-	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], gwConfig.GetGatewayId())
-
-	websocketSendCounter("router_config").Inc()
-	if err := b.sendToGateway(gatewayID, rc); err != nil {
-		return errors.Wrap(err, "send router config to gateway error")
-	}
-
-	log.WithField("gateway_id", gatewayID).Info("backend/basicstation: router-config message sent to gateway")
-
 	return nil
 }
 
@@ -530,32 +510,8 @@ func (b *Backend) handleVersion(gatewayID lorawan.EUI64, pl structs.Version) {
 		// "features":   pl.Features,
 	}).Info("backend/basicstation: gateway version received")
 
-	g, err := b.gateways.get(gatewayID)
-	if err != nil {
-		log.WithError(err).WithField("gateway_id", gatewayID).Error("backend/basicstation: get gateway error")
-		return
-	}
-
-	ts, err := ptypes.TimestampProto(time.Now())
-	if err != nil {
-		log.WithError(err).Error("backend/basicstation: get timestamp proto error")
-		return
-	}
-
-	// TODO: remove this in the next major release
-	if b.routerConfig == nil {
-		b.gatewayStatsChan <- gw.GatewayStats{
-			GatewayId:     gatewayID[:],
-			Ip:            g.conn.RemoteAddr().String(),
-			Time:          ts,
-			ConfigVersion: g.configVersion,
-		}
-
-		return
-	}
-
 	websocketSendCounter("router_config").Inc()
-	if err := b.sendToGateway(gatewayID, *b.routerConfig); err != nil {
+	if err := b.sendToGateway(gatewayID, b.routerConfig); err != nil {
 		log.WithError(err).Error("backend/basicstation: send to gateway error")
 		return
 	}
