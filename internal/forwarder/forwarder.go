@@ -89,7 +89,12 @@ func forwardGatewayStatsLoop() {
 			copy(statsID[:], stats.StatsId)
 
 			// add meta-data to stats
-			stats.MetaData = metadata.Get()
+			if stats.MetaData == nil {
+				stats.MetaData = make(map[string]string)
+			}
+			for k, v := range metadata.Get() {
+				stats.MetaData[k] = v
+			}
 
 			if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventStats, statsID, &stats); err != nil {
 				log.WithError(err).WithFields(log.Fields{
