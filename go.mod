@@ -1,6 +1,6 @@
 module github.com/brocaar/chirpstack-gateway-bridge
 
-go 1.13
+go 1.14
 
 require (
 	github.com/brocaar/chirpstack-api/go/v3 v3.0.7
