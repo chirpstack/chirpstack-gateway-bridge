@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -30,10 +31,10 @@ type udpPacket struct {
 type Backend struct {
 	sync.RWMutex
 
-	// tokenMap stores the token to UUID mapping. This should take ~ 1MB of
-	// memory. Optionaly this could be optimized by letting keys expire after
-	// a given time.
-	tokenMap map[uint16][]byte
+	// Cache to temporarily store downlinks.
+	// This is needed since a single downlink command can contain multiple
+	// downlink opportunities (e.g. RX1 and RX2).
+	cache *cache.Cache
 
 	downlinkTXAckChan chan gw.DownlinkTXAck
 	uplinkFrameChan   chan gw.UplinkFrame
@@ -73,7 +74,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		},
 		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
 		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,
-		tokenMap:     make(map[uint16][]byte),
+		cache:        cache.New(15*time.Second, 15*time.Second),
 	}
 
 	go func() {
@@ -153,10 +154,6 @@ func (b *Backend) GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEve
 
 // SendDownlinkFrame sends the given downlink frame to the gateway.
 func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
-	// mutex is needed in order to write to tokenMap
-	b.Lock()
-	defer b.Unlock()
-
 	// if Token == 0, generate it in order to be backwards compatible.
 	if frame.Token == 0 {
 		tokenB := make([]byte, 2)
@@ -166,18 +163,35 @@ func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
 		frame.Token = uint32(binary.BigEndian.Uint16(tokenB))
 	}
 
-	// store token to UUID mapping
-	b.tokenMap[uint16(frame.Token)] = frame.DownlinkId
+	acks := make([]*gw.DownlinkTXAckItem, len(frame.Items))
+	for i := range acks {
+		acks[i] = &gw.DownlinkTXAckItem{
+			Status: gw.TxAckStatus_IGNORED,
+		}
+	}
+
+	return b.sendDownlinkFrame(frame, 0, acks)
+}
+
+func (b *Backend) sendDownlinkFrame(frame gw.DownlinkFrame, i int, txAckItems []*gw.DownlinkTXAckItem) error {
+	if i > len(frame.Items)-1 {
+		return errors.New("invalid downlink frame item index")
+	}
+
+	// create cache items
+	b.cache.Set(fmt.Sprintf("%d:ack", frame.Token), txAckItems, cache.DefaultExpiration)
+	b.cache.Set(fmt.Sprintf("%d:frame", frame.Token), frame, cache.DefaultExpiration)
+	b.cache.Set(fmt.Sprintf("%d:index", frame.Token), i, cache.DefaultExpiration)
 
 	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], frame.GetTxInfo().GetGatewayId())
+	copy(gatewayID[:], frame.GetGatewayId())
 
 	gw, err := b.gateways.get(gatewayID)
 	if err != nil {
 		return errors.Wrap(err, "get gateway error")
 	}
 
-	pullResp, err := packets.GetPullRespPacket(gw.protocolVersion, uint16(frame.Token), frame)
+	pullResp, err := packets.GetPullRespPacket(gw.protocolVersion, uint16(frame.Token), frame, i)
 	if err != nil {
 		return errors.Wrap(err, "get PullRespPacket error")
 	}
@@ -337,20 +351,82 @@ func (b *Backend) handleTXACK(up udpPacket) error {
 		return err
 	}
 
-	downID := b.tokenMap[p.RandomToken]
+	// get downlink frame from cache
+	var frame gw.DownlinkFrame
+	v, ok := b.cache.Get(fmt.Sprintf("%d:frame", p.RandomToken))
+	if !ok {
+		return fmt.Errorf("no internal frame cache for token %d", p.RandomToken)
+	}
+	if df, ok := v.(gw.DownlinkFrame); ok {
+		frame = df
+	} else {
+		return fmt.Errorf("expected gw.DownlinkFrame, got: %T", v)
+	}
 
+	// get current downlink frame item from cache
+	var itemIndex int
+	v, ok = b.cache.Get(fmt.Sprintf("%d:index", p.RandomToken))
+	if !ok {
+		return fmt.Errorf("no internal index cache for token %d", p.RandomToken)
+	}
+	if ii, ok := v.(int); ok {
+		itemIndex = ii
+	} else {
+		return fmt.Errorf("expected int, got: %T", v)
+	}
+
+	// get downlink tx acknowledgement items from cache
+	var txAckItems []*gw.DownlinkTXAckItem
+	v, ok = b.cache.Get(fmt.Sprintf("%d:ack", p.RandomToken))
+	if !ok {
+		return fmt.Errorf("no internal tx ack cache for token %d", p.RandomToken)
+	}
+	if items, ok := v.([]*gw.DownlinkTXAckItem); ok {
+		txAckItems = items
+	} else {
+		return fmt.Errorf("expected []gw.DownlinkTXAckItem, got: %T", items)
+	}
+
+	// validate that the data is sane
+	if itemIndex > len(txAckItems)-1 || len(txAckItems) != len(frame.Items) {
+		return errors.New("cache items are out of sync")
+	}
+
+	// did the received ack contain an error?
 	if p.Payload != nil && p.Payload.TXPKACK.Error != "" && p.Payload.TXPKACK.Error != "NONE" {
+		// set tx ack error
+		if v, ok := gw.TxAckStatus_value[p.Payload.TXPKACK.Error]; ok {
+			txAckItems[itemIndex] = &gw.DownlinkTXAckItem{
+				Status: gw.TxAckStatus(v),
+			}
+		} else {
+			return fmt.Errorf("unexpected error: %s", p.Payload.TXPKACK.Error)
+		}
+
+		// can we retry?
+		if itemIndex < len(frame.Items)-1 {
+			// retry with next option
+			return b.sendDownlinkFrame(frame, itemIndex+1, txAckItems)
+		}
+
+		// report acks
 		b.downlinkTXAckChan <- gw.DownlinkTXAck{
 			GatewayId:  p.GatewayMAC[:],
 			Token:      uint32(p.RandomToken),
-			DownlinkId: downID,
-			Error:      p.Payload.TXPKACK.Error,
+			DownlinkId: frame.DownlinkId,
+			Items:      txAckItems,
 		}
 	} else {
+		// no error
+		txAckItems[itemIndex] = &gw.DownlinkTXAckItem{
+			Status: gw.TxAckStatus_OK,
+		}
+
 		b.downlinkTXAckChan <- gw.DownlinkTXAck{
 			GatewayId:  p.GatewayMAC[:],
 			Token:      uint32(p.RandomToken),
-			DownlinkId: downID,
+			DownlinkId: frame.DownlinkId,
+			Items:      txAckItems,
 		}
 	}
 

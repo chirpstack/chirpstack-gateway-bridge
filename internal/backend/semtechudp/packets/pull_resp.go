@@ -82,25 +82,32 @@ type TXPK struct {
 }
 
 // GetPullRespPacket returns a PullRespPacket for the given gw.DownlinkFrame.
-func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.DownlinkFrame) (PullRespPacket, error) {
+func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.DownlinkFrame, index int) (PullRespPacket, error) {
+	if index > len(frame.Items)-1 {
+		return PullRespPacket{}, fmt.Errorf("invalid frame index: %d", index)
+	}
+
+	item := frame.Items[index]
+	txInfo := item.GetTxInfo()
+
 	packet := PullRespPacket{
 		ProtocolVersion: protoVersion,
 		RandomToken:     randomToken,
 		Payload: PullRespPayload{
 			TXPK: TXPK{
-				Freq: float64(frame.TxInfo.Frequency) / 1000000,
-				Powe: uint8(frame.TxInfo.Power),
-				Modu: frame.TxInfo.Modulation.String(),
-				Size: uint16(len(frame.PhyPayload)),
-				Data: frame.PhyPayload,
-				Ant:  uint8(frame.TxInfo.Antenna),
-				Brd:  uint32(frame.TxInfo.Board),
+				Freq: float64(txInfo.GetFrequency()) / 1000000,
+				Powe: uint8(txInfo.GetPower()),
+				Modu: txInfo.GetModulation().String(),
+				Size: uint16(len(item.PhyPayload)),
+				Data: item.PhyPayload,
+				Ant:  uint8(txInfo.GetAntenna()),
+				Brd:  uint32(txInfo.GetBoard()),
 			},
 		},
 	}
 
-	if frame.TxInfo.Modulation == common.Modulation_LORA {
-		modInfo := frame.TxInfo.GetLoraModulationInfo()
+	if txInfo.GetModulation() == common.Modulation_LORA {
+		modInfo := txInfo.GetLoraModulationInfo()
 		if modInfo == nil {
 			return packet, errors.New("gateway: lora_modulation_info must not be nil")
 		}
@@ -109,8 +116,8 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 		packet.Payload.TXPK.IPol = modInfo.PolarizationInversion
 	}
 
-	if frame.TxInfo.Modulation == common.Modulation_FSK {
-		modInfo := frame.TxInfo.GetFskModulationInfo()
+	if txInfo.GetModulation() == common.Modulation_FSK {
+		modInfo := txInfo.GetFskModulationInfo()
 		if modInfo == nil {
 			return packet, errors.New("gateway: fsk_modulation_info must not be nil")
 		}
@@ -123,12 +130,12 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 		}
 	}
 
-	switch frame.TxInfo.Timing {
+	switch txInfo.GetTiming() {
 	case gw.DownlinkTiming_IMMEDIATELY:
 		packet.Payload.TXPK.Imme = true
 
 	case gw.DownlinkTiming_DELAY:
-		timingInfo := frame.TxInfo.GetDelayTimingInfo()
+		timingInfo := txInfo.GetDelayTimingInfo()
 		if timingInfo == nil {
 			return packet, errors.New("delay_timing_info must not be nil")
 		}
@@ -138,15 +145,15 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 			return packet, errors.Wrap(err, "get delay duration error")
 		}
 
-		if len(frame.TxInfo.Context) < 4 {
-			return packet, fmt.Errorf("context must contain at least 4 bytes, got: %d", len(frame.TxInfo.Context))
+		if len(txInfo.GetContext()) < 4 {
+			return packet, fmt.Errorf("context must contain at least 4 bytes, got: %d", len(txInfo.GetContext()))
 		}
-		timestamp := binary.BigEndian.Uint32(frame.TxInfo.Context[0:4])
+		timestamp := binary.BigEndian.Uint32(txInfo.GetContext()[0:4])
 		timestamp += uint32(delay / time.Microsecond)
 		packet.Payload.TXPK.Tmst = &timestamp
 
 	case gw.DownlinkTiming_GPS_EPOCH:
-		timingInfo := frame.TxInfo.GetGpsEpochTimingInfo()
+		timingInfo := txInfo.GetGpsEpochTimingInfo()
 		if timingInfo == nil {
 			return packet, errors.New("gps_epoch_timing must not be nil")
 		}
@@ -160,7 +167,7 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 		packet.Payload.TXPK.Tmms = &durMS
 
 	default:
-		return packet, fmt.Errorf("unexpected downlink timing: %s", frame.TxInfo.Timing)
+		return packet, fmt.Errorf("unexpected downlink timing: %s", txInfo.GetTiming())
 	}
 
 	return packet, nil

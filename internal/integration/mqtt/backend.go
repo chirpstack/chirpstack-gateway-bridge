@@ -356,10 +356,28 @@ func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
 		return
 	}
 
-	var gatewayID lorawan.EUI64
 	var downID uuid.UUID
-	copy(gatewayID[:], downlinkFrame.GetTxInfo().GetGatewayId())
 	copy(downID[:], downlinkFrame.GetDownlinkId())
+
+	// For backwards compatibility.
+	if len(downlinkFrame.Items) == 0 && (downlinkFrame.TxInfo != nil && len(downlinkFrame.PhyPayload) != 0) {
+		downlinkFrame.Items = append(downlinkFrame.Items, &gw.DownlinkFrameItem{
+			PhyPayload: downlinkFrame.PhyPayload,
+			TxInfo:     downlinkFrame.TxInfo,
+		})
+
+		downlinkFrame.GatewayId = downlinkFrame.Items[0].GetTxInfo().GetGatewayId()
+	}
+
+	if len(downlinkFrame.Items) == 0 {
+		log.WithFields(log.Fields{
+			"downlink_id": downID,
+		}).Error("integration/mqtt: downlink must have at least one item")
+		return
+	}
+
+	var gatewayID lorawan.EUI64
+	copy(gatewayID[:], downlinkFrame.Items[0].GetTxInfo().GetGatewayId())
 
 	log.WithFields(log.Fields{
 		"gateway_id":  gatewayID,
@@ -369,7 +387,6 @@ func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
 	b.downlinkFrameChan <- downlinkFrame
 }
 
-// TODO: this feature is deprecated. Remove this in the next major release.
 func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 	log.WithFields(log.Fields{
 		"topic": msg.Topic(),

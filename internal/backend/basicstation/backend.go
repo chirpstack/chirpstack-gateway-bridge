@@ -235,7 +235,7 @@ func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 
 	var gatewayID lorawan.EUI64
 	var downID uuid.UUID
-	copy(gatewayID[:], df.GetTxInfo().GetGatewayId())
+	copy(gatewayID[:], df.GetGatewayId())
 	copy(downID[:], df.GetDownlinkId())
 
 	// store token to UUID mapping

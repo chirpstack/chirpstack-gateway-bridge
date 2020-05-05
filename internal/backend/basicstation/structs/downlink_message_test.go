@@ -30,29 +30,33 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 		{
 			Name: "Class-A LoRa",
 			In: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							Bandwidth:             125,
-							SpreadingFactor:       10,
-							CodeRate:              "4/5",
-							PolarizationInversion: true,
+				Token:     1234,
+				GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_LORA,
+							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+								LoraModulationInfo: &gw.LoRaModulationInfo{
+									Bandwidth:             125,
+									SpreadingFactor:       10,
+									CodeRate:              "4/5",
+									PolarizationInversion: true,
+								},
+							},
+							Timing: gw.DownlinkTiming_DELAY,
+							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+								DelayTimingInfo: &gw.DelayTimingInfo{
+									Delay: ptypes.DurationProto(time.Second),
+								},
+							},
+							Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 						},
 					},
-					Timing: gw.DownlinkTiming_DELAY,
-					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-						DelayTimingInfo: &gw.DelayTimingInfo{
-							Delay: ptypes.DurationProto(time.Second),
-						},
-					},
-					Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 				},
-				Token: 1234,
 			},
 			Out: DownlinkFrame{
 				MessageType: DownlinkMessage,
@@ -71,26 +75,30 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 		{
 			Name: "Class-A FSK",
 			In: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_FSK,
-					ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
-						FskModulationInfo: &gw.FSKModulationInfo{
-							Datarate: 50000,
+				Token:     1234,
+				GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_FSK,
+							ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
+								FskModulationInfo: &gw.FSKModulationInfo{
+									Datarate: 50000,
+								},
+							},
+							Timing: gw.DownlinkTiming_DELAY,
+							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+								DelayTimingInfo: &gw.DelayTimingInfo{
+									Delay: ptypes.DurationProto(time.Second),
+								},
+							},
+							Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 						},
 					},
-					Timing: gw.DownlinkTiming_DELAY,
-					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-						DelayTimingInfo: &gw.DelayTimingInfo{
-							Delay: ptypes.DurationProto(time.Second),
-						},
-					},
-					Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 				},
-				Token: 1234,
 			},
 			Out: DownlinkFrame{
 				MessageType: DownlinkMessage,
@@ -109,29 +117,33 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 		{
 			Name: "Class-B",
 			In: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							Bandwidth:             125,
-							SpreadingFactor:       10,
-							CodeRate:              "4/5",
-							PolarizationInversion: true,
+				Token:     1234,
+				GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_LORA,
+							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+								LoraModulationInfo: &gw.LoRaModulationInfo{
+									Bandwidth:             125,
+									SpreadingFactor:       10,
+									CodeRate:              "4/5",
+									PolarizationInversion: true,
+								},
+							},
+							Timing: gw.DownlinkTiming_GPS_EPOCH,
+							TimingInfo: &gw.DownlinkTXInfo_GpsEpochTimingInfo{
+								GpsEpochTimingInfo: &gw.GPSEpochTimingInfo{
+									TimeSinceGpsEpoch: ptypes.DurationProto(time.Second),
+								},
+							},
+							Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 						},
 					},
-					Timing: gw.DownlinkTiming_GPS_EPOCH,
-					TimingInfo: &gw.DownlinkTXInfo_GpsEpochTimingInfo{
-						GpsEpochTimingInfo: &gw.GPSEpochTimingInfo{
-							TimeSinceGpsEpoch: ptypes.DurationProto(time.Second),
-						},
-					},
-					Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 				},
-				Token: 1234,
 			},
 			Out: DownlinkFrame{
 				MessageType: DownlinkMessage,
@@ -150,24 +162,28 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 		{
 			Name: "Class-C",
 			In: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							Bandwidth:             125,
-							SpreadingFactor:       10,
-							CodeRate:              "4/5",
-							PolarizationInversion: true,
+				Token:     1234,
+				GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_LORA,
+							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+								LoraModulationInfo: &gw.LoRaModulationInfo{
+									Bandwidth:             125,
+									SpreadingFactor:       10,
+									CodeRate:              "4/5",
+									PolarizationInversion: true,
+								},
+							},
+							Timing:  gw.DownlinkTiming_IMMEDIATELY,
+							Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 						},
 					},
-					Timing:  gw.DownlinkTiming_IMMEDIATELY,
-					Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 				},
-				Token: 1234,
 			},
 			Out: DownlinkFrame{
 				MessageType: DownlinkMessage,

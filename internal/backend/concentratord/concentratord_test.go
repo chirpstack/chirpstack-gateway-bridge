@@ -127,7 +127,7 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	assert := require.New(ts.T())
 
 	down := gw.DownlinkFrame{
-		PhyPayload: []byte{1, 2, 3, 4},
+		GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
 	}
 	downB, err := proto.Marshal(&down)
 	assert.NoError(err)

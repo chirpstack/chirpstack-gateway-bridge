@@ -37,25 +37,27 @@ type DownlinkFrame struct {
 
 // DownlinkFrameFromProto convers the given protobuf message to a DownlinkFrame.
 func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFrame, error) {
-
-	if pb.TxInfo == nil {
-		return DownlinkFrame{}, errors.New("tx_info must not be nil")
+	if len(pb.Items) == 0 {
+		return DownlinkFrame{}, errors.New("items must contain at least one item")
 	}
+
+	// TODO: implement for rx1 and rx2 parameters when there are two downlink items.
+	item := pb.Items[0]
 
 	out := DownlinkFrame{
 		MessageType: DownlinkMessage,
 		Priority:    1,                         // not (yet) available through gw.DownlinkFrame
 		DevEui:      "00-00-00-00-00-00-00-00", // set to blank EUI
 		DIID:        pb.Token,
-		PDU:         hex.EncodeToString(pb.PhyPayload),
+		PDU:         hex.EncodeToString(item.PhyPayload),
 	}
 
 	// context
 	// depending the scheduling type, there might or might not be a context
-	if len(pb.TxInfo.Context) >= 8 {
+	if len(item.GetTxInfo().Context) >= 8 {
 		var rctx, xtime uint64
-		rctx = binary.BigEndian.Uint64(pb.TxInfo.Context[0:8])
-		xtime = binary.BigEndian.Uint64(pb.TxInfo.Context[8:16])
+		rctx = binary.BigEndian.Uint64(item.GetTxInfo().Context[0:8])
+		xtime = binary.BigEndian.Uint64(item.GetTxInfo().Context[8:16])
 
 		out.RCtx = &rctx
 		out.XTime = &xtime
@@ -65,9 +67,9 @@ func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFr
 	var dr int
 	var err error
 
-	switch pb.TxInfo.Modulation {
+	switch item.GetTxInfo().Modulation {
 	case common.Modulation_LORA:
-		modInfo := pb.TxInfo.GetLoraModulationInfo()
+		modInfo := item.GetTxInfo().GetLoraModulationInfo()
 		if modInfo == nil {
 			return out, fmt.Errorf("lora_modulation_info is missing")
 		}
@@ -80,7 +82,7 @@ func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFr
 			return out, errors.Wrap(err, "get data-rate index error")
 		}
 	case common.Modulation_FSK:
-		modInfo := pb.TxInfo.GetFskModulationInfo()
+		modInfo := item.GetTxInfo().GetFskModulationInfo()
 		if modInfo == nil {
 			return out, fmt.Errorf("fsk_modulation_info is missing")
 		}
@@ -92,16 +94,16 @@ func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFr
 			return out, errors.Wrap(err, "get data-rate index error")
 		}
 	default:
-		return out, fmt.Errorf("unexpected modulation: %s", pb.TxInfo.Modulation)
+		return out, fmt.Errorf("unexpected modulation: %s", item.GetTxInfo().Modulation)
 	}
 
-	switch pb.TxInfo.Timing {
+	switch item.GetTxInfo().Timing {
 	case gw.DownlinkTiming_IMMEDIATELY:
 		out.DC = 2 // Class-C
 		out.RX2DR = &dr
-		out.RX2Freq = &pb.TxInfo.Frequency
+		out.RX2Freq = &item.GetTxInfo().Frequency
 	case gw.DownlinkTiming_DELAY:
-		timingInfo := pb.TxInfo.GetDelayTimingInfo()
+		timingInfo := item.GetTxInfo().GetDelayTimingInfo()
 		if timingInfo == nil {
 			return out, errors.New("delay_timing_info must not be nil")
 		}
@@ -114,9 +116,9 @@ func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFr
 		out.DC = 0 // Class-A
 		out.RxDelay = &delay
 		out.RX1DR = &dr
-		out.RX1Freq = &pb.TxInfo.Frequency
+		out.RX1Freq = &item.GetTxInfo().Frequency
 	case gw.DownlinkTiming_GPS_EPOCH:
-		timingInfo := pb.TxInfo.GetGpsEpochTimingInfo()
+		timingInfo := item.GetTxInfo().GetGpsEpochTimingInfo()
 		if timingInfo == nil {
 			return out, errors.New("gps_epoch_timing_info must not be nil")
 		}
@@ -128,11 +130,11 @@ func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFr
 
 		out.DC = 1 // Class-B
 		out.DR = &dr
-		out.Freq = &pb.TxInfo.Frequency
+		out.Freq = &item.GetTxInfo().Frequency
 		out.GPSTime = &gpsEpoch
 
 	default:
-		return out, fmt.Errorf("unexpected downlink timing: %s", pb.TxInfo.Timing)
+		return out, fmt.Errorf("unexpected downlink timing: %s", item.GetTxInfo().Timing)
 	}
 
 	return out, nil

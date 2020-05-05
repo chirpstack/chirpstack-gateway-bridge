@@ -22,6 +22,11 @@ For the Protobuf definitions, please refer to [gw.proto](https://github.com/broc
 
 Request the gateway to schedule a downlink transmission.
 
+The `items` must contain at least one downlink option but can contain multiple
+items. At most one item will be emitted by the gateway. By specifying multiple
+items (e.g. RX1 and RX2), the gateway can retry with the next item in case of a
+scheduling issue.
+
 The `context` key must contain the same value as the related uplink frame.
 It holds the gateway internal context (e.g. internal timing information).
 
@@ -31,27 +36,31 @@ It holds the gateway internal context (e.g. internal timing information).
 
 {{<highlight json>}}
 {
-    "phyPayload": "IHN792Ld0vEHetyVv9+llJnnmz88Up6pFz8UiUdJMnUc",
-    "txInfo": {
-        "gatewayID": "AQIDBAUGBwg=",
-        "frequency": 868100000,
-        "power": 14,
-        "modulation": "LORA",
-        "loRaModulationInfo": {
-            "bandwidth": 125,
-            "spreadingFactor": 10,
-            "codeRate": "4/5",
-            "polarizationInversion": true
-        },
-        "board": 0,
-        "antenna": 0,
-        "timing": "DELAY",
-        "delayTimingInfo": {
-            "delay": "1s"
-        },
-        "context": "AAAAAAAAAAMAAAAAAAAABA=="
-    },
-    "token": 1234
+    "gatewayID": "AQIDBAUGBwg=",
+    "token": 1234,
+    "items": [
+        {
+            "phyPayload": "IHN792Ld0vEHetyVv9+llJnnmz88Up6pFz8UiUdJMnUc",
+            "txInfo": {
+                "frequency": 868100000,
+                "power": 14,
+                "modulation": "LORA",
+                "loRaModulationInfo": {
+                    "bandwidth": 125,
+                    "spreadingFactor": 10,
+                    "codeRate": "4/5",
+                    "polarizationInversion": true
+                },
+                "board": 0,
+                "antenna": 0,
+                "timing": "DELAY",
+                "delayTimingInfo": {
+                    "delay": "1s"
+                },
+                "context": "AAAAAAAAAAMAAAAAAAAABA=="
+            }
+        }
+    ]
 }
 {{</highlight>}}
 
@@ -59,26 +68,30 @@ It holds the gateway internal context (e.g. internal timing information).
 
 {{<highlight json>}}
 {
-    "phyPayload": "IHN792Ld0vEHetyVv9+llJnnmz88Up6pFz8UiUdJMnUc",
-    "txInfo": {
-        "gatewayID": "AQIDBAUGBwg=",
-        "frequency": 868100000,
-        "power": 14,
-        "modulation": "LORA",
-        "loRaModulationInfo": {
-            "bandwidth": 125,
-            "spreadingFactor": 10,
-            "codeRate": "4/5",
-            "polarizationInversion": true
-        },
-        "board": 0,
-        "antenna": 0,
-        "timing": "GPS_EPOCH",
-        "gpsEpochTimingInfo": {
-            "timeSinceGPSEpoch": "1s"
+    "token": 1234,
+    "gatewayID": "AQIDBAUGBwg=",
+    "items": [
+        {
+            "phyPayload": "IHN792Ld0vEHetyVv9+llJnnmz88Up6pFz8UiUdJMnUc",
+            "txInfo": {
+                "frequency": 868100000,
+                "power": 14,
+                "modulation": "LORA",
+                "loRaModulationInfo": {
+                    "bandwidth": 125,
+                    "spreadingFactor": 10,
+                    "codeRate": "4/5",
+                    "polarizationInversion": true
+                },
+                "board": 0,
+                "antenna": 0,
+                "timing": "GPS_EPOCH",
+                "gpsEpochTimingInfo": {
+                    "timeSinceGPSEpoch": "1s"
+                }
+            },
         }
-    },
-    "token": 1234
+    ]
 }
 {{</highlight>}}
 
@@ -86,23 +99,27 @@ It holds the gateway internal context (e.g. internal timing information).
 
 {{<highlight json>}}
 {
-    "phyPayload": "IHN792Ld0vEHetyVv9+llJnnmz88Up6pFz8UiUdJMnUc",
-    "txInfo": {
-        "gatewayID": "AQIDBAUGBwg=",
-        "frequency": 868100000,
-        "power": 14,
-        "modulation": "LORA",
-        "loRaModulationInfo": {
-            "bandwidth": 125,
-            "spreadingFactor": 10,
-            "codeRate": "4/5",
-            "polarizationInversion": true
-        },
-        "board": 0,
-        "antenna": 0,
-        "timing": "IMMEDIATELY"
-    },
-    "token": 1234
+    "token": 1234,
+    "gatewayID": "AQIDBAUGBwg=",
+    "items": [
+        {
+            "phyPayload": "IHN792Ld0vEHetyVv9+llJnnmz88Up6pFz8UiUdJMnUc",
+            "txInfo": {
+                "frequency": 868100000,
+                "power": 14,
+                "modulation": "LORA",
+                "loRaModulationInfo": {
+                    "bandwidth": 125,
+                    "spreadingFactor": 10,
+                    "codeRate": "4/5",
+                    "polarizationInversion": true
+                },
+                "board": 0,
+                "antenna": 0,
+                "timing": "IMMEDIATELY"
+            },
+        }
+    ]
 }
 {{</highlight>}}
 

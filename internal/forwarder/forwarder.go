@@ -101,6 +101,16 @@ func forwardDownlinkTxAckLoop() {
 			var downID uuid.UUID
 			copy(downID[:], txAck.DownlinkId)
 
+			// for backwards compatibility
+			for _, err := range txAck.Items {
+				if err.Status == gw.TxAckStatus_OK {
+					txAck.Error = ""
+					break
+				}
+
+				txAck.Error = err.String()
+			}
+
 			if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventAck, downID, &txAck); err != nil {
 				log.WithError(err).WithFields(log.Fields{
 					"gateway_id":  gatewayID,

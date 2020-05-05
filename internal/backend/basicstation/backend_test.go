@@ -300,30 +300,34 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	assert.NoError(err)
 
 	err = ts.backend.SendDownlinkFrame(gw.DownlinkFrame{
-		PhyPayload: []byte{1, 2, 3, 4},
-		TxInfo: &gw.DownlinkTXInfo{
-			GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
-			Frequency:  868100000,
-			Power:      14,
-			Modulation: common.Modulation_LORA,
-			ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-				LoraModulationInfo: &gw.LoRaModulationInfo{
-					Bandwidth:             125,
-					SpreadingFactor:       10,
-					CodeRate:              "4/5",
-					PolarizationInversion: true,
-				},
-			},
-			Timing: gw.DownlinkTiming_DELAY,
-			TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-				DelayTimingInfo: &gw.DelayTimingInfo{
-					Delay: ptypes.DurationProto(time.Second),
-				},
-			},
-			Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
-		},
 		Token:      1234,
 		DownlinkId: id[:],
+		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Items: []*gw.DownlinkFrameItem{
+			{
+				PhyPayload: []byte{1, 2, 3, 4},
+				TxInfo: &gw.DownlinkTXInfo{
+					Frequency:  868100000,
+					Power:      14,
+					Modulation: common.Modulation_LORA,
+					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+						LoraModulationInfo: &gw.LoRaModulationInfo{
+							Bandwidth:             125,
+							SpreadingFactor:       10,
+							CodeRate:              "4/5",
+							PolarizationInversion: true,
+						},
+					},
+					Timing: gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(time.Second),
+						},
+					},
+					Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
+				},
+			},
+		},
 	})
 	assert.NoError(err)
 

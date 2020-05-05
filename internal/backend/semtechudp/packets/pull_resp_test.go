@@ -56,29 +56,33 @@ func TestGetPullRespPacket(t *testing.T) {
 		{
 			Name: "delay timing - lora",
 			DownlinkFrame: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							SpreadingFactor:       12,
-							Bandwidth:             125,
-							PolarizationInversion: true,
-							CodeRate:              "4/5",
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_LORA,
+							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+								LoraModulationInfo: &gw.LoRaModulationInfo{
+									SpreadingFactor:       12,
+									Bandwidth:             125,
+									PolarizationInversion: true,
+									CodeRate:              "4/5",
+								},
+							},
+							Board:   1,
+							Antenna: 2,
+							Timing:  gw.DownlinkTiming_DELAY,
+							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+								DelayTimingInfo: &gw.DelayTimingInfo{
+									Delay: ptypes.DurationProto(time.Second),
+								},
+							},
+							Context: []byte{0x00, 0x0f, 0x42, 0x40},
 						},
 					},
-					Board:   1,
-					Antenna: 2,
-					Timing:  gw.DownlinkTiming_DELAY,
-					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-						DelayTimingInfo: &gw.DelayTimingInfo{
-							Delay: ptypes.DurationProto(time.Second),
-						},
-					},
-					Context: []byte{0x00, 0x0f, 0x42, 0x40},
 				},
 				Token: 1234,
 			},
@@ -107,27 +111,31 @@ func TestGetPullRespPacket(t *testing.T) {
 		{
 			Name: "delay timing - fsk",
 			DownlinkFrame: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_FSK,
-					ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
-						FskModulationInfo: &gw.FSKModulationInfo{
-							Datarate:           50000,
-							FrequencyDeviation: 25000,
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_FSK,
+							ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
+								FskModulationInfo: &gw.FSKModulationInfo{
+									Datarate:           50000,
+									FrequencyDeviation: 25000,
+								},
+							},
+							Board:   1,
+							Antenna: 2,
+							Timing:  gw.DownlinkTiming_DELAY,
+							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+								DelayTimingInfo: &gw.DelayTimingInfo{
+									Delay: ptypes.DurationProto(time.Second),
+								},
+							},
+							Context: []byte{0x00, 0x0f, 0x42, 0x40},
 						},
 					},
-					Board:   1,
-					Antenna: 2,
-					Timing:  gw.DownlinkTiming_DELAY,
-					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-						DelayTimingInfo: &gw.DelayTimingInfo{
-							Delay: ptypes.DurationProto(time.Second),
-						},
-					},
-					Context: []byte{0x00, 0x0f, 0x42, 0x40},
 				},
 				Token: 1234,
 			},
@@ -155,23 +163,27 @@ func TestGetPullRespPacket(t *testing.T) {
 		{
 			Name: "immmediately",
 			DownlinkFrame: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							SpreadingFactor:       12,
-							Bandwidth:             125,
-							PolarizationInversion: true,
-							CodeRate:              "4/5",
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_LORA,
+							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+								LoraModulationInfo: &gw.LoRaModulationInfo{
+									SpreadingFactor:       12,
+									Bandwidth:             125,
+									PolarizationInversion: true,
+									CodeRate:              "4/5",
+								},
+							},
+							Board:   1,
+							Antenna: 2,
+							Timing:  gw.DownlinkTiming_IMMEDIATELY,
 						},
 					},
-					Board:   1,
-					Antenna: 2,
-					Timing:  gw.DownlinkTiming_IMMEDIATELY,
 				},
 				Token: 1234,
 			},
@@ -200,26 +212,30 @@ func TestGetPullRespPacket(t *testing.T) {
 		{
 			Name: "gps epoch",
 			DownlinkFrame: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							SpreadingFactor:       12,
-							Bandwidth:             125,
-							PolarizationInversion: true,
-							CodeRate:              "4/5",
-						},
-					},
-					Board:   1,
-					Antenna: 2,
-					Timing:  gw.DownlinkTiming_GPS_EPOCH,
-					TimingInfo: &gw.DownlinkTXInfo_GpsEpochTimingInfo{
-						GpsEpochTimingInfo: &gw.GPSEpochTimingInfo{
-							TimeSinceGpsEpoch: ptypes.DurationProto(5 * time.Second),
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_LORA,
+							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+								LoraModulationInfo: &gw.LoRaModulationInfo{
+									SpreadingFactor:       12,
+									Bandwidth:             125,
+									PolarizationInversion: true,
+									CodeRate:              "4/5",
+								},
+							},
+							Board:   1,
+							Antenna: 2,
+							Timing:  gw.DownlinkTiming_GPS_EPOCH,
+							TimingInfo: &gw.DownlinkTXInfo_GpsEpochTimingInfo{
+								GpsEpochTimingInfo: &gw.GPSEpochTimingInfo{
+									TimeSinceGpsEpoch: ptypes.DurationProto(5 * time.Second),
+								},
+							},
 						},
 					},
 				},
@@ -253,7 +269,7 @@ func TestGetPullRespPacket(t *testing.T) {
 		t.Run(tst.Name, func(t *testing.T) {
 			assert := require.New(t)
 
-			resp, err := GetPullRespPacket(ProtocolVersion2, 1234, tst.DownlinkFrame)
+			resp, err := GetPullRespPacket(ProtocolVersion2, 1234, tst.DownlinkFrame, 0)
 			assert.Equal(tst.Error, err)
 			if err != nil {
 				return

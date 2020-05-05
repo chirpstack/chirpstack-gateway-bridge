@@ -11,6 +11,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -116,6 +117,11 @@ func (ts *BackendTestSuite) TestTXAck() {
 			BackendPacket: gw.DownlinkTXAck{
 				GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
 				Token:     12345,
+				Items: []*gw.DownlinkTXAckItem{
+					{
+						Status: gw.TxAckStatus_OK,
+					},
+				},
 			},
 		},
 		{
@@ -133,6 +139,11 @@ func (ts *BackendTestSuite) TestTXAck() {
 			BackendPacket: gw.DownlinkTXAck{
 				GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
 				Token:     12345,
+				Items: []*gw.DownlinkTXAckItem{
+					{
+						Status: gw.TxAckStatus_OK,
+					},
+				},
 			},
 		},
 		{
@@ -143,14 +154,18 @@ func (ts *BackendTestSuite) TestTXAck() {
 				GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
 				Payload: &packets.TXACKPayload{
 					TXPKACK: packets.TXPKACK{
-						Error: "BOOM",
+						Error: "TX_FREQ",
 					},
 				},
 			},
 			BackendPacket: gw.DownlinkTXAck{
 				GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
 				Token:     12345,
-				Error:     "BOOM",
+				Items: []*gw.DownlinkTXAckItem{
+					{
+						Status: gw.TxAckStatus_TX_FREQ,
+					},
+				},
 			},
 		},
 	}
@@ -161,7 +176,15 @@ func (ts *BackendTestSuite) TestTXAck() {
 			id, err := uuid.NewV4()
 			assert.NoError(err)
 
-			ts.backend.tokenMap[12345] = id[:]
+			ts.backend.cache.Set("12345:ack", make([]*gw.DownlinkTXAckItem, 1), cache.DefaultExpiration)
+			ts.backend.cache.Set("12345:frame", gw.DownlinkFrame{
+				Token:      12345,
+				DownlinkId: id.Bytes(),
+				Items: []*gw.DownlinkFrameItem{
+					{},
+				},
+			}, cache.DefaultExpiration)
+			ts.backend.cache.Set("12345:index", 0, cache.DefaultExpiration)
 
 			b, err := test.GatewayPacket.MarshalBinary()
 			assert.NoError(err)
@@ -175,6 +198,441 @@ func (ts *BackendTestSuite) TestTXAck() {
 			assert.Equal(test.BackendPacket, ack)
 		})
 	}
+}
+
+func (ts *BackendTestSuite) TestTXAckRetryFailOK() {
+	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
+	buf := make([]byte, 65507)
+
+	// register gateway
+	p := packets.PullDataPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+	}
+	b, err := p.MarshalBinary()
+	assert.NoError(err)
+	_, err = ts.gwUDPConn.WriteToUDP(b, ts.backendUDPAddr)
+	assert.NoError(err)
+	i, _, err := ts.gwUDPConn.ReadFromUDP(buf)
+	assert.NoError(err)
+	var ack packets.PullACKPacket
+	assert.NoError(ack.UnmarshalBinary(buf[:i]))
+	assert.Equal(p.RandomToken, ack.RandomToken)
+	assert.Equal(p.ProtocolVersion, ack.ProtocolVersion)
+
+	// set cache
+	ts.backend.cache.Set("12345:frame", gw.DownlinkFrame{
+		Items: []*gw.DownlinkFrameItem{
+			{
+				PhyPayload: []byte{1, 2, 3, 4},
+				TxInfo: &gw.DownlinkTXInfo{
+					Frequency:  868100000,
+					Power:      14,
+					Modulation: common.Modulation_LORA,
+					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+						LoraModulationInfo: &gw.LoRaModulationInfo{
+							Bandwidth:             125,
+							SpreadingFactor:       7,
+							CodeRate:              "4/5",
+							PolarizationInversion: true,
+						},
+					},
+					Timing: gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(time.Second),
+						},
+					},
+					Context: []byte{0x00, 0x0f, 0x42, 0x40},
+				},
+			},
+			{
+				PhyPayload: []byte{1, 2, 3, 4, 5},
+				TxInfo: &gw.DownlinkTXInfo{
+					Frequency:  868100000,
+					Power:      14,
+					Modulation: common.Modulation_LORA,
+					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+						LoraModulationInfo: &gw.LoRaModulationInfo{
+							Bandwidth:             125,
+							SpreadingFactor:       7,
+							CodeRate:              "4/5",
+							PolarizationInversion: true,
+						},
+					},
+					Timing: gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(2 * time.Second),
+						},
+					},
+					Context: []byte{0x00, 0x0f, 0x42, 0x40},
+				},
+			},
+		},
+		Token:      12345,
+		DownlinkId: id[:],
+		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+	}, cache.DefaultExpiration)
+	ts.backend.cache.Set("12345:index", 0, cache.DefaultExpiration)
+	ts.backend.cache.Set("12345:ack", []*gw.DownlinkTXAckItem{
+		{Status: gw.TxAckStatus_IGNORED},
+		{Status: gw.TxAckStatus_IGNORED},
+	}, cache.DefaultExpiration)
+
+	// send a nack on the first downlink attempt
+	ack1 := packets.TXACKPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Payload: &packets.TXACKPayload{
+			TXPKACK: packets.TXPKACK{
+				Error: "TX_FREQ",
+			},
+		},
+	}
+	ack1B, err := ack1.MarshalBinary()
+	assert.NoError(err)
+	_, err = ts.gwUDPConn.WriteToUDP(ack1B, ts.backendUDPAddr)
+	assert.NoError(err)
+
+	// validate udp packet
+	i, _, err = ts.gwUDPConn.ReadFromUDP(buf)
+	assert.NoError(err)
+	tmst := uint32(3000000)
+	var pullResp packets.PullRespPacket
+	assert.NoError(pullResp.UnmarshalBinary(buf[:i]))
+	assert.Equal(packets.PullRespPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		Payload: packets.PullRespPayload{
+			TXPK: packets.TXPK{
+				Tmst: &tmst,
+				Freq: 868.1,
+				RFCh: 0,
+				Powe: 14,
+				Modu: "LORA",
+				DatR: packets.DatR{
+					LoRa: "SF7BW125",
+				},
+				CodR: "4/5",
+				IPol: true,
+				Size: 5,
+				Data: []byte{1, 2, 3, 4, 5},
+			},
+		},
+	}, pullResp)
+
+	// send an ack on the second downlink attempt
+	ack2 := packets.TXACKPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Payload: &packets.TXACKPayload{
+			TXPKACK: packets.TXPKACK{
+				Error: "",
+			},
+		},
+	}
+	ack2B, err := ack2.MarshalBinary()
+	assert.NoError(err)
+	_, err = ts.gwUDPConn.WriteToUDP(ack2B, ts.backendUDPAddr)
+	assert.NoError(err)
+
+	// validate final ack
+	txAck := <-ts.backend.GetDownlinkTXAckChan()
+	assert.Equal(gw.DownlinkTXAck{
+		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Token:      12345,
+		DownlinkId: id[:],
+		Items: []*gw.DownlinkTXAckItem{
+			{
+				Status: gw.TxAckStatus_TX_FREQ,
+			},
+			{
+				Status: gw.TxAckStatus_OK,
+			},
+		},
+	}, txAck)
+}
+
+func (ts *BackendTestSuite) TestTXAckRetryFailFail() {
+	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
+	buf := make([]byte, 65507)
+
+	// register gateway
+	p := packets.PullDataPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+	}
+	b, err := p.MarshalBinary()
+	assert.NoError(err)
+	_, err = ts.gwUDPConn.WriteToUDP(b, ts.backendUDPAddr)
+	assert.NoError(err)
+	i, _, err := ts.gwUDPConn.ReadFromUDP(buf)
+	assert.NoError(err)
+	var ack packets.PullACKPacket
+	assert.NoError(ack.UnmarshalBinary(buf[:i]))
+	assert.Equal(p.RandomToken, ack.RandomToken)
+	assert.Equal(p.ProtocolVersion, ack.ProtocolVersion)
+
+	// set cache
+	ts.backend.cache.Set("12345:frame", gw.DownlinkFrame{
+		Items: []*gw.DownlinkFrameItem{
+			{
+				PhyPayload: []byte{1, 2, 3, 4},
+				TxInfo: &gw.DownlinkTXInfo{
+					Frequency:  868100000,
+					Power:      14,
+					Modulation: common.Modulation_LORA,
+					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+						LoraModulationInfo: &gw.LoRaModulationInfo{
+							Bandwidth:             125,
+							SpreadingFactor:       7,
+							CodeRate:              "4/5",
+							PolarizationInversion: true,
+						},
+					},
+					Timing: gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(time.Second),
+						},
+					},
+					Context: []byte{0x00, 0x0f, 0x42, 0x40},
+				},
+			},
+			{
+				PhyPayload: []byte{1, 2, 3, 4, 5},
+				TxInfo: &gw.DownlinkTXInfo{
+					Frequency:  868100000,
+					Power:      14,
+					Modulation: common.Modulation_LORA,
+					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+						LoraModulationInfo: &gw.LoRaModulationInfo{
+							Bandwidth:             125,
+							SpreadingFactor:       7,
+							CodeRate:              "4/5",
+							PolarizationInversion: true,
+						},
+					},
+					Timing: gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(2 * time.Second),
+						},
+					},
+					Context: []byte{0x00, 0x0f, 0x42, 0x40},
+				},
+			},
+		},
+		Token:      12345,
+		DownlinkId: id[:],
+		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+	}, cache.DefaultExpiration)
+	ts.backend.cache.Set("12345:index", 0, cache.DefaultExpiration)
+	ts.backend.cache.Set("12345:ack", []*gw.DownlinkTXAckItem{
+		{Status: gw.TxAckStatus_IGNORED},
+		{Status: gw.TxAckStatus_IGNORED},
+	}, cache.DefaultExpiration)
+
+	// send a nack on the first downlink attempt
+	ack1 := packets.TXACKPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Payload: &packets.TXACKPayload{
+			TXPKACK: packets.TXPKACK{
+				Error: "TX_FREQ",
+			},
+		},
+	}
+	ack1B, err := ack1.MarshalBinary()
+	assert.NoError(err)
+	_, err = ts.gwUDPConn.WriteToUDP(ack1B, ts.backendUDPAddr)
+	assert.NoError(err)
+
+	// validate udp packet
+	i, _, err = ts.gwUDPConn.ReadFromUDP(buf)
+	assert.NoError(err)
+	tmst := uint32(3000000)
+	var pullResp packets.PullRespPacket
+	assert.NoError(pullResp.UnmarshalBinary(buf[:i]))
+	assert.Equal(packets.PullRespPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		Payload: packets.PullRespPayload{
+			TXPK: packets.TXPK{
+				Tmst: &tmst,
+				Freq: 868.1,
+				RFCh: 0,
+				Powe: 14,
+				Modu: "LORA",
+				DatR: packets.DatR{
+					LoRa: "SF7BW125",
+				},
+				CodR: "4/5",
+				IPol: true,
+				Size: 5,
+				Data: []byte{1, 2, 3, 4, 5},
+			},
+		},
+	}, pullResp)
+
+	// send a nack on the second downlink attempt
+	ack2 := packets.TXACKPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Payload: &packets.TXACKPayload{
+			TXPKACK: packets.TXPKACK{
+				Error: "TOO_LATE",
+			},
+		},
+	}
+	ack2B, err := ack2.MarshalBinary()
+	assert.NoError(err)
+	_, err = ts.gwUDPConn.WriteToUDP(ack2B, ts.backendUDPAddr)
+	assert.NoError(err)
+
+	// validate final ack
+	txAck := <-ts.backend.GetDownlinkTXAckChan()
+	assert.Equal(gw.DownlinkTXAck{
+		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Token:      12345,
+		DownlinkId: id[:],
+		Items: []*gw.DownlinkTXAckItem{
+			{
+				Status: gw.TxAckStatus_TX_FREQ,
+			},
+			{
+				Status: gw.TxAckStatus_TOO_LATE,
+			},
+		},
+	}, txAck)
+}
+
+func (ts *BackendTestSuite) TestTXAckRetryOkIgnored() {
+	assert := require.New(ts.T())
+	id, err := uuid.NewV4()
+	assert.NoError(err)
+	buf := make([]byte, 65507)
+
+	// register gateway
+	p := packets.PullDataPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+	}
+	b, err := p.MarshalBinary()
+	assert.NoError(err)
+	_, err = ts.gwUDPConn.WriteToUDP(b, ts.backendUDPAddr)
+	assert.NoError(err)
+	i, _, err := ts.gwUDPConn.ReadFromUDP(buf)
+	assert.NoError(err)
+	var ack packets.PullACKPacket
+	assert.NoError(ack.UnmarshalBinary(buf[:i]))
+	assert.Equal(p.RandomToken, ack.RandomToken)
+	assert.Equal(p.ProtocolVersion, ack.ProtocolVersion)
+
+	// set cache
+	ts.backend.cache.Set("12345:frame", gw.DownlinkFrame{
+		Items: []*gw.DownlinkFrameItem{
+			{
+				PhyPayload: []byte{1, 2, 3, 4},
+				TxInfo: &gw.DownlinkTXInfo{
+					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+					Frequency:  868100000,
+					Power:      14,
+					Modulation: common.Modulation_LORA,
+					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+						LoraModulationInfo: &gw.LoRaModulationInfo{
+							Bandwidth:             125,
+							SpreadingFactor:       7,
+							CodeRate:              "4/5",
+							PolarizationInversion: true,
+						},
+					},
+					Timing: gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(time.Second),
+						},
+					},
+					Context: []byte{0x00, 0x0f, 0x42, 0x40},
+				},
+			},
+			{
+				PhyPayload: []byte{1, 2, 3, 4, 5},
+				TxInfo: &gw.DownlinkTXInfo{
+					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+					Frequency:  868100000,
+					Power:      14,
+					Modulation: common.Modulation_LORA,
+					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+						LoraModulationInfo: &gw.LoRaModulationInfo{
+							Bandwidth:             125,
+							SpreadingFactor:       7,
+							CodeRate:              "4/5",
+							PolarizationInversion: true,
+						},
+					},
+					Timing: gw.DownlinkTiming_DELAY,
+					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+						DelayTimingInfo: &gw.DelayTimingInfo{
+							Delay: ptypes.DurationProto(2 * time.Second),
+						},
+					},
+					Context: []byte{0x00, 0x0f, 0x42, 0x40},
+				},
+			},
+		},
+		Token:      12345,
+		DownlinkId: id[:],
+	}, cache.DefaultExpiration)
+	ts.backend.cache.Set("12345:index", 0, cache.DefaultExpiration)
+	ts.backend.cache.Set("12345:ack", []*gw.DownlinkTXAckItem{
+		{Status: gw.TxAckStatus_IGNORED},
+		{Status: gw.TxAckStatus_IGNORED},
+	}, cache.DefaultExpiration)
+
+	// send an ack on the first downlink attempt
+	ack1 := packets.TXACKPacket{
+		ProtocolVersion: packets.ProtocolVersion2,
+		RandomToken:     12345,
+		GatewayMAC:      [8]byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Payload: &packets.TXACKPayload{
+			TXPKACK: packets.TXPKACK{
+				Error: "",
+			},
+		},
+	}
+	ack1B, err := ack1.MarshalBinary()
+	assert.NoError(err)
+	_, err = ts.gwUDPConn.WriteToUDP(ack1B, ts.backendUDPAddr)
+	assert.NoError(err)
+
+	// validate final ack
+	txAck := <-ts.backend.GetDownlinkTXAckChan()
+	assert.Equal(gw.DownlinkTXAck{
+		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		Token:      12345,
+		DownlinkId: id[:],
+		Items: []*gw.DownlinkTXAckItem{
+			{
+				Status: gw.TxAckStatus_OK,
+			},
+			{
+				Status: gw.TxAckStatus_IGNORED,
+			},
+		},
+	}, txAck)
 }
 
 func (ts *BackendTestSuite) TestPushData() {
@@ -377,8 +835,12 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 		{
 			Name: "Gateway not registered",
 			DownlinkFrame: gw.DownlinkFrame{
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId: []byte{1, 1, 1, 1, 1, 1, 1, 1},
+				Items: []*gw.DownlinkFrameItem{
+					{
+						TxInfo: &gw.DownlinkTXInfo{
+							GatewayId: []byte{1, 1, 1, 1, 1, 1, 1, 1},
+						},
+					},
 				},
 			},
 			Error: errors.New("get gateway error: gateway does not exist"),
@@ -386,32 +848,36 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 		{
 			Name: "LORA",
 			DownlinkFrame: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							Bandwidth:             125,
-							SpreadingFactor:       7,
-							CodeRate:              "4/5",
-							PolarizationInversion: true,
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_LORA,
+							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+								LoraModulationInfo: &gw.LoRaModulationInfo{
+									Bandwidth:             125,
+									SpreadingFactor:       7,
+									CodeRate:              "4/5",
+									PolarizationInversion: true,
+								},
+							},
+							Timing: gw.DownlinkTiming_DELAY,
+							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+								DelayTimingInfo: &gw.DelayTimingInfo{
+									Delay: ptypes.DurationProto(time.Second),
+								},
+							},
+							Board:   1,
+							Antenna: 2,
+							Context: []byte{0x00, 0x0f, 0x42, 0x40},
 						},
 					},
-					Timing: gw.DownlinkTiming_DELAY,
-					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-						DelayTimingInfo: &gw.DelayTimingInfo{
-							Delay: ptypes.DurationProto(time.Second),
-						},
-					},
-					Board:   1,
-					Antenna: 2,
-					Context: []byte{0x00, 0x0f, 0x42, 0x40},
 				},
 				Token:      123,
 				DownlinkId: id[:],
+				GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
 			},
 			GatewayPacket: packets.PullRespPacket{
 				ProtocolVersion: packets.ProtocolVersion2,
@@ -439,30 +905,34 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 		{
 			Name: "FSK",
 			DownlinkFrame: gw.DownlinkFrame{
-				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_FSK,
-					ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
-						FskModulationInfo: &gw.FSKModulationInfo{
-							Datarate:           50000,
-							FrequencyDeviation: 25000,
+				Items: []*gw.DownlinkFrameItem{
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							Frequency:  868100000,
+							Power:      14,
+							Modulation: common.Modulation_FSK,
+							ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
+								FskModulationInfo: &gw.FSKModulationInfo{
+									Datarate:           50000,
+									FrequencyDeviation: 25000,
+								},
+							},
+							Board:   1,
+							Antenna: 2,
+							Timing:  gw.DownlinkTiming_DELAY,
+							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+								DelayTimingInfo: &gw.DelayTimingInfo{
+									Delay: ptypes.DurationProto(time.Second),
+								},
+							},
+							Context: []byte{0x00, 0x0f, 0x42, 0x40},
 						},
 					},
-					Board:   1,
-					Antenna: 2,
-					Timing:  gw.DownlinkTiming_DELAY,
-					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-						DelayTimingInfo: &gw.DelayTimingInfo{
-							Delay: ptypes.DurationProto(time.Second),
-						},
-					},
-					Context: []byte{0x00, 0x0f, 0x42, 0x40},
 				},
 				Token:      123,
 				DownlinkId: id[:],
+				GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
 			},
 			GatewayPacket: packets.PullRespPacket{
 				ProtocolVersion: packets.ProtocolVersion2,
@@ -518,8 +988,6 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 				return
 			}
 			assert.NoError(err)
-
-			assert.Equal(id[:], ts.backend.tokenMap[uint16(test.DownlinkFrame.Token)])
 
 			i, _, err := ts.gwUDPConn.ReadFromUDP(buf)
 			assert.NoError(err)

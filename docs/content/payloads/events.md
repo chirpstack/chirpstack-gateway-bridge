@@ -94,15 +94,12 @@ This message is defined by the `UplinkFrame` Protobuf message.
 
 Acknowledgement (or error) after a downlink command.
 
-Possible error values are:
+The index of `items` correlates to the same order of the `down` command payload
+`items`.
 
-* `TOO_LATE`: Rejected because it was already too late to program this packet for downlink
-* `TOO_EARLY`: Rejected because downlink packet timestamp is too much in advance
-* `COLLISION_PACKET`: Rejected because there was already a packet programmed in requested timeframe
-* `COLLISION_BEACON`: Rejected because there was already a beacon planned in requested timeframe
-* `TX_FREQ`: Rejected because requested frequency is not supported by TX RF chain
-* `TX_POWER`: Rejected because requested power is not supported by gateway
-* `GPS_UNLOCKED`: Rejected because GPS is unlocked, so GPS timestamp cannot be used
+Possible status values are specified by the `TxAckStatus` enum in the
+[gw.proto](https://github.com/brocaar/chirpstack-api/blob/master/protobuf/gw/gw.proto)
+Protobuf definition.
 
 ### JSON
 
@@ -110,7 +107,11 @@ Possible error values are:
 {
     "gatewayID": "cnb/AC4GLBg=",
     "token": 12345,
-    "error": "GPS_UNLOCKED"
+    "items": [
+        {
+            "status": "GPS_UNLOCKED"
+        }
+    ]
 }
 {{< /highlight >}}
 

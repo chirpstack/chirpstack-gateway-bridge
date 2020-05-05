@@ -151,6 +151,11 @@ func (ts *MQTTBackendTestSuite) TestPublishDownlinkTXAck() {
 		GatewayId:  ts.gatewayID[:],
 		Token:      1234,
 		DownlinkId: id[:],
+		Items: []*gw.DownlinkTXAckItem{
+			{
+				Status: gw.TxAckStatus_OK,
+			},
+		},
 	}
 
 	txAckChan := make(chan gw.DownlinkTXAck)
@@ -171,7 +176,11 @@ func (ts *MQTTBackendTestSuite) TestDownlinkFrameHandler() {
 	assert := require.New(ts.T())
 
 	downlink := gw.DownlinkFrame{
-		PhyPayload: []byte{1, 2, 3, 4},
+		Items: []*gw.DownlinkFrameItem{
+			{
+				PhyPayload: []byte{1, 2, 3, 4},
+			},
+		},
 	}
 
 	b, err := ts.backend.marshal(&downlink)
