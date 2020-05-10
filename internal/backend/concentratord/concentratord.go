@@ -181,9 +181,11 @@ func (b *Backend) GetSubscribeEventChan() chan events.Subscribe {
 
 // SendDownlinkFrame sends the given downlink frame.
 func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
-	loRaModInfo := pl.GetTxInfo().GetLoraModulationInfo()
-	if loRaModInfo != nil {
-		loRaModInfo.Bandwidth = loRaModInfo.Bandwidth * 1000
+	for i := range pl.GetItems() {
+		loRaModInfo := pl.Items[i].GetTxInfo().GetLoraModulationInfo()
+		if loRaModInfo != nil {
+			loRaModInfo.Bandwidth = loRaModInfo.Bandwidth * 1000
+		}
 	}
 
 	var downlinkID uuid.UUID
