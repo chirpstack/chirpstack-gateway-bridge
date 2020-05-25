@@ -10,6 +10,42 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 # Changelog
 
+## v3.9.0
+
+### Features
+
+#### Multi-downlink commands and ACKs
+
+This multi-downlink feature allows a Network Server to send multiple downlink
+opportunities at once, e.g. one item for RX1 and one for RX2. The gateway will
+send at most one downlink item from the list. The ChirpStack Gateway Bridge will
+respond with a list of ACK items, indicating which item item was emitted, which
+item(s) failed and which item(s) were ignored (because the previous item was
+emitted).
+
+#### Channel re-configuration
+
+This implements channel re-configuration for the [ChirpStack Concentratord](https://github.com/brocaar/chirpstack-concentratord)
+backend over MQTT. This also removes the channel re-configuration for the Semtech
+UDP Packet Forwarder. While this feature had been removed from the documentation
+code references were still present. As there are different implementations of
+the Semtech UDP Packet Forwarder, there are also different flavors of
+configuration files.
+
+The ChirpStack Concentratord provides a unified API to different types of
+gateways which makes it possible to implement channel re-configuration for
+this backend.
+
+#### Kerlink iStation
+
+This release provides IPK packages that can be installed on a Kerlink iStation
+gateway.
+
+### Improvements
+
+* Split multi-line meta-data returned by a command only once on delimiter.
+* Forward meta-data provided by a Packet Forwarder backend.
+
 ## v3.8.0
 
 ### Features
