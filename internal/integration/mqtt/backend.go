@@ -377,7 +377,7 @@ func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
 	}
 
 	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], downlinkFrame.Items[0].GetTxInfo().GetGatewayId())
+	copy(gatewayID[:], downlinkFrame.GatewayId)
 
 	log.WithFields(log.Fields{
 		"gateway_id":  gatewayID,
