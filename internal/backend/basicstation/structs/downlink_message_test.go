@@ -14,9 +14,11 @@ import (
 
 func TestDownlinkFrameFromProto(t *testing.T) {
 	delay1 := 1
+	dr1 := 1
 	dr2 := 2
 	dr7 := 7
 	freq := uint32(868100000)
+	freq2 := uint32(868200000)
 	rCtx := uint64(3)
 	xTime := uint64(4)
 	gpsTime := uint64(time.Second / time.Microsecond)
@@ -56,11 +58,34 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 							Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
 						},
 					},
+					{
+						PhyPayload: []byte{1, 2, 3, 4},
+						TxInfo: &gw.DownlinkTXInfo{
+							Frequency:  868200000,
+							Power:      14,
+							Modulation: common.Modulation_LORA,
+							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
+								LoraModulationInfo: &gw.LoRaModulationInfo{
+									Bandwidth:             125,
+									SpreadingFactor:       11,
+									CodeRate:              "4/5",
+									PolarizationInversion: true,
+								},
+							},
+							Timing: gw.DownlinkTiming_DELAY,
+							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
+								DelayTimingInfo: &gw.DelayTimingInfo{
+									Delay: ptypes.DurationProto(time.Second * 2),
+								},
+							},
+							Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
+						},
+					},
 				},
 			},
 			Out: DownlinkFrame{
 				MessageType: DownlinkMessage,
-				DevEui:      "00-00-00-00-00-00-00-00",
+				DevEui:      "01-01-01-01-01-01-01-01",
 				DC:          0,
 				DIID:        1234,
 				Priority:    1,
@@ -70,6 +95,8 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 				RxDelay:     &delay1,
 				RX1DR:       &dr2,
 				RX1Freq:     &freq,
+				RX2DR:       &dr1,
+				RX2Freq:     &freq2,
 			},
 		},
 		{
@@ -102,7 +129,7 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 			},
 			Out: DownlinkFrame{
 				MessageType: DownlinkMessage,
-				DevEui:      "00-00-00-00-00-00-00-00",
+				DevEui:      "01-01-01-01-01-01-01-01",
 				DC:          0,
 				DIID:        1234,
 				Priority:    1,
@@ -147,7 +174,7 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 			},
 			Out: DownlinkFrame{
 				MessageType: DownlinkMessage,
-				DevEui:      "00-00-00-00-00-00-00-00",
+				DevEui:      "01-01-01-01-01-01-01-01",
 				DC:          1,
 				DIID:        1234,
 				Priority:    1,
@@ -187,7 +214,7 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 			},
 			Out: DownlinkFrame{
 				MessageType: DownlinkMessage,
-				DevEui:      "00-00-00-00-00-00-00-00",
+				DevEui:      "01-01-01-01-01-01-01-01",
 				DC:          2,
 				DIID:        1234,
 				Priority:    1,

@@ -344,7 +344,7 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 
 	assert.Equal(structs.DownlinkFrame{
 		MessageType: structs.DownlinkMessage,
-		DevEui:      "00-00-00-00-00-00-00-00",
+		DevEui:      "01-01-01-01-01-01-01-01",
 		DC:          0,
 		DIID:        1234,
 		Priority:    1,

@@ -41,13 +41,13 @@ func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFr
 		return DownlinkFrame{}, errors.New("items must contain at least one item")
 	}
 
-	// TODO: implement for rx1 and rx2 parameters when there are two downlink items.
+	// We assume this is for RX1
 	item := pb.Items[0]
 
 	out := DownlinkFrame{
 		MessageType: DownlinkMessage,
 		Priority:    1,                         // not (yet) available through gw.DownlinkFrame
-		DevEui:      "00-00-00-00-00-00-00-00", // set to blank EUI
+		DevEui:      "01-01-01-01-01-01-01-01", // set to fake DevEUI (setting it to 0 causes the BasicStation to not send acks, see https://github.com/lorabasics/basicstation/issues/71).
 		DIID:        pb.Token,
 		PDU:         hex.EncodeToString(item.PhyPayload),
 	}
@@ -135,6 +135,40 @@ func DownlinkFrameFromProto(loraBand band.Band, pb gw.DownlinkFrame) (DownlinkFr
 
 	default:
 		return out, fmt.Errorf("unexpected downlink timing: %s", item.GetTxInfo().Timing)
+	}
+
+	// We assume this is the RX2.
+	if len(pb.Items) == 2 {
+		item := pb.Items[1]
+
+		if item.GetTxInfo().GetDelayTimingInfo() != nil {
+			if modInfo := item.GetTxInfo().GetLoraModulationInfo(); modInfo != nil {
+				dr, err := loraBand.GetDataRateIndex(false, band.DataRate{
+					Modulation:   band.LoRaModulation,
+					SpreadFactor: int(modInfo.SpreadingFactor),
+					Bandwidth:    int(modInfo.Bandwidth),
+				})
+				if err != nil {
+					return out, errors.Wrap(err, "get data-rate index error")
+				}
+
+				out.RX2Freq = &item.GetTxInfo().Frequency
+				out.RX2DR = &dr
+			}
+
+			if modInfo := item.GetTxInfo().GetFskModulationInfo(); modInfo != nil {
+				dr, err := loraBand.GetDataRateIndex(false, band.DataRate{
+					Modulation: band.FSKModulation,
+					BitRate:    int(modInfo.Datarate),
+				})
+				if err != nil {
+					return out, errors.Wrap(err, "get data-rate index error")
+				}
+
+				out.RX2Freq = &item.GetTxInfo().Frequency
+				out.RX2DR = &dr
+			}
+		}
 	}
 
 	return out, nil
