@@ -10,6 +10,13 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 # Changelog
 
+## v3.9.1
+
+### Bugfixes
+
+* Downlinks are now visible in the web-interface when using in combination with the BasicStation.
+* RX2 parameters are now set for Class-A downlinks when using in combination with the BasicStation.
+
 ## v3.9.0
 
 ### Features
