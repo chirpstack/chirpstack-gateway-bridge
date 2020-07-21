@@ -10,6 +10,12 @@ description: Lists the changes per ChirpStack Gateway Bridge release, including 
 
 # Changelog
 
+## v3.9.2
+
+### Improvements
+
+* Provide uplink / downlink stats when using the BasicStation backend.
+
 ## v3.9.1
 
 ### Bugfixes
