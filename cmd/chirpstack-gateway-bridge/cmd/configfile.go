@@ -124,6 +124,12 @@ type="{{ .Backend.Type }}"
   # certificate of the gateway has been signed by this CA certificate.
   ca_cert="{{ .Backend.BasicStation.CACert }}"
 
+  # Stats interval.
+  #
+  # This defines the interval in which the ChirpStack Gateway Bridge forwards
+  # the uplink / downlink statistics.
+  stats_interval="{{ .Backend.BasicStation.StatsInterval }}"
+
   # Ping interval.
   ping_interval="{{ .Backend.BasicStation.PingInterval }}"
 

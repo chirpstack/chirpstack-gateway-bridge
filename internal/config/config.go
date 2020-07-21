@@ -26,13 +26,14 @@ type Config struct {
 		} `mapstructure:"semtech_udp"`
 
 		BasicStation struct {
-			Bind         string        `mapstructure:"bind"`
-			TLSCert      string        `mapstructure:"tls_cert"`
-			TLSKey       string        `mapstructure:"tls_key"`
-			CACert       string        `mapstructure:"ca_cert"`
-			PingInterval time.Duration `mapstructure:"ping_interval"`
-			ReadTimeout  time.Duration `mapstructure:"read_timeout"`
-			WriteTimeout time.Duration `mapstructure:"write_timeout"`
+			Bind          string        `mapstructure:"bind"`
+			TLSCert       string        `mapstructure:"tls_cert"`
+			TLSKey        string        `mapstructure:"tls_key"`
+			CACert        string        `mapstructure:"ca_cert"`
+			StatsInterval time.Duration `mapstructure:"stats_interval"`
+			PingInterval  time.Duration `mapstructure:"ping_interval"`
+			ReadTimeout   time.Duration `mapstructure:"read_timeout"`
+			WriteTimeout  time.Duration `mapstructure:"write_timeout"`
 			// TODO: remove Filters in the next major release, use global filters instead
 			Filters struct {
 				NetIDs   []string    `mapstructure:"net_ids"`

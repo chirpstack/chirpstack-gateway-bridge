@@ -16,7 +16,9 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/websocket"
+	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -43,9 +45,10 @@ type Backend struct {
 	scheme   string
 	isClosed bool
 
-	pingInterval time.Duration
-	readTimeout  time.Duration
-	writeTimeout time.Duration
+	statsInterval time.Duration
+	pingInterval  time.Duration
+	readTimeout   time.Duration
+	writeTimeout  time.Duration
 
 	gateways gateways
 
@@ -62,10 +65,11 @@ type Backend struct {
 	frequencyMax uint32
 	routerConfig structs.RouterConfig
 
-	// diidMap stores the mapping of diid to UUIDs. This should take ~ 1MB of
-	// memory. Optionaly this could be optimized by letting keys expire after
-	// a given time.
-	diidMap map[uint16][]byte
+	// Cache to store stats.
+	statsCache *cache.Cache
+
+	// Cache to store diid to UUIDs.
+	diidCache *cache.Cache
 }
 
 // NewBackend creates a new Backend.
@@ -83,15 +87,17 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		gatewayStatsChan:            make(chan gw.GatewayStats),
 		rawPacketForwarderEventChan: make(chan gw.RawPacketForwarderEvent),
 
-		pingInterval: conf.Backend.BasicStation.PingInterval,
-		readTimeout:  conf.Backend.BasicStation.ReadTimeout,
-		writeTimeout: conf.Backend.BasicStation.WriteTimeout,
+		statsInterval: conf.Backend.BasicStation.StatsInterval,
+		pingInterval:  conf.Backend.BasicStation.PingInterval,
+		readTimeout:   conf.Backend.BasicStation.ReadTimeout,
+		writeTimeout:  conf.Backend.BasicStation.WriteTimeout,
 
 		region:       band.Name(conf.Backend.BasicStation.Region),
 		frequencyMin: conf.Backend.BasicStation.FrequencyMin,
 		frequencyMax: conf.Backend.BasicStation.FrequencyMax,
 
-		diidMap: make(map[uint16][]byte),
+		diidCache:  cache.New(time.Minute, time.Minute),
+		statsCache: cache.New(conf.Backend.BasicStation.StatsInterval*2, conf.Backend.BasicStation.StatsInterval*2),
 	}
 
 	for _, n := range conf.Filters.NetIDs {
@@ -238,8 +244,10 @@ func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 	copy(gatewayID[:], df.GetGatewayId())
 	copy(downID[:], df.GetDownlinkId())
 
+	b.incrementTxStats(gatewayID)
+
 	// store token to UUID mapping
-	b.diidMap[uint16(df.Token)] = df.GetDownlinkId()
+	b.diidCache.SetDefault(fmt.Sprintf("%d", df.Token), df.GetDownlinkId())
 
 	websocketSendCounter("dnmsg").Inc()
 	if err := b.sendToGateway(gatewayID, pl); err != nil {
@@ -382,13 +390,67 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 		"remote_addr": r.RemoteAddr,
 	}).Info("backend/basicstation: gateway connected")
 
+	done := make(chan struct{})
+
 	// remove the gateway on return
 	defer func() {
+		done <- struct{}{}
 		b.gateways.remove(gatewayID)
 		log.WithFields(log.Fields{
 			"gateway_id":  gatewayID,
 			"remote_addr": r.RemoteAddr,
 		}).Info("backend/basicstation: gateway disconnected")
+	}()
+
+	statsTicker := time.NewTicker(b.statsInterval)
+	defer statsTicker.Stop()
+
+	// stats publishing loop
+	go func() {
+		gwIDStr := gatewayID.String()
+
+		for {
+			select {
+			case <-statsTicker.C:
+				id, err := uuid.NewV4()
+				if err != nil {
+					log.WithError(err).Error("backend/basicstation: new uuid error")
+					continue
+				}
+
+				var rx, rxOK, tx, txOK uint32
+				if v, ok := b.statsCache.Get(gwIDStr + ":rx"); ok {
+					rx = v.(uint32)
+				}
+				if v, ok := b.statsCache.Get(gwIDStr + ":rxOK"); ok {
+					rxOK = v.(uint32)
+				}
+				if v, ok := b.statsCache.Get(gwIDStr + ":tx"); ok {
+					tx = v.(uint32)
+				}
+				if v, ok := b.statsCache.Get(gwIDStr + ":txOK"); ok {
+					txOK = v.(uint32)
+				}
+
+				b.statsCache.Delete(gwIDStr + ":rx")
+				b.statsCache.Delete(gwIDStr + ":rxOK")
+				b.statsCache.Delete(gwIDStr + ":tx")
+				b.statsCache.Delete(gwIDStr + ":txOK")
+
+				b.gatewayStatsChan <- gw.GatewayStats{
+					GatewayId:           gatewayID[:],
+					Time:                ptypes.TimestampNow(),
+					StatsId:             id[:],
+					RxPacketsReceived:   rx,
+					RxPacketsReceivedOk: rxOK,
+					TxPacketsReceived:   tx,
+					TxPacketsEmitted:    txOK,
+				}
+			case <-done:
+				return
+			}
+		}
+
 	}()
 
 	// receive data
@@ -447,6 +509,7 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 			b.handleVersion(gatewayID, pl)
 		case structs.UplinkDataFrameMessage:
 			// handle uplink
+			b.incrementRxStats(gatewayID)
 			var pl structs.UplinkDataFrame
 			if err := json.Unmarshal(msg, &pl); err != nil {
 				log.WithError(err).WithFields(log.Fields{
@@ -459,6 +522,7 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 			b.handleUplinkDataFrame(gatewayID, pl)
 		case structs.JoinRequestMessage:
 			// handle join-request
+			b.incrementRxStats(gatewayID)
 			var pl structs.JoinRequest
 			if err := json.Unmarshal(msg, &pl); err != nil {
 				log.WithError(err).WithFields(log.Fields{
@@ -471,6 +535,7 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 			b.handleJoinRequest(gatewayID, pl)
 		case structs.ProprietaryDataFrameMessage:
 			// handle proprietary uplink
+			b.incrementRxStats(gatewayID)
 			var pl structs.UplinkProprietaryFrame
 			if err := json.Unmarshal(msg, &pl); err != nil {
 				log.WithError(err).WithFields(log.Fields{
@@ -483,6 +548,7 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 			b.handleProprietaryDataFrame(gatewayID, pl)
 		case structs.DownlinkTransmittedMessage:
 			// handle downlink transmitted
+			b.incrementTxOkStats(gatewayID)
 			var pl structs.DownlinkTransmitted
 			if err := json.Unmarshal(msg, &pl); err != nil {
 				log.WithError(err).WithFields(log.Fields{
@@ -584,7 +650,10 @@ func (b *Backend) handleDownlinkTransmittedMessage(gatewayID lorawan.EUI64, v st
 		}).Error("backend/basicstation: error converting downlink transmitted to protobuf message")
 		return
 	}
-	txack.DownlinkId = b.diidMap[uint16(v.DIID)]
+
+	if v, ok := b.diidCache.Get(fmt.Sprintf("%d", v.DIID)); ok {
+		txack.DownlinkId = v.([]byte)
+	}
 
 	var downID uuid.UUID
 	copy(downID[:], txack.GetDownlinkId())
@@ -722,4 +791,32 @@ func (b *Backend) websocketWrap(handler func(*http.Request, *websocket.Conn), w 
 
 	handler(r, conn)
 	done <- struct{}{}
+}
+
+func (b *Backend) incrementRxStats(id lorawan.EUI64) {
+	idStr := id.String()
+
+	if _, err := b.statsCache.IncrementUint32(idStr+":rx", uint32(1)); err != nil {
+		b.statsCache.SetDefault(idStr+":rx", uint32(1))
+	}
+
+	if _, err := b.statsCache.IncrementUint32(idStr+":rxOK", uint32(1)); err != nil {
+		b.statsCache.SetDefault(idStr+":rxOK", uint32(1))
+	}
+}
+
+func (b *Backend) incrementTxOkStats(id lorawan.EUI64) {
+	idStr := id.String()
+
+	if _, err := b.statsCache.IncrementUint32(idStr+"txOK", uint32(1)); err != nil {
+		b.statsCache.SetDefault(idStr+":txOK", uint32(1))
+	}
+}
+
+func (b *Backend) incrementTxStats(id lorawan.EUI64) {
+	idStr := id.String()
+
+	if _, err := b.statsCache.IncrementUint32(idStr+"tx", uint32(1)); err != nil {
+		b.statsCache.SetDefault(idStr+":tx", uint32(1))
+	}
 }

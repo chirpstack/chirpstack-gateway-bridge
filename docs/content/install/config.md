@@ -142,7 +142,6 @@ type="semtech_udp"
   fake_rx_time=false
 
 
-
   # ChirpStack Concentratord backend.
   [backend.concentratord]
 
@@ -174,6 +173,12 @@ type="semtech_udp"
   # When configured, ChirpStack Gateway Bridge will validate that the client
   # certificate of the gateway has been signed by this CA certificate.
   ca_cert=""
+
+  # Stats interval.
+  #
+  # This defines the interval in which the ChirpStack Gateway Bridge forwards
+  # the uplink / downlink statistics.
+  stats_interval="30s"
 
   # Ping interval.
   ping_interval="1m0s"

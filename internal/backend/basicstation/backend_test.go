@@ -44,6 +44,7 @@ func (ts *BackendTestSuite) SetupTest() {
 	conf.Backend.BasicStation.Region = "EU868"
 	conf.Backend.BasicStation.FrequencyMin = 867000000
 	conf.Backend.BasicStation.FrequencyMax = 869000000
+	conf.Backend.BasicStation.StatsInterval = 30 * time.Second
 	conf.Backend.BasicStation.PingInterval = time.Minute
 	conf.Backend.BasicStation.ReadTimeout = 2 * time.Minute
 	conf.Backend.BasicStation.WriteTimeout = time.Second
@@ -168,6 +169,14 @@ func (ts *BackendTestSuite) TestUplinkDataFrame() {
 			CrcStatus: gw.CRCStatus_CRC_OK,
 		},
 	}, uplinkFrame)
+
+	rx, ok := ts.backend.statsCache.Get("0102030405060708:rx")
+	assert.True(ok)
+	assert.Equal(uint32(1), rx)
+
+	rxOK, ok := ts.backend.statsCache.Get("0102030405060708:rxOK")
+	assert.True(ok)
+	assert.Equal(uint32(1), rxOK)
 }
 
 func (ts *BackendTestSuite) TestJoinRequest() {
@@ -221,6 +230,14 @@ func (ts *BackendTestSuite) TestJoinRequest() {
 			CrcStatus: gw.CRCStatus_CRC_OK,
 		},
 	}, uplinkFrame)
+
+	rx, ok := ts.backend.statsCache.Get("0102030405060708:rx")
+	assert.True(ok)
+	assert.Equal(uint32(1), rx)
+
+	rxOK, ok := ts.backend.statsCache.Get("0102030405060708:rxOK")
+	assert.True(ok)
+	assert.Equal(uint32(1), rxOK)
 }
 
 func (ts *BackendTestSuite) TestProprietaryDataFrame() {
@@ -269,6 +286,14 @@ func (ts *BackendTestSuite) TestProprietaryDataFrame() {
 			CrcStatus: gw.CRCStatus_CRC_OK,
 		},
 	}, uplinkFrame)
+
+	rx, ok := ts.backend.statsCache.Get("0102030405060708:rx")
+	assert.True(ok)
+	assert.Equal(uint32(1), rx)
+
+	rxOK, ok := ts.backend.statsCache.Get("0102030405060708:rxOK")
+	assert.True(ok)
+	assert.Equal(uint32(1), rxOK)
 }
 
 func (ts *BackendTestSuite) TestDownlinkTransmitted() {
@@ -276,7 +301,7 @@ func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 	id, err := uuid.NewV4()
 	assert.NoError(err)
 
-	ts.backend.diidMap[12345] = id[:]
+	ts.backend.diidCache.SetDefault("12345", id[:])
 
 	dtx := structs.DownlinkTransmitted{
 		MessageType: structs.DownlinkTransmittedMessage,
@@ -292,6 +317,14 @@ func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 		Token:      12345,
 		DownlinkId: id[:],
 	}, txAck)
+
+	// this variable is not yet stored
+	_, ok := ts.backend.statsCache.Get("0102030405060708:tx")
+	assert.False(ok)
+
+	txOK, ok := ts.backend.statsCache.Get("0102030405060708:txOK")
+	assert.True(ok)
+	assert.Equal(uint32(1), txOK)
 }
 
 func (ts *BackendTestSuite) TestSendDownlinkFrame() {
@@ -331,7 +364,9 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	})
 	assert.NoError(err)
 
-	assert.Equal(id[:], ts.backend.diidMap[1234])
+	idResp, ok := ts.backend.diidCache.Get("1234")
+	assert.True(ok)
+	assert.Equal(id[:], idResp)
 
 	var df structs.DownlinkFrame
 	assert.NoError(ts.wsClient.ReadJSON(&df))
@@ -355,6 +390,14 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 		RX1DR:       &dr2,
 		RX1Freq:     &freq,
 	}, df)
+
+	tx, ok := ts.backend.statsCache.Get("0102030405060708:tx")
+	assert.True(ok)
+	assert.Equal(uint32(1), tx)
+
+	// this variable is not yet stored
+	_, ok = ts.backend.statsCache.Get("0102030405060708:txOK")
+	assert.False(ok)
 }
 
 func (ts *BackendTestSuite) TestRawPacketForwarderCommand() {
