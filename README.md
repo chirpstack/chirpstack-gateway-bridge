@@ -22,7 +22,7 @@ The following integrations are provided:
 
 ## Architecture
 
-![architecture](https://www.chirpstack.io/img/graphs/architecture.png)
+![architecture](https://www.chirpstack.io/static/img/graphs/architecture.dot.png)
 
 ### Component links
 
@@ -40,12 +40,6 @@ The following integrations are provided:
 * Support
   * [Community forum](https://forum.chirpstack.io)
   * [Bug or feature requests](https://github.com/brocaar/chirpstack-gateway-bridge/issues)
-
-## Sponsors
-
-[![CableLabs](https://www.chirpstack.io/img/sponsors/cablelabs.png)](https://www.cablelabs.com/)
-[![SIDNFonds](https://www.chirpstack.io/img/sponsors/sidn_fonds.png)](https://www.sidnfonds.nl/)
-[![acklio](https://www.chirpstack.io/img/sponsors/acklio.png)](http://www.ackl.io/)
 
 ## License
 
