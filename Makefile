@@ -44,4 +44,4 @@ serve: build
 	./build/chirpstack-gateway-bridge
 
 run-compose-test:
-	docker-compose run --rm gatewaybridge make test
+	docker-compose run --rm chirpstack-gateway-bridge make test
