@@ -224,6 +224,11 @@ marshaler="{{ .Integration.Marshaler }}"
   # Command topic template.
   command_topic_template="{{ .Integration.MQTT.CommandTopicTemplate }}"
 
+  # Keep alive will set the amount of time (in seconds) that the client should
+  # wait before sending a PING request to the broker. This will allow the client
+  # to know that a connection has not been lost with the server.
+  keep_alive="{{ .Integration.MQTT.KeepAlive }}"
+
   # Maximum interval that will be waited between reconnection attempts when connection is lost.
   # Valid units are 'ms', 's', 'm', 'h'. Note that these values can be combined, e.g. '24h30m15s'.
   max_reconnect_interval="{{ .Integration.MQTT.MaxReconnectInterval }}"
