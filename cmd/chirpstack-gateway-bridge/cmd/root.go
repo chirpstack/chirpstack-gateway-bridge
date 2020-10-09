@@ -60,6 +60,7 @@ func init() {
 	viper.SetDefault("integration.mqtt.command_topic_template", "gateway/{{ .GatewayID }}/command/#")
 	viper.SetDefault("integration.mqtt.keep_alive", 30*time.Second)
 	viper.SetDefault("integration.mqtt.max_reconnect_interval", time.Minute)
+	viper.SetDefault("integration.mqtt.enable_client_logging", false)
 
 	viper.SetDefault("integration.mqtt.auth.generic.servers", []string{"tcp://127.0.0.1:1883"})
 	viper.SetDefault("integration.mqtt.auth.generic.clean_session", true)

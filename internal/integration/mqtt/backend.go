@@ -59,6 +59,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		gateways:                      make(map[lorawan.EUI64]struct{}),
 	}
 
+	if conf.Integration.MQTT.EnableClientLogging {
+		enableClientLogging()
+	}
+
 	switch conf.Integration.MQTT.Auth.Type {
 	case "generic":
 		b.auth, err = auth.NewGenericAuthentication(conf)
@@ -487,4 +491,23 @@ func (b *Backend) publish(gatewayID lorawan.EUI64, event string, fields log.Fiel
 		return token.Error()
 	}
 	return nil
+}
+
+var _ paho.Logger = (*debug)(nil)
+
+type debug struct{}
+
+func (d debug) Println(v ...interface{}) {
+	log.Debug(v...)
+}
+
+func (d debug) Printf(format string, v ...interface{}) {
+	log.Debugf(format, v...)
+}
+
+func enableClientLogging() {
+	paho.DEBUG = debug{}
+	paho.ERROR = debug{}
+	paho.WARN = debug{}
+	paho.CRITICAL = debug{}
 }
