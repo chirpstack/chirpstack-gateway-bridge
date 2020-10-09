@@ -28,6 +28,7 @@ import (
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
+	"github.com/brocaar/lorawan/gps"
 )
 
 // websocket upgrade parameters
@@ -559,6 +560,18 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 				continue
 			}
 			b.handleDownlinkTransmittedMessage(gatewayID, pl)
+		case structs.TimeSyncMessage:
+			// handle time sync request
+			var pl structs.TimeSyncRequest
+			if err := json.Unmarshal(msg, &pl); err != nil {
+				log.WithError(err).WithFields(log.Fields{
+					"message_type": msgType,
+					"gateway_id":   gatewayID,
+					"payload":      string(msg),
+				}).Error("backend/basicstation: unmarshal json message error")
+				continue
+			}
+			b.handleTimeSync(gatewayID, pl)
 		default:
 			b.handleRawPacketForwarderEvent(gatewayID, msg)
 		}
@@ -714,6 +727,24 @@ func (b *Backend) handleRawPacketForwarderEvent(gatewayID lorawan.EUI64, pl []by
 	}).Info("backend/basicstation: raw packet-forwarder event received")
 
 	b.rawPacketForwarderEventChan <- rawEvent
+}
+
+func (b *Backend) handleTimeSync(gatewayID lorawan.EUI64, v structs.TimeSyncRequest) {
+	resp := structs.TimeSyncResponse{
+		MessageType: structs.TimeSyncMessage,
+		TxTime:      v.TxTime,
+		GPSTime:     int64(gps.Time(time.Now()).TimeSinceGPSEpoch() / time.Microsecond),
+	}
+	if err := b.sendToGateway(gatewayID, &resp); err != nil {
+		log.WithError(err).Error("backend/basicstation: send to gateway error")
+		return
+	}
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"txtime":     resp.TxTime,
+		"gpstime":    resp.GPSTime,
+	}).Info("backend/basicstation: timesync message sent to gateway")
 }
 
 func (b *Backend) sendToGateway(gatewayID lorawan.EUI64, v interface{}) error {

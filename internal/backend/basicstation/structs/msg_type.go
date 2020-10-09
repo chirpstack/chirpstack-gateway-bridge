@@ -18,6 +18,7 @@ const (
 	ProprietaryDataFrameMessage MessageType = "propdf"
 	DownlinkMessage             MessageType = "dnmsg"
 	DownlinkTransmittedMessage  MessageType = "dntxed"
+	TimeSyncMessage             MessageType = "timesync"
 )
 
 type messageTypePayload struct {
