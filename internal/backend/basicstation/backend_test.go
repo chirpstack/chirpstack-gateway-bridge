@@ -18,6 +18,7 @@ import (
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/gps"
 )
 
 type BackendTestSuite struct {
@@ -470,6 +471,27 @@ func (ts *BackendTestSuite) TestRawPacketForwarderEvent() {
 		assert.NotNil(pl.RawId)
 		assert.Equal([]byte(jsonMsg), pl.Payload)
 	})
+}
+
+func (ts *BackendTestSuite) TestTimeSync() {
+	assert := require.New(ts.T())
+
+	startGPS := int64(gps.Time(time.Now()).TimeSinceGPSEpoch() / time.Microsecond)
+	tsync := structs.TimeSyncRequest{
+		MessageType: structs.TimeSyncMessage,
+		TxTime:      112233445566,
+	}
+
+	assert.NoError(ts.wsClient.WriteJSON(&tsync))
+
+	var tsresp structs.TimeSyncResponse
+	assert.NoError(ts.wsClient.ReadJSON(&tsresp))
+
+	assert.Equal(tsync.MessageType, tsresp.MessageType)
+	assert.Equal(tsync.TxTime, tsresp.TxTime)
+
+	endGPS := int64(gps.Time(time.Now()).TimeSinceGPSEpoch() / time.Microsecond)
+	assert.True(tsresp.GPSTime >= startGPS && tsresp.GPSTime <= endGPS)
 }
 
 func TestBackend(t *testing.T) {
