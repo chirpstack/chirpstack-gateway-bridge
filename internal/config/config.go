@@ -61,7 +61,6 @@ type Config struct {
 			KeepAlive               time.Duration `mapstructure:"keep_alive"`
 			MaxReconnectInterval    time.Duration `mapstructure:"max_reconnect_interval"`
 			TerminateOnConnectError bool          `mapstructure:"terminate_on_connect_error"`
-			EnableClientLogging     bool          `mapstructure:"enable_client_logging"`
 
 			Auth struct {
 				Type string `mapstructure:"type"`

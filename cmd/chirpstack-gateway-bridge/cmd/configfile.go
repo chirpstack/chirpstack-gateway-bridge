@@ -240,10 +240,6 @@ marshaler="{{ .Integration.Marshaler }}"
   # process will be terminated on a connection error.
   terminate_on_connect_error={{ .Integration.MQTT.TerminateOnConnectError }}
 
-  # Enable mqtt client logging.
-  # When set to true, will include logs from the mqtt client as debug level logs.
-  # This can be useful when debugging mqtt connection issues.
-  enable_client_logging={{ .Integration.MQTT.EnableClientLogging }}
 
   # MQTT authentication.
   [integration.mqtt.auth]
