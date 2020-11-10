@@ -32,6 +32,8 @@ func run(cmd *cobra.Command, args []string) error {
 		setupMetrics,
 		setupMetaData,
 		setupCommands,
+		startIntegration,
+		startBackend,
 	}
 
 	for _, t := range tasks {
@@ -106,6 +108,20 @@ func setupFilters() error {
 func setupCommands() error {
 	if err := commands.Setup(config.C); err != nil {
 		return errors.Wrap(err, "setup commands error")
+	}
+	return nil
+}
+
+func startIntegration() error {
+	if err := integration.GetIntegration().Start(); err != nil {
+		return errors.Wrap(err, "start integration error")
+	}
+	return nil
+}
+
+func startBackend() error {
+	if err := backend.GetBackend().Start(); err != nil {
+		return errors.Wrap(err, "start backend error")
 	}
 	return nil
 }

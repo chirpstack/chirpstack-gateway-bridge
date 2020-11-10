@@ -50,17 +50,18 @@ func Setup(conf config.Config) error {
 		}).Info("commands: configuring command")
 	}
 
-	go executeLoop()
+	i := integration.GetIntegration()
+	if i == nil {
+		return errors.New("integration is not set")
+	}
+
+	i.SetGatewayCommandExecRequestFunc(gatewayCommandExecRequestFunc)
 
 	return nil
 }
 
-func executeLoop() {
-	for cmd := range integration.GetIntegration().GetGatewayCommandExecRequestChan() {
-		go func(cmd gw.GatewayCommandExecRequest) {
-			executeCommand(cmd)
-		}(cmd)
-	}
+func gatewayCommandExecRequestFunc(pl gw.GatewayCommandExecRequest) {
+	go executeCommand(pl)
 }
 
 func executeCommand(cmd gw.GatewayCommandExecRequest) {

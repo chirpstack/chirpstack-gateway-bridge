@@ -7,6 +7,7 @@ import (
 
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/metadata"
@@ -26,148 +27,135 @@ func Setup(conf config.Config) error {
 		return errors.New("integration is not set")
 	}
 
-	go gatewaySubscribeLoop()
-	go forwardUplinkFrameLoop()
-	go forwardGatewayStatsLoop()
-	go forwardDownlinkTxAckLoop()
-	go forwardDownlinkFrameLoop()
-	go forwardGatewayConfigurationLoop()
-	go forwardRawPacketForwarderCommandLoop()
-	go forwardRawPacketForwarderEventLoop()
+	// setup backend callbacks
+	b.SetSubscribeEventFunc(gatewaySubscribeFunc)
+	b.SetUplinkFrameFunc(uplinkFrameFunc)
+	b.SetGatewayStatsFunc(gatewayStatsFunc)
+	b.SetDownlinkTxAckFunc(downlinkTxAckFunc)
+	b.SetRawPacketForwarderEventFunc(rawPacketForwarderEventFunc)
+
+	// setup integration callbacks
+	i.SetDownlinkFrameFunc(downlinkFrameFunc)
+	i.SetGatewayConfigurationFunc(gatewayConfigurationFunc)
+	i.SetRawPacketForwarderCommandFunc(rawPacketForwarderCommandFunc)
 
 	return nil
 }
 
-func gatewaySubscribeLoop() {
-	for event := range backend.GetBackend().GetSubscribeEventChan() {
-		if err := integration.GetIntegration().SetGatewaySubscription(event.Subscribe, event.GatewayID); err != nil {
+func gatewaySubscribeFunc(pl events.Subscribe) {
+	go func(pl events.Subscribe) {
+		if err := integration.GetIntegration().SetGatewaySubscription(pl.Subscribe, pl.GatewayID); err != nil {
 			log.WithError(err).Error("set gateway subscription error")
 		}
-	}
+	}(pl)
 }
 
-func forwardUplinkFrameLoop() {
-	for uplinkFrame := range backend.GetBackend().GetUplinkFrameChan() {
-		go func(uplinkFrame gw.UplinkFrame) {
-			var gatewayID lorawan.EUI64
-			var uplinkID uuid.UUID
-			copy(gatewayID[:], uplinkFrame.RxInfo.GatewayId)
-			copy(uplinkID[:], uplinkFrame.RxInfo.UplinkId)
+func uplinkFrameFunc(pl gw.UplinkFrame) {
+	go func(pl gw.UplinkFrame) {
+		var gatewayID lorawan.EUI64
+		var uplinkID uuid.UUID
+		copy(gatewayID[:], pl.GetRxInfo().GatewayId)
+		copy(uplinkID[:], pl.GetRxInfo().UplinkId)
 
-			if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventUp, uplinkID, &uplinkFrame); err != nil {
-				log.WithError(err).WithFields(log.Fields{
-					"gateway_id": gatewayID,
-					"event_type": integration.EventUp,
-					"uplink_id":  uplinkID,
-				}).Error("publish event error")
-			}
-		}(uplinkFrame)
-	}
+		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventUp, uplinkID, &pl); err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"gateway_id": gatewayID,
+				"event_type": integration.EventUp,
+				"uplink_id":  uplinkID,
+			}).Error("publish event error")
+		}
+	}(pl)
 }
 
-func forwardGatewayStatsLoop() {
-	for stats := range backend.GetBackend().GetGatewayStatsChan() {
-		go func(stats gw.GatewayStats) {
-			var gatewayID lorawan.EUI64
-			var statsID uuid.UUID
-			copy(gatewayID[:], stats.GatewayId)
-			copy(statsID[:], stats.StatsId)
+func gatewayStatsFunc(pl gw.GatewayStats) {
+	go func(pl gw.GatewayStats) {
+		var gatewayID lorawan.EUI64
+		var statsID uuid.UUID
+		copy(gatewayID[:], pl.GatewayId)
+		copy(statsID[:], pl.StatsId)
 
-			// add meta-data to stats
-			if stats.MetaData == nil {
-				stats.MetaData = make(map[string]string)
-			}
-			for k, v := range metadata.Get() {
-				stats.MetaData[k] = v
-			}
+		// add meta-data to stats
+		if pl.MetaData == nil {
+			pl.MetaData = make(map[string]string)
+		}
+		for k, v := range metadata.Get() {
+			pl.MetaData[k] = v
+		}
 
-			if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventStats, statsID, &stats); err != nil {
-				log.WithError(err).WithFields(log.Fields{
-					"gateway_id": gatewayID,
-					"event_type": integration.EventStats,
-					"stats_id":   statsID,
-				}).Error("publish event error")
-			}
-		}(stats)
-	}
+		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventStats, statsID, &pl); err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"gateway_id": gatewayID,
+				"event_type": integration.EventStats,
+				"stats_id":   statsID,
+			}).Error("publish event error")
+		}
+	}(pl)
 }
 
-func forwardDownlinkTxAckLoop() {
-	for txAck := range backend.GetBackend().GetDownlinkTXAckChan() {
-		go func(txAck gw.DownlinkTXAck) {
-			var gatewayID lorawan.EUI64
-			copy(gatewayID[:], txAck.GatewayId)
+func downlinkTxAckFunc(pl gw.DownlinkTXAck) {
+	go func(pl gw.DownlinkTXAck) {
+		var gatewayID lorawan.EUI64
+		var downID uuid.UUID
+		copy(gatewayID[:], pl.GatewayId)
+		copy(downID[:], pl.DownlinkId)
 
-			var downID uuid.UUID
-			copy(downID[:], txAck.DownlinkId)
-
-			// for backwards compatibility
-			for _, err := range txAck.Items {
-				if err.Status == gw.TxAckStatus_OK {
-					txAck.Error = ""
-					break
-				}
-
-				txAck.Error = err.String()
+		// for backwards compatibility
+		for _, err := range pl.Items {
+			if err.Status == gw.TxAckStatus_OK {
+				pl.Error = ""
+				break
 			}
 
-			if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventAck, downID, &txAck); err != nil {
-				log.WithError(err).WithFields(log.Fields{
-					"gateway_id":  gatewayID,
-					"event_type":  integration.EventAck,
-					"downlink_id": downID,
-				}).Error("publish event error")
-			}
-		}(txAck)
-	}
+			pl.Error = err.String()
+		}
+
+		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventAck, downID, &pl); err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"gateway_id":  gatewayID,
+				"event_type":  integration.EventAck,
+				"downlink_id": downID,
+			}).Error("publish event error")
+		}
+	}(pl)
 }
 
-func forwardRawPacketForwarderEventLoop() {
-	for raw := range backend.GetBackend().GetRawPacketForwarderEventChan() {
-		go func(raw gw.RawPacketForwarderEvent) {
-			var gatewayID lorawan.EUI64
-			copy(gatewayID[:], raw.GatewayId)
+func rawPacketForwarderEventFunc(pl gw.RawPacketForwarderEvent) {
+	go func(pl gw.RawPacketForwarderEvent) {
+		var gatewayID lorawan.EUI64
+		var rawID uuid.UUID
+		copy(gatewayID[:], pl.GatewayId)
+		copy(rawID[:], pl.RawId)
 
-			var rawID uuid.UUID
-			copy(rawID[:], raw.RawId)
-
-			if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventRaw, rawID, &raw); err != nil {
-				log.WithError(err).WithFields(log.Fields{
-					"gateway_id": gatewayID,
-					"event_type": integration.EventRaw,
-					"raw_id":     rawID,
-				}).Error("publish event error")
-			}
-		}(raw)
-	}
+		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventRaw, rawID, &pl); err != nil {
+			log.WithError(err).WithFields(log.Fields{
+				"gateway_id": gatewayID,
+				"event_type": integration.EventRaw,
+				"raw_id":     rawID,
+			}).Error("publish event error")
+		}
+	}(pl)
 }
 
-func forwardDownlinkFrameLoop() {
-	for downlinkFrame := range integration.GetIntegration().GetDownlinkFrameChan() {
-		go func(downlinkFrame gw.DownlinkFrame) {
-			if err := backend.GetBackend().SendDownlinkFrame(downlinkFrame); err != nil {
-				log.WithError(err).Error("send downlink frame error")
-			}
-		}(downlinkFrame)
-	}
+func downlinkFrameFunc(pl gw.DownlinkFrame) {
+	go func(pl gw.DownlinkFrame) {
+		if err := backend.GetBackend().SendDownlinkFrame(pl); err != nil {
+			log.WithError(err).Error("send downlink frame error")
+		}
+	}(pl)
 }
 
-func forwardGatewayConfigurationLoop() {
-	for gatewayConfig := range integration.GetIntegration().GetGatewayConfigurationChan() {
-		go func(gatewayConfig gw.GatewayConfiguration) {
-			if err := backend.GetBackend().ApplyConfiguration(gatewayConfig); err != nil {
-				log.WithError(err).Error("apply gateway-configuration error")
-			}
-		}(gatewayConfig)
-	}
+func gatewayConfigurationFunc(pl gw.GatewayConfiguration) {
+	go func(pl gw.GatewayConfiguration) {
+		if err := backend.GetBackend().ApplyConfiguration(pl); err != nil {
+			log.WithError(err).Error("apply gateway-configuration error")
+		}
+	}(pl)
 }
 
-func forwardRawPacketForwarderCommandLoop() {
-	for raw := range integration.GetIntegration().GetRawPacketForwarderChan() {
-		go func(raw gw.RawPacketForwarderCommand) {
-			if err := backend.GetBackend().RawPacketForwarderCommand(raw); err != nil {
-				log.WithError(err).Error("raw packet-forwarder command error")
-			}
-		}(raw)
-	}
+func rawPacketForwarderCommandFunc(pl gw.RawPacketForwarderCommand) {
+	go func(pl gw.RawPacketForwarderCommand) {
+		if err := backend.GetBackend().RawPacketForwarderCommand(pl); err != nil {
+			log.WithError(err).Error("raw packet-forwarder command error")
+		}
+	}(pl)
 }

@@ -42,6 +42,11 @@ var upgrader = websocket.Upgrader{
 type Backend struct {
 	sync.RWMutex
 
+	caCert  string
+	tlsCert string
+	tlsKey  string
+
+	server   *http.Server
 	ln       net.Listener
 	scheme   string
 	isClosed bool
@@ -53,10 +58,10 @@ type Backend struct {
 
 	gateways gateways
 
-	downlinkTXAckChan           chan gw.DownlinkTXAck
-	uplinkFrameChan             chan gw.UplinkFrame
-	gatewayStatsChan            chan gw.GatewayStats
-	rawPacketForwarderEventChan chan gw.RawPacketForwarderEvent
+	downlinkTxAckFunc           func(gw.DownlinkTXAck)
+	uplinkFrameFunc             func(gw.UplinkFrame)
+	gatewayStatsFunc            func(gw.GatewayStats)
+	rawPacketForwarderEventFunc func(gw.RawPacketForwarderEvent)
 
 	band         band.Band
 	region       band.Name
@@ -79,14 +84,12 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		scheme: "ws",
 
 		gateways: gateways{
-			gateways:           make(map[lorawan.EUI64]gateway),
-			subscribeEventChan: make(chan events.Subscribe),
+			gateways: make(map[lorawan.EUI64]gateway),
 		},
 
-		downlinkTXAckChan:           make(chan gw.DownlinkTXAck),
-		uplinkFrameChan:             make(chan gw.UplinkFrame),
-		gatewayStatsChan:            make(chan gw.GatewayStats),
-		rawPacketForwarderEventChan: make(chan gw.RawPacketForwarderEvent),
+		caCert:  conf.Backend.BasicStation.CACert,
+		tlsCert: conf.Backend.BasicStation.TLSCert,
+		tlsKey:  conf.Backend.BasicStation.TLSKey,
 
 		statsInterval: conf.Backend.BasicStation.StatsInterval,
 		pingInterval:  conf.Backend.BasicStation.PingInterval,
@@ -150,13 +153,13 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	}
 
 	// init HTTP server
-	server := &http.Server{
+	b.server = &http.Server{
 		Handler: mux,
 	}
 
 	// if the CA cert is configured, setup client certificate verification.
-	if conf.Backend.BasicStation.CACert != "" {
-		rawCACert, err := ioutil.ReadFile(conf.Backend.BasicStation.CACert)
+	if b.caCert != "" {
+		rawCACert, err := ioutil.ReadFile(b.caCert)
 		if err != nil {
 			return nil, errors.Wrap(err, "read ca cert error")
 		}
@@ -164,60 +167,38 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(rawCACert)
 
-		server.TLSConfig = &tls.Config{
+		b.server.TLSConfig = &tls.Config{
 			ClientCAs:  caCertPool,
 			ClientAuth: tls.RequireAndVerifyClientCert,
 		}
 	}
 
-	go func() {
-		log.WithFields(log.Fields{
-			"bind":     b.ln.Addr(),
-			"tls_cert": conf.Backend.BasicStation.TLSCert,
-			"tls_key":  conf.Backend.BasicStation.TLSKey,
-			"ca_cert":  conf.Backend.BasicStation.CACert,
-		}).Info("backend/basicstation: starting websocket listener")
-
-		if conf.Backend.BasicStation.TLSCert == "" && conf.Backend.BasicStation.TLSKey == "" && conf.Backend.BasicStation.CACert == "" {
-			// no tls
-			if err := server.Serve(b.ln); err != nil && !b.isClosed {
-				log.WithError(err).Fatal("backend/basicstation: server error")
-			}
-		} else {
-			// tls
-			b.scheme = "wss"
-			if err := server.ServeTLS(b.ln, conf.Backend.BasicStation.TLSCert, conf.Backend.BasicStation.TLSKey); err != nil && !b.isClosed {
-				log.WithError(err).Fatal("backend/basicstation: server error")
-			}
-		}
-	}()
-
 	return &b, nil
 }
 
-// GetDownlinkTXAckChan returns the channel for downlink tx acknowledgements.
-func (b *Backend) GetDownlinkTXAckChan() chan gw.DownlinkTXAck {
-	return b.downlinkTXAckChan
+// SetDownlinkTxAckFunc sets the DownlinkTXAck handler func.
+func (b *Backend) SetDownlinkTxAckFunc(f func(gw.DownlinkTXAck)) {
+	b.downlinkTxAckFunc = f
 }
 
-// GetGatewayStatsChan returns the channel for gateway statistics.
-func (b *Backend) GetGatewayStatsChan() chan gw.GatewayStats {
-	return b.gatewayStatsChan
+// SetGatewayStatsFunc sets the GatewayStats handler func.
+func (b *Backend) SetGatewayStatsFunc(f func(gw.GatewayStats)) {
+	b.gatewayStatsFunc = f
 }
 
-// GetUplinkFrameChan returns the channel for received uplinks.
-func (b *Backend) GetUplinkFrameChan() chan gw.UplinkFrame {
-	return b.uplinkFrameChan
+// SetUplinkFrameFunc sets the UplinkFrame handler func.
+func (b *Backend) SetUplinkFrameFunc(f func(gw.UplinkFrame)) {
+	b.uplinkFrameFunc = f
 }
 
-// GetSubscribeEventChan returns the channel for the (un)subscribe events.
-func (b *Backend) GetSubscribeEventChan() chan events.Subscribe {
-	return b.gateways.subscribeEventChan
+// SetRawPacketForwarderEventFunc sets the RawPacketForwarderEvent handler func.
+func (b *Backend) SetRawPacketForwarderEventFunc(f func(gw.RawPacketForwarderEvent)) {
+	b.rawPacketForwarderEventFunc = f
 }
 
-// GetRawPacketForwarderEventChan returns the raw packet-forwarder command channel.
-func (b *Backend) GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEvent {
-	return b.rawPacketForwarderEventChan
+// SetSubscribeEventFunc sets the Subscribe handler func.
+func (b *Backend) SetSubscribeEventFunc(f func(events.Subscribe)) {
+	b.gateways.subscribeEventFunc = f
 }
 
 // SendDownlinkFrame sends the given downlink frame.
@@ -298,8 +279,35 @@ func (b *Backend) RawPacketForwarderCommand(pl gw.RawPacketForwarderCommand) err
 	return nil
 }
 
-// Close closes the backend.
-func (b *Backend) Close() error {
+// Start starts the backend.
+func (b *Backend) Start() error {
+	go func() {
+		log.WithFields(log.Fields{
+			"bind":     b.ln.Addr(),
+			"ca_cert":  b.caCert,
+			"tls_cert": b.tlsCert,
+			"tls_key":  b.tlsKey,
+		}).Info("backend/basicstation: starting websocket listener")
+
+		if b.tlsCert == "" && b.tlsKey == "" && b.caCert == "" {
+			// no tls
+			if err := b.server.Serve(b.ln); err != nil && !b.isClosed {
+				log.WithError(err).Fatal("backend/basicstation: server error")
+			}
+		} else {
+			// tls
+			b.scheme = "wss"
+			if err := b.server.ServeTLS(b.ln, b.tlsCert, b.tlsKey); err != nil && !b.isClosed {
+				log.WithError(err).Fatal("backend/basicstation: server error")
+			}
+		}
+	}()
+
+	return nil
+}
+
+// Stop stops the backend.
+func (b *Backend) Stop() error {
 	b.isClosed = true
 	return b.ln.Close()
 }
@@ -438,14 +446,16 @@ func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
 				b.statsCache.Delete(gwIDStr + ":tx")
 				b.statsCache.Delete(gwIDStr + ":txOK")
 
-				b.gatewayStatsChan <- gw.GatewayStats{
-					GatewayId:           gatewayID[:],
-					Time:                ptypes.TimestampNow(),
-					StatsId:             id[:],
-					RxPacketsReceived:   rx,
-					RxPacketsReceivedOk: rxOK,
-					TxPacketsReceived:   tx,
-					TxPacketsEmitted:    txOK,
+				if b.gatewayStatsFunc != nil {
+					b.gatewayStatsFunc(gw.GatewayStats{
+						GatewayId:           gatewayID[:],
+						Time:                ptypes.TimestampNow(),
+						StatsId:             id[:],
+						RxPacketsReceived:   rx,
+						RxPacketsReceivedOk: rxOK,
+						TxPacketsReceived:   tx,
+						TxPacketsEmitted:    txOK,
+					})
 				}
 			case <-done:
 				return
@@ -622,7 +632,9 @@ func (b *Backend) handleJoinRequest(gatewayID lorawan.EUI64, v structs.JoinReque
 		"uplink_id":  uplinkID,
 	}).Info("backend/basicstation: join-request received")
 
-	b.uplinkFrameChan <- uplinkFrame
+	if b.uplinkFrameFunc != nil {
+		b.uplinkFrameFunc(uplinkFrame)
+	}
 }
 
 func (b *Backend) handleProprietaryDataFrame(gatewayID lorawan.EUI64, v structs.UplinkProprietaryFrame) {
@@ -649,7 +661,9 @@ func (b *Backend) handleProprietaryDataFrame(gatewayID lorawan.EUI64, v structs.
 		"uplink_id":  uplinkID,
 	}).Info("backend/basicstation: proprietary uplink frame received")
 
-	b.uplinkFrameChan <- uplinkFrame
+	if b.uplinkFrameFunc != nil {
+		b.uplinkFrameFunc(uplinkFrame)
+	}
 }
 
 func (b *Backend) handleDownlinkTransmittedMessage(gatewayID lorawan.EUI64, v structs.DownlinkTransmitted) {
@@ -676,7 +690,9 @@ func (b *Backend) handleDownlinkTransmittedMessage(gatewayID lorawan.EUI64, v st
 		"downlink_id": downID,
 	}).Info("backend/basicstation: downlink transmitted message received")
 
-	b.downlinkTXAckChan <- txack
+	if b.downlinkTxAckFunc != nil {
+		b.downlinkTxAckFunc(txack)
+	}
 }
 
 func (b *Backend) handleUplinkDataFrame(gatewayID lorawan.EUI64, v structs.UplinkDataFrame) {
@@ -703,7 +719,9 @@ func (b *Backend) handleUplinkDataFrame(gatewayID lorawan.EUI64, v structs.Uplin
 		"uplink_id":  uplinkID,
 	}).Info("backend/basicstation: uplink frame received")
 
-	b.uplinkFrameChan <- uplinkFrame
+	if b.uplinkFrameFunc != nil {
+		b.uplinkFrameFunc(uplinkFrame)
+	}
 }
 
 func (b *Backend) handleRawPacketForwarderEvent(gatewayID lorawan.EUI64, pl []byte) {
@@ -726,7 +744,9 @@ func (b *Backend) handleRawPacketForwarderEvent(gatewayID lorawan.EUI64, pl []by
 		"raw_id":     rawID,
 	}).Info("backend/basicstation: raw packet-forwarder event received")
 
-	b.rawPacketForwarderEventChan <- rawEvent
+	if b.rawPacketForwarderEventFunc != nil {
+		b.rawPacketForwarderEventFunc(rawEvent)
+	}
 }
 
 func (b *Backend) handleTimeSync(gatewayID lorawan.EUI64, v structs.TimeSyncRequest) {

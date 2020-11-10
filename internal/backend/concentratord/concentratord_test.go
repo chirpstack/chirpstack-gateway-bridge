@@ -60,28 +60,34 @@ func (ts *BackendTestSuite) SetupTest() {
 	}()
 
 	ts.backend, err = NewBackend(conf)
-	wg.Wait()
 	assert.NoError(err)
 
+	subscribeEventChan := make(chan events.Subscribe, 1)
+	ts.backend.subscribeEventFunc = func(pl events.Subscribe) {
+		subscribeEventChan <- pl
+	}
+
+	assert.NoError(ts.backend.Start())
+	wg.Wait()
+
+	assert.Equal(events.Subscribe{
+
+		Subscribe: true,
+		GatewayID: lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+	}, <-subscribeEventChan)
 }
 
 func (ts *BackendTestSuite) TearDownTest() {
 	assert := require.New(ts.T())
-	assert.NoError(ts.backend.Close())
-}
-
-func (ts *BackendTestSuite) TestSubscribeEvent() {
-	assert := require.New(ts.T())
-
-	e := <-ts.backend.GetSubscribeEventChan()
-	assert.Equal(events.Subscribe{
-		Subscribe: true,
-		GatewayID: lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
-	}, e)
+	assert.NoError(ts.backend.Stop())
 }
 
 func (ts *BackendTestSuite) TestGatewayStats() {
 	assert := require.New(ts.T())
+	gatewayStatsChan := make(chan gw.GatewayStats, 1)
+	ts.backend.gatewayStatsFunc = func(pl gw.GatewayStats) {
+		gatewayStatsChan <- pl
+	}
 
 	stats := gw.GatewayStats{
 		GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
@@ -96,12 +102,16 @@ func (ts *BackendTestSuite) TestGatewayStats() {
 		},
 	}))
 
-	recv := <-ts.backend.GetGatewayStatsChan()
+	recv := <-gatewayStatsChan
 	assert.True(proto.Equal(&stats, &recv))
 }
 
 func (ts *BackendTestSuite) TestUplinkFrame() {
 	assert := require.New(ts.T())
+	uplinkFrameChan := make(chan gw.UplinkFrame, 1)
+	ts.backend.uplinkFrameFunc = func(pl gw.UplinkFrame) {
+		uplinkFrameChan <- pl
+	}
 
 	uf := gw.UplinkFrame{
 		PhyPayload: []byte{1, 2, 3, 4},
@@ -119,12 +129,16 @@ func (ts *BackendTestSuite) TestUplinkFrame() {
 		},
 	}))
 
-	recv := <-ts.backend.GetUplinkFrameChan()
+	recv := <-uplinkFrameChan
 	assert.True(proto.Equal(&uf, &recv))
 }
 
 func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	assert := require.New(ts.T())
+	txAckChan := make(chan gw.DownlinkTXAck, 1)
+	ts.backend.downlinkTxAckFunc = func(pl gw.DownlinkTXAck) {
+		txAckChan <- pl
+	}
 
 	down := gw.DownlinkFrame{
 		GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
@@ -148,7 +162,7 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 
 	assert.NoError(ts.backend.SendDownlinkFrame(down))
 
-	recv := <-ts.backend.GetDownlinkTXAckChan()
+	recv := <-txAckChan
 	assert.True(proto.Equal(&ack, &recv))
 }
 

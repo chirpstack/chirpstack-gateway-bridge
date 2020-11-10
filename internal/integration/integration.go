@@ -47,18 +47,21 @@ type Integration interface {
 	// PublishEvent publishes the given event.
 	PublishEvent(lorawan.EUI64, string, uuid.UUID, proto.Message) error
 
-	// GetDownlinkFrameChan returns the channel for downlink frames.
-	GetDownlinkFrameChan() chan gw.DownlinkFrame
+	// SetDownlinkFrameFunc sets the DownlinkFrame handler func.
+	SetDownlinkFrameFunc(func(gw.DownlinkFrame))
 
-	// GetRawPacketForwarderChan returns the channel for raw packet-forwarder commands.
-	GetRawPacketForwarderChan() chan gw.RawPacketForwarderCommand
+	// SetRawPacketForwarderCommandFunc sets the RawPacketForwarderCommand handler func.
+	SetRawPacketForwarderCommandFunc(func(gw.RawPacketForwarderCommand))
 
-	// GetGatewayConfigurationChan returns the channel for gateway configuration.
-	GetGatewayConfigurationChan() chan gw.GatewayConfiguration
+	// SetGatewayConfigurationFunc sets the GatewayConfiguration handler func.
+	SetGatewayConfigurationFunc(func(gw.GatewayConfiguration))
 
-	// GetGatewayCommandExecRequestChan() returns the channel for gateway command execution.
-	GetGatewayCommandExecRequestChan() chan gw.GatewayCommandExecRequest
+	// SetGatewayCommandExecRequestFunc sets the GatewayCommandExecRequest handler func.
+	SetGatewayCommandExecRequestFunc(func(gw.GatewayCommandExecRequest))
 
-	// Close closes the integration.
-	Close() error
+	// Start starts the integration.
+	Start() error
+
+	// Stop stops the integration.
+	Stop() error
 }

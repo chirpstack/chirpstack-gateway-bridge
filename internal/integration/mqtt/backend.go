@@ -25,16 +25,18 @@ import (
 type Backend struct {
 	sync.RWMutex
 
-	auth                          auth.Authentication
-	conn                          paho.Client
-	closed                        bool
-	clientOpts                    *paho.ClientOptions
-	downlinkFrameChan             chan gw.DownlinkFrame
-	gatewayConfigurationChan      chan gw.GatewayConfiguration
-	gatewayCommandExecRequestChan chan gw.GatewayCommandExecRequest
-	rawPacketForwarderCommandChan chan gw.RawPacketForwarderCommand
-	gateways                      map[lorawan.EUI64]struct{}
-	terminateOnConnectError       bool
+	auth       auth.Authentication
+	conn       paho.Client
+	closed     bool
+	clientOpts *paho.ClientOptions
+
+	downlinkFrameFunc             func(gw.DownlinkFrame)
+	gatewayConfigurationFunc      func(gw.GatewayConfiguration)
+	gatewayCommandExecRequestFunc func(gw.GatewayCommandExecRequest)
+	rawPacketForwarderCommandFunc func(gw.RawPacketForwarderCommand)
+
+	gateways                map[lorawan.EUI64]struct{}
+	terminateOnConnectError bool
 
 	qos                  uint8
 	eventTopicTemplate   *template.Template
@@ -49,14 +51,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	var err error
 
 	b := Backend{
-		qos:                           conf.Integration.MQTT.Auth.Generic.QOS,
-		terminateOnConnectError:       conf.Integration.MQTT.TerminateOnConnectError,
-		clientOpts:                    paho.NewClientOptions(),
-		downlinkFrameChan:             make(chan gw.DownlinkFrame),
-		gatewayConfigurationChan:      make(chan gw.GatewayConfiguration),
-		gatewayCommandExecRequestChan: make(chan gw.GatewayCommandExecRequest),
-		rawPacketForwarderCommandChan: make(chan gw.RawPacketForwarderCommand),
-		gateways:                      make(map[lorawan.EUI64]struct{}),
+		qos:                     conf.Integration.MQTT.Auth.Generic.QOS,
+		terminateOnConnectError: conf.Integration.MQTT.TerminateOnConnectError,
+		clientOpts:              paho.NewClientOptions(),
+		gateways:                make(map[lorawan.EUI64]struct{}),
 	}
 
 	switch conf.Integration.MQTT.Auth.Type {
@@ -135,14 +133,18 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		return nil, errors.Wrap(err, "mqtt: init authentication error")
 	}
 
-	b.connectLoop()
-	go b.reconnectLoop()
-
 	return &b, nil
 }
 
-// Close closes the backend.
-func (b *Backend) Close() error {
+// Start starts the integration.
+func (b *Backend) Start() error {
+	b.connectLoop()
+	go b.reconnectLoop()
+	return nil
+}
+
+// Stop stops the integration.
+func (b *Backend) Stop() error {
 	b.Lock()
 	b.closed = true
 	b.Unlock()
@@ -151,24 +153,24 @@ func (b *Backend) Close() error {
 	return nil
 }
 
-// GetDownlinkFrameChan returns the downlink frame channel.
-func (b *Backend) GetDownlinkFrameChan() chan gw.DownlinkFrame {
-	return b.downlinkFrameChan
+// SetDownlinkFrameFunc sets the DownlinkFrame handler func.
+func (b *Backend) SetDownlinkFrameFunc(f func(gw.DownlinkFrame)) {
+	b.downlinkFrameFunc = f
 }
 
-// GetGatewayConfigurationChan returns the gateway configuration channel.
-func (b *Backend) GetGatewayConfigurationChan() chan gw.GatewayConfiguration {
-	return b.gatewayConfigurationChan
+// SetGatewayConfigurationFunc sets the GatewayConfiguration handler func.
+func (b *Backend) SetGatewayConfigurationFunc(f func(gw.GatewayConfiguration)) {
+	b.gatewayConfigurationFunc = f
 }
 
-// GetGatewayCommandExecRequestChan returns the channel for gateway command execution.
-func (b *Backend) GetGatewayCommandExecRequestChan() chan gw.GatewayCommandExecRequest {
-	return b.gatewayCommandExecRequestChan
+// SetGatewayCommandExecRequestFunc sets the GatewayCommandExecRequest handler func.
+func (b *Backend) SetGatewayCommandExecRequestFunc(f func(gw.GatewayCommandExecRequest)) {
+	b.gatewayCommandExecRequestFunc = f
 }
 
-// GetRawPacketForwarderChan returns the channel for raw packet-forwarder commands.
-func (b *Backend) GetRawPacketForwarderChan() chan gw.RawPacketForwarderCommand {
-	return b.rawPacketForwarderCommandChan
+// SetRawPacketForwarderCommandFunc sets the RawPacketForwarderCommand handler func.
+func (b *Backend) SetRawPacketForwarderCommandFunc(f func(gw.RawPacketForwarderCommand)) {
+	b.rawPacketForwarderCommandFunc = f
 }
 
 // SetGatewaySubscription (un)subscribes the given gateway.
@@ -385,7 +387,9 @@ func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
 		"downlink_id": downID,
 	}).Info("integration/mqtt: downlink frame received")
 
-	b.downlinkFrameChan <- downlinkFrame
+	if b.downlinkFrameFunc != nil {
+		b.downlinkFrameFunc(downlinkFrame)
+	}
 }
 
 func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
@@ -399,7 +403,9 @@ func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 		return
 	}
 
-	b.gatewayConfigurationChan <- gatewayConfig
+	if b.gatewayConfigurationFunc != nil {
+		b.gatewayConfigurationFunc(gatewayConfig)
+	}
 }
 
 func (b *Backend) handleGatewayCommandExecRequest(c paho.Client, msg paho.Message) {
@@ -421,7 +427,9 @@ func (b *Backend) handleGatewayCommandExecRequest(c paho.Client, msg paho.Messag
 		"exec_id":    execID,
 	}).Info("integration/mqtt: gateway command execution request received")
 
-	b.gatewayCommandExecRequestChan <- gatewayCommandExecRequest
+	if b.gatewayCommandExecRequestFunc != nil {
+		b.gatewayCommandExecRequestFunc(gatewayCommandExecRequest)
+	}
 }
 
 func (b *Backend) handleRawPacketForwarderCommand(c paho.Client, msg paho.Message) {
@@ -443,7 +451,9 @@ func (b *Backend) handleRawPacketForwarderCommand(c paho.Client, msg paho.Messag
 		"raw_id":     rawID,
 	}).Info("integration/mqtt: raw packet-forwarder command received")
 
-	b.rawPacketForwarderCommandChan <- rawPacketForwarderCommand
+	if b.rawPacketForwarderCommandFunc != nil {
+		b.rawPacketForwarderCommandFunc(rawPacketForwarderCommand)
+	}
 }
 
 func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {

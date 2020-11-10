@@ -4,9 +4,10 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/gorilla/websocket"
+
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/lorawan"
-	"github.com/gorilla/websocket"
 )
 
 var (
@@ -22,7 +23,7 @@ type gateways struct {
 	sync.RWMutex
 	gateways map[lorawan.EUI64]gateway
 
-	subscribeEventChan chan events.Subscribe
+	subscribeEventFunc func(events.Subscribe)
 }
 
 func (g *gateways) get(id lorawan.EUI64) (gateway, error) {
@@ -41,7 +42,11 @@ func (g *gateways) set(id lorawan.EUI64, gw gateway) error {
 	defer g.Unlock()
 
 	g.gateways[id] = gw
-	g.subscribeEventChan <- events.Subscribe{Subscribe: true, GatewayID: id}
+
+	if g.subscribeEventFunc != nil {
+		g.subscribeEventFunc(events.Subscribe{Subscribe: true, GatewayID: id})
+	}
+
 	return nil
 }
 
@@ -49,7 +54,10 @@ func (g *gateways) remove(id lorawan.EUI64) error {
 	g.Lock()
 	defer g.Unlock()
 
-	g.subscribeEventChan <- events.Subscribe{Subscribe: false, GatewayID: id}
+	if g.subscribeEventFunc != nil {
+		g.subscribeEventFunc(events.Subscribe{Subscribe: false, GatewayID: id})
+	}
+
 	delete(g.gateways, id)
 	return nil
 }

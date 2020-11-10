@@ -44,23 +44,26 @@ func GetBackend() Backend {
 
 // Backend defines the interface that a backend must implement
 type Backend interface {
-	// Close closes the backend.
-	Close() error
+	// Stop closes the backend.
+	Stop() error
 
-	// GetDownlinkTXAckChan returns the channel for downlink tx acknowledgements.
-	GetDownlinkTXAckChan() chan gw.DownlinkTXAck
+	// Start starts the backend.
+	Start() error
 
-	// GetGatewayStatsChan returns the channel for gateway statistics.
-	GetGatewayStatsChan() chan gw.GatewayStats
+	// SetDownlinkTxAckFunc sets the DownlinkTXAck handler func.
+	SetDownlinkTxAckFunc(func(gw.DownlinkTXAck))
 
-	// GetUplinkFrameChan returns the channel for received uplinks.
-	GetUplinkFrameChan() chan gw.UplinkFrame
+	// SetGatewayStatsFunc sets the GatewayStats handler func.
+	SetGatewayStatsFunc(func(gw.GatewayStats))
 
-	// GetRawPacketForwarderEventChan returns the raw packet-forwarder command channel.
-	GetRawPacketForwarderEventChan() chan gw.RawPacketForwarderEvent
+	// SetUplinkFrameFunc sets the UplinkFrame handler func.
+	SetUplinkFrameFunc(func(gw.UplinkFrame))
 
-	// GetSubscribeEventChan returns the channel for the (un)subscribe events.
-	GetSubscribeEventChan() chan events.Subscribe
+	// SetRawPacketForwarderEventFunc sets the RawPacketForwarderEvent handler func.
+	SetRawPacketForwarderEventFunc(func(gw.RawPacketForwarderEvent))
+
+	// SetSubscribeEventFunc sets the Subscribe handler func.
+	SetSubscribeEventFunc(func(events.Subscribe))
 
 	// SendDownlinkFrame sends the given downlink frame.
 	SendDownlinkFrame(gw.DownlinkFrame) error

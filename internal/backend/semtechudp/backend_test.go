@@ -48,6 +48,7 @@ func (ts *BackendTestSuite) SetupTest() {
 
 	ts.backend, err = NewBackend(conf)
 	assert.NoError(err)
+	assert.NoError(ts.backend.Start())
 
 	ts.backendUDPAddr, err = net.ResolveUDPAddr("udp", ts.backend.conn.LocalAddr().String())
 	assert.NoError(err)
@@ -58,17 +59,11 @@ func (ts *BackendTestSuite) SetupTest() {
 	ts.gwUDPConn, err = net.ListenUDP("udp", gwAddr)
 	assert.NoError(err)
 	assert.NoError(ts.gwUDPConn.SetDeadline(time.Now().Add(time.Second)))
-
-	go func() {
-		for {
-			<-ts.backend.GetSubscribeEventChan()
-		}
-	}()
 }
 
 func (ts *BackendTestSuite) TearDownTest() {
 	os.RemoveAll(ts.tempDir)
-	ts.backend.Close()
+	ts.backend.Stop()
 	ts.gwUDPConn.Close()
 }
 
@@ -176,6 +171,11 @@ func (ts *BackendTestSuite) TestTXAck() {
 			id, err := uuid.NewV4()
 			assert.NoError(err)
 
+			ackChan := make(chan gw.DownlinkTXAck, 1)
+			ts.backend.SetDownlinkTxAckFunc(func(pl gw.DownlinkTXAck) {
+				ackChan <- pl
+			})
+
 			ts.backend.cache.Set("12345:ack", make([]*gw.DownlinkTXAckItem, 1), cache.DefaultExpiration)
 			ts.backend.cache.Set("12345:frame", gw.DownlinkFrame{
 				Token:      12345,
@@ -191,7 +191,7 @@ func (ts *BackendTestSuite) TestTXAck() {
 			_, err = ts.gwUDPConn.WriteToUDP(b, ts.backendUDPAddr)
 			assert.NoError(err)
 
-			ack := <-ts.backend.GetDownlinkTXAckChan()
+			ack := <-ackChan
 			assert.Equal(id[:], ack.DownlinkId)
 			ack.DownlinkId = nil
 
@@ -342,8 +342,13 @@ func (ts *BackendTestSuite) TestTXAckRetryFailOK() {
 	_, err = ts.gwUDPConn.WriteToUDP(ack2B, ts.backendUDPAddr)
 	assert.NoError(err)
 
+	ackChan := make(chan gw.DownlinkTXAck, 1)
+	ts.backend.SetDownlinkTxAckFunc(func(pl gw.DownlinkTXAck) {
+		ackChan <- pl
+	})
+
 	// validate final ack
-	txAck := <-ts.backend.GetDownlinkTXAckChan()
+	txAck := <-ackChan
 	assert.Equal(gw.DownlinkTXAck{
 		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
 		Token:      12345,
@@ -502,7 +507,11 @@ func (ts *BackendTestSuite) TestTXAckRetryFailFail() {
 	assert.NoError(err)
 
 	// validate final ack
-	txAck := <-ts.backend.GetDownlinkTXAckChan()
+	ackChan := make(chan gw.DownlinkTXAck, 1)
+	ts.backend.SetDownlinkTxAckFunc(func(pl gw.DownlinkTXAck) {
+		ackChan <- pl
+	})
+	txAck := <-ackChan
 	assert.Equal(gw.DownlinkTXAck{
 		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
 		Token:      12345,
@@ -619,7 +628,11 @@ func (ts *BackendTestSuite) TestTXAckRetryOkIgnored() {
 	assert.NoError(err)
 
 	// validate final ack
-	txAck := <-ts.backend.GetDownlinkTXAckChan()
+	ackChan := make(chan gw.DownlinkTXAck, 1)
+	ts.backend.SetDownlinkTxAckFunc(func(pl gw.DownlinkTXAck) {
+		ackChan <- pl
+	})
+	txAck := <-ackChan
 	assert.Equal(gw.DownlinkTXAck{
 		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
 		Token:      12345,
@@ -778,6 +791,16 @@ func (ts *BackendTestSuite) TestPushData() {
 		ts.T().Run(test.Name, func(t *testing.T) {
 			assert := require.New(t)
 
+			statsChan := make(chan gw.GatewayStats, 1)
+			uplinkChan := make(chan gw.UplinkFrame, 1)
+
+			ts.backend.SetGatewayStatsFunc(func(pl gw.GatewayStats) {
+				statsChan <- pl
+			})
+			ts.backend.SetUplinkFrameFunc(func(pl gw.UplinkFrame) {
+				uplinkChan <- pl
+			})
+
 			// send gateway data
 			b, err := test.GatewayPacket.MarshalBinary()
 			assert.NoError(err)
@@ -795,7 +818,7 @@ func (ts *BackendTestSuite) TestPushData() {
 
 			// stats
 			if test.Stats != nil {
-				stats := <-ts.backend.GetGatewayStatsChan()
+				stats := <-statsChan
 				ip, err := getOutboundIP()
 				assert.NoError(err)
 				test.Stats.Ip = ip.String()
@@ -808,7 +831,7 @@ func (ts *BackendTestSuite) TestPushData() {
 
 			// uplink frames
 			for _, uf := range test.UplinkFrames {
-				receivedUF := <-ts.backend.GetUplinkFrameChan()
+				receivedUF := <-uplinkChan
 
 				assert.Len(receivedUF.RxInfo.UplinkId, 16)
 				receivedUF.RxInfo.UplinkId = nil

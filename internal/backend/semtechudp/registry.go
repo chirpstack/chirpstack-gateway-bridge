@@ -31,7 +31,7 @@ type gateways struct {
 	sync.RWMutex
 	gateways map[lorawan.EUI64]gateway
 
-	subscribeEventChan chan events.Subscribe
+	subscribeEventFunc func(events.Subscribe)
 }
 
 // get returns the gateway object for the given MAC.
@@ -60,7 +60,13 @@ func (c *gateways) set(gatewayID lorawan.EUI64, gw gateway) error {
 		connectCounter().Inc()
 	}
 
-	c.subscribeEventChan <- events.Subscribe{Subscribe: true, GatewayID: gatewayID}
+	if c.subscribeEventFunc != nil {
+		c.subscribeEventFunc(events.Subscribe{
+			Subscribe: true,
+			GatewayID: gatewayID,
+		})
+	}
+
 	c.gateways[gatewayID] = gw
 	return nil
 }
@@ -73,7 +79,14 @@ func (c *gateways) cleanup() error {
 	for gatewayID := range c.gateways {
 		if c.gateways[gatewayID].lastSeen.Before(time.Now().Add(gatewayCleanupDuration)) {
 			disconnectCounter().Inc()
-			c.subscribeEventChan <- events.Subscribe{Subscribe: false, GatewayID: gatewayID}
+
+			if c.subscribeEventFunc != nil {
+				c.subscribeEventFunc(events.Subscribe{
+					Subscribe: false,
+					GatewayID: gatewayID,
+				})
+			}
+
 			delete(c.gateways, gatewayID)
 		}
 	}
