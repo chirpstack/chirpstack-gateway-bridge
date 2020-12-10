@@ -209,7 +209,6 @@ func (ts *MQTTBackendTestSuite) TestGatewayConfigHandler() {
 	config := gw.GatewayConfiguration{
 		GatewayId: ts.gatewayID[:],
 		Version:   "123",
-		Channels:  []*gw.ChannelConfiguration{},
 	}
 
 	b, err := ts.backend.marshal(&config)

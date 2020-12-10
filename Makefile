@@ -1,5 +1,4 @@
 .PHONY: build clean test package serve run-compose-test
-PKGS := $(shell go list ./... | grep -v /vendor/)
 VERSION := $(shell git describe --always |sed -e "s/^v//")
 
 build:
@@ -15,11 +14,9 @@ clean:
 test:
 	@echo "Running tests"
 	@rm -f coverage.out
-	@for pkg in $(PKGS) ; do \
-		golint $$pkg ; \
-	done
-	@go vet $(PKGS)
-	@go test -cover -v $(PKGS) -coverprofile coverage.out
+	@golint ./...
+	@go vet ./...
+	@go test -cover -v -coverprofile coverage.out -p 1 ./...
 
 dist:
 	@goreleaser
