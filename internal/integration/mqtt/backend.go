@@ -382,6 +382,9 @@ func (b *Backend) subscribeLoop() {
 }
 
 func (b *Backend) onConnectionLost(c paho.Client, err error) {
+	if b.terminateOnConnectError {
+		log.Fatal(err)
+	}
 	mqttDisconnectCounter().Inc()
 	log.WithError(err).Error("mqtt: connection error")
 }
