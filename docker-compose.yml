@@ -15,4 +15,4 @@ services:
       - TEST_MQTT_SERVER=tcp://mosquitto:1883
 
   mosquitto:
-    image: eclipse-mosquitto
+    image: eclipse-mosquitto:1.6
