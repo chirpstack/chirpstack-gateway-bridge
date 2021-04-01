@@ -313,6 +313,9 @@ func (b *Backend) Stop() error {
 }
 
 func (b *Backend) handleRouterInfo(r *http.Request, c *websocket.Conn) {
+	b.Lock()
+	defer b.Unlock()
+
 	websocketReceiveCounter("router_info").Inc()
 	var req structs.RouterInfoRequest
 
@@ -359,6 +362,9 @@ func (b *Backend) handleRouterInfo(r *http.Request, c *websocket.Conn) {
 }
 
 func (b *Backend) handleGateway(r *http.Request, c *websocket.Conn) {
+	b.Lock()
+	defer b.Unlock()
+
 	// get the gateway id from the url
 	urlParts := strings.Split(r.URL.Path, "/")
 	if len(urlParts) < 2 {
@@ -828,12 +834,14 @@ func (b *Backend) websocketWrap(handler func(*http.Request, *websocket.Conn), w 
 		for {
 			select {
 			case <-ticker.C:
+				b.Lock()
 				websocketPingPongCounter("ping").Inc()
 				conn.SetWriteDeadline(time.Now().Add(b.writeTimeout))
 				if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					log.WithError(err).Error("backend/basicstation: send ping message error")
 					conn.Close()
 				}
+				b.Unlock()
 			case <-done:
 				return
 			}
