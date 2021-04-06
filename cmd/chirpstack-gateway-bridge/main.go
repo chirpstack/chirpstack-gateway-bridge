@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/brocaar/chirpstack-gateway-bridge/cmd/chirpstack-gateway-bridge/cmd"
 	paho "github.com/eclipse/paho.mqtt.golang"
 	log "github.com/sirupsen/logrus"
@@ -28,6 +30,10 @@ func enableClientLogging() {
 }
 
 func init() {
+	log.SetFormatter(&log.TextFormatter{
+		TimestampFormat: time.RFC3339Nano,
+	})
+
 	enableClientLogging()
 }
 
