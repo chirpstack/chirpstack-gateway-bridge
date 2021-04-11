@@ -221,6 +221,14 @@ marshaler="{{ .Integration.Marshaler }}"
   # Event topic template.
   event_topic_template="{{ .Integration.MQTT.EventTopicTemplate }}"
 
+  # State topic template.
+  #
+  # States are sent by the gateway as retained MQTT messages so that the last
+  # message will be stored by the MQTT broker. When set to a blank string, this
+  # feature will be disabled. This feature is only supported when using the
+  # generic authentication type.
+  state_topic_template="{{ .Integration.MQTT.StateTopicTemplate }}"
+
   # Command topic template.
   command_topic_template="{{ .Integration.MQTT.CommandTopicTemplate }}"
 

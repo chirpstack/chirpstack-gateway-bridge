@@ -55,19 +55,23 @@ func (ts *MQTTBackendTestSuite) SetupSuite() {
 	var conf config.Config
 	conf.Integration.Marshaler = "json"
 	conf.Integration.MQTT.EventTopicTemplate = "gateway/{{ .GatewayID }}/event/{{ .EventType }}"
+	conf.Integration.MQTT.StateTopicTemplate = "gateway/{{ .GatewayID }}/state/{{ .StateType }}"
 	conf.Integration.MQTT.CommandTopicTemplate = "gateway/{{ .GatewayID }}/command/#"
 	conf.Integration.MQTT.Auth.Type = "generic"
 	conf.Integration.MQTT.Auth.Generic.Servers = []string{server}
 	conf.Integration.MQTT.Auth.Generic.Username = username
 	conf.Integration.MQTT.Auth.Generic.Password = password
 	conf.Integration.MQTT.Auth.Generic.CleanSession = true
+	conf.Integration.MQTT.Auth.Generic.ClientID = ts.gatewayID.String()
 
 	var err error
 	ts.backend, err = NewBackend(conf)
 	assert.NoError(err)
 	assert.NoError(ts.backend.Start())
-	assert.NoError(ts.backend.SetGatewaySubscription(true, ts.gatewayID))
-	time.Sleep(100 * time.Millisecond)
+
+	// The subscribe loop runs every 100ms, we will wait twice the time to make
+	// sure the subscription is set.
+	time.Sleep(200 * time.Millisecond)
 }
 
 func (ts *MQTTBackendTestSuite) TearDownSuite() {
@@ -75,14 +79,64 @@ func (ts *MQTTBackendTestSuite) TearDownSuite() {
 	ts.backend.Stop()
 }
 
+func (ts *MQTTBackendTestSuite) TestLastWill() {
+	assert := require.New(ts.T())
+
+	assert.True(ts.backend.clientOpts.WillEnabled)
+	assert.Equal("gateway/0807060504030201/state/conn", ts.backend.clientOpts.WillTopic)
+	assert.Equal(`{"gatewayID":"CAcGBQQDAgE=","state":"OFFLINE"}`, string(ts.backend.clientOpts.WillPayload))
+	assert.True(ts.backend.clientOpts.WillRetained)
+}
+
+func (ts *MQTTBackendTestSuite) TestConnStateOnline() {
+	assert := require.New(ts.T())
+
+	connStateChan := make(chan gw.ConnState)
+	token := ts.mqttClient.Subscribe("gateway/0807060504030201/state/conn", 0, func(c paho.Client, msg paho.Message) {
+		var pl gw.ConnState
+		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
+		connStateChan <- pl
+	})
+	token.Wait()
+	assert.NoError(token.Error())
+
+	assert.Equal(gw.ConnState{
+		GatewayId: ts.gatewayID[:],
+		State:     gw.ConnState_ONLINE,
+	}, <-connStateChan)
+
+	token = ts.mqttClient.Unsubscribe("gateway/0807060504030201/state/conn")
+	token.Wait()
+	assert.NoError(token.Error())
+}
+
 func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 	assert := require.New(ts.T())
 
 	gatewayID := lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8}
+	connStateChan := make(chan gw.ConnState)
 
 	assert.NoError(ts.backend.SetGatewaySubscription(true, gatewayID))
 	_, ok := ts.backend.gateways[gatewayID]
 	assert.True(ok)
+
+	// Wait 200ms to make sure that the subscribe loop has picked up the
+	// change and set the ConnState. If we subscribe too early, it is
+	// possible that we get an (old) OFFLINE retained message.
+	time.Sleep(200 * time.Millisecond)
+
+	token := ts.mqttClient.Subscribe("gateway/0102030405060708/state/conn", 0, func(c paho.Client, msg paho.Message) {
+		var pl gw.ConnState
+		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
+		connStateChan <- pl
+	})
+	token.Wait()
+	assert.NoError(token.Error())
+
+	assert.Equal(gw.ConnState{
+		GatewayId: gatewayID[:],
+		State:     gw.ConnState_ONLINE,
+	}, <-connStateChan)
 
 	ts.T().Run("Unsubscribe", func(t *testing.T) {
 		assert := require.New(t)
@@ -90,7 +144,16 @@ func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 		assert.NoError(ts.backend.SetGatewaySubscription(false, gatewayID))
 		_, ok := ts.backend.gateways[gatewayID]
 		assert.False(ok)
+
+		assert.Equal(gw.ConnState{
+			GatewayId: gatewayID[:],
+			State:     gw.ConnState_OFFLINE,
+		}, <-connStateChan)
 	})
+
+	token = ts.mqttClient.Unsubscribe("gateway/0102030405060708/state/conn")
+	token.Wait()
+	assert.NoError(token.Error())
 }
 
 func (ts *MQTTBackendTestSuite) TestPublishUplinkFrame() {
@@ -169,8 +232,36 @@ func (ts *MQTTBackendTestSuite) TestPublishDownlinkTXAck() {
 	assert.NoError(token.Error())
 
 	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "ack", id, &txAck))
+
 	txAckReceived := <-txAckChan
 	assert.Equal(txAck, txAckReceived)
+}
+
+func (ts *MQTTBackendTestSuite) TestPublishConnState() {
+	assert := require.New(ts.T())
+
+	// We publish first
+	state := gw.ConnState{
+		GatewayId: ts.gatewayID[:],
+		State:     gw.ConnState_ONLINE,
+	}
+	assert.NoError(ts.backend.PublishState(ts.gatewayID, "conn", &state))
+
+	// And then subscribe to test that the message has been retained
+	stateChan := make(chan gw.ConnState)
+	token := ts.mqttClient.Subscribe("gateway/0807060504030201/state/conn", 0, func(c paho.Client, msg paho.Message) {
+		var pl gw.ConnState
+		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
+		stateChan <- pl
+	})
+	token.Wait()
+	assert.NoError(token.Error())
+
+	assert.Equal(state, <-stateChan)
+
+	token = ts.mqttClient.Unsubscribe("gateway/0807060504030201/state/conn")
+	token.Wait()
+	assert.NoError(token.Error())
 }
 
 func (ts *MQTTBackendTestSuite) TestDownlinkFrameHandler() {

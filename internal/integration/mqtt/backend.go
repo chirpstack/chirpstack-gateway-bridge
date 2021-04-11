@@ -43,6 +43,7 @@ type Backend struct {
 
 	qos                  uint8
 	eventTopicTemplate   *template.Template
+	stateTopicTemplate   *template.Template
 	commandTopicTemplate *template.Template
 
 	marshal   func(msg proto.Message) ([]byte, error)
@@ -75,6 +76,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 
 		conf.Integration.MQTT.EventTopicTemplate = "/devices/gw-{{ .GatewayID }}/events/{{ .EventType }}"
 		conf.Integration.MQTT.CommandTopicTemplate = "/devices/gw-{{ .GatewayID }}/commands/#"
+		conf.Integration.MQTT.StateTopicTemplate = ""
 	case "azure_iot_hub":
 		b.auth, err = auth.NewAzureIoTHubAuthentication(conf)
 		if err != nil {
@@ -83,6 +85,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 
 		conf.Integration.MQTT.EventTopicTemplate = "devices/{{ .GatewayID }}/messages/events/{{ .EventType }}"
 		conf.Integration.MQTT.CommandTopicTemplate = "devices/{{ .GatewayID }}/messages/devicebound/#"
+		conf.Integration.MQTT.StateTopicTemplate = ""
 	default:
 		return nil, fmt.Errorf("integration/mqtt: unknown auth type: %s", conf.Integration.MQTT.Auth.Type)
 	}
@@ -121,6 +124,13 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		return nil, errors.Wrap(err, "integration/mqtt: parse event-topic template error")
 	}
 
+	if conf.Integration.MQTT.StateTopicTemplate != "" {
+		b.stateTopicTemplate, err = template.New("state").Parse(conf.Integration.MQTT.StateTopicTemplate)
+		if err != nil {
+			return nil, errors.Wrap(err, "integration/mqtt: parse state-topic template error")
+		}
+	}
+
 	b.commandTopicTemplate, err = template.New("event").Parse(conf.Integration.MQTT.CommandTopicTemplate)
 	if err != nil {
 		return nil, errors.Wrap(err, "integration/mqtt: parse event-topic template error")
@@ -135,6 +145,43 @@ func NewBackend(conf config.Config) (*Backend, error) {
 
 	if err = b.auth.Init(b.clientOpts); err != nil {
 		return nil, errors.Wrap(err, "mqtt: init authentication error")
+	}
+
+	if gatewayID := b.auth.GetGatewayID(); gatewayID != nil {
+		log.WithFields(log.Fields{
+			"gateway_id": gatewayID,
+		}).Info("integration/mqtt: gateway id provided by authentication method")
+
+		// Add GatewayID to list of gateways we must subscribe to.
+		b.gateways[*gatewayID] = struct{}{}
+
+		// As we know the Gateway ID and a state topic has been configured, we set
+		// the last will and testament.
+		if b.stateTopicTemplate != nil {
+			pl := gw.ConnState{
+				GatewayId: gatewayID[:],
+				State:     gw.ConnState_OFFLINE,
+			}
+			bb, err := b.marshal(&pl)
+			if err != nil {
+				return nil, errors.Wrap(err, "marshal error")
+			}
+
+			topic := bytes.NewBuffer(nil)
+			if err := b.stateTopicTemplate.Execute(topic, struct {
+				GatewayID lorawan.EUI64
+				StateType string
+			}{*gatewayID, "conn"}); err != nil {
+				return nil, errors.Wrap(err, "execute state template error")
+			}
+
+			log.WithFields(log.Fields{
+				"gateway_id": gatewayID,
+				"topic":      topic.String(),
+			}).Info("integration/mqtt: setting last will and testament")
+
+			b.clientOpts.SetBinaryWill(topic.String(), bb, b.qos, true)
+		}
 	}
 
 	return &b, nil
@@ -152,6 +199,20 @@ func (b *Backend) Start() error {
 func (b *Backend) Stop() error {
 	b.connMux.Lock()
 	defer b.connMux.Unlock()
+
+	b.gatewaysMux.Lock()
+	defer b.gatewaysMux.Unlock()
+
+	// Set gateway state to offline for all gateways.
+	for gatewayID := range b.gateways {
+		pl := gw.ConnState{
+			GatewayId: gatewayID[:],
+			State:     gw.ConnState_OFFLINE,
+		}
+		if err := b.PublishState(gatewayID, "conn", &pl); err != nil {
+			log.WithError(err).Error("integration/mqtt: publish state error")
+		}
+	}
 
 	b.conn.Disconnect(250)
 	b.connClosed = true
@@ -183,6 +244,16 @@ func (b *Backend) SetRawPacketForwarderCommandFunc(f func(gw.RawPacketForwarderC
 // race conditions in case of connection issues. This way, the gateways map
 // always reflect the desired state.
 func (b *Backend) SetGatewaySubscription(subscribe bool, gatewayID lorawan.EUI64) error {
+	// In this case we don't want to (un)subscribe as the Gateway ID is provided by
+	// the authentication and is set before connect.
+	if id := b.auth.GetGatewayID(); id != nil && *id == gatewayID {
+		log.WithFields(log.Fields{
+			"gateway_id": gatewayID,
+			"subscribe":  subscribe,
+		}).Debug("integration/mqtt: ignoring SetGatewaySubscription as gateway id is set by authentication")
+		return nil
+	}
+
 	log.WithFields(log.Fields{
 		"gateway_id": gatewayID,
 		"subscribe":  subscribe,
@@ -242,9 +313,46 @@ func (b *Backend) PublishEvent(gatewayID lorawan.EUI64, event string, id uuid.UU
 		"exec":  "exec_",
 		"raw":   "raw_",
 	}
-	return b.publish(gatewayID, event, log.Fields{
+	return b.publishEvent(gatewayID, event, log.Fields{
 		idPrefix[event] + "id": id,
 	}, v)
+}
+
+// PublishState publishes the given state as retained message.
+func (b *Backend) PublishState(gatewayID lorawan.EUI64, state string, v proto.Message) error {
+	if b.stateTopicTemplate == nil {
+		log.WithFields(log.Fields{
+			"state":      state,
+			"gateway_id": gatewayID,
+		}).Debug("integration/mqtt: ignoring publish state, no state_topic_template configured")
+		return nil
+	}
+
+	mqttStateCounter(state).Inc()
+
+	topic := bytes.NewBuffer(nil)
+	if err := b.stateTopicTemplate.Execute(topic, struct {
+		GatewayID lorawan.EUI64
+		StateType string
+	}{gatewayID, state}); err != nil {
+		return errors.Wrap(err, "execute state template error")
+	}
+
+	bytes, err := b.marshal(v)
+	if err != nil {
+		return errors.Wrap(err, "marshal message error")
+	}
+
+	log.WithFields(log.Fields{
+		"topic":      topic.String(),
+		"qos":        b.qos,
+		"state":      state,
+		"gateway_id": gatewayID,
+	}).Info("integration/mqtt: publishing state")
+	if token := b.conn.Publish(topic.String(), b.qos, true, bytes); token.Wait() && token.Error() != nil {
+		return token.Error()
+	}
+	return nil
 }
 
 func (b *Backend) connect() error {
@@ -293,13 +401,10 @@ func (b *Backend) disconnect() error {
 func (b *Backend) reconnectLoop() {
 	if b.auth.ReconnectAfter() > 0 {
 		for {
-			b.connMux.RLock()
-			closed := b.connClosed
-			b.connMux.RUnlock()
-
-			if closed {
+			if b.isClosed() {
 				break
 			}
+
 			time.Sleep(b.auth.ReconnectAfter())
 			log.Info("mqtt: re-connect triggered")
 
@@ -329,11 +434,14 @@ func (b *Backend) onConnected(c paho.Client) {
 
 func (b *Backend) subscribeLoop() {
 	for {
-		b.connMux.RLock()
-		closed := b.connClosed
-		b.connMux.RUnlock()
-		if closed {
+		time.Sleep(time.Millisecond * 100)
+
+		if b.isClosed() {
 			break
+		}
+
+		if !b.conn.IsConnected() {
+			continue
 		}
 
 		var subscribe []lorawan.EUI64
@@ -361,23 +469,40 @@ func (b *Backend) subscribeLoop() {
 		b.gatewaysMux.RUnlock()
 
 		for _, gatewayID := range subscribe {
+			statePL := gw.ConnState{
+				GatewayId: gatewayID[:],
+				State:     gw.ConnState_ONLINE,
+			}
+
 			if err := b.subscribeGateway(gatewayID); err != nil {
 				log.WithError(err).WithField("gateway_id", gatewayID).Error("integration/mqtt: subscribe gateway error")
 			} else {
-				b.gatewaysSubscribed[gatewayID] = struct{}{}
+				if err := b.PublishState(gatewayID, "conn", &statePL); err != nil {
+					log.WithError(err).WithField("gateway_id", gatewayID).Error("integration/mqtt: publish conn state error")
+				} else {
+					b.gatewaysSubscribed[gatewayID] = struct{}{}
+				}
 			}
 		}
 
 		for _, gatewayID := range unsubscribe {
+			statePL := gw.ConnState{
+				GatewayId: gatewayID[:],
+				State:     gw.ConnState_OFFLINE,
+			}
+
 			if err := b.unsubscribeGateway(gatewayID); err != nil {
 				log.WithError(err).WithField("gateway_id", gatewayID).Error("integration/mqtt: unsubscribe gateway error")
 			} else {
-				delete(b.gatewaysSubscribed, gatewayID)
+				if err := b.PublishState(gatewayID, "conn", &statePL); err != nil {
+					log.WithError(err).WithField("gateway_id", gatewayID).Error("integration/mqtt: publish conn state error")
+				} else {
+					delete(b.gatewaysSubscribed, gatewayID)
+				}
 			}
 		}
 
 		b.gatewaysSubscribedMux.Unlock()
-		time.Sleep(time.Millisecond * 100)
 	}
 }
 
@@ -513,7 +638,7 @@ func (b *Backend) handleCommand(c paho.Client, msg paho.Message) {
 	}
 }
 
-func (b *Backend) publish(gatewayID lorawan.EUI64, event string, fields log.Fields, msg proto.Message) error {
+func (b *Backend) publishEvent(gatewayID lorawan.EUI64, event string, fields log.Fields, msg proto.Message) error {
 	topic := bytes.NewBuffer(nil)
 	if err := b.eventTopicTemplate.Execute(topic, struct {
 		GatewayID lorawan.EUI64
@@ -536,4 +661,11 @@ func (b *Backend) publish(gatewayID lorawan.EUI64, event string, fields log.Fiel
 		return token.Error()
 	}
 	return nil
+}
+
+// isClosed returns true when the integration is shutting down.
+func (b *Backend) isClosed() bool {
+	b.connMux.RLock()
+	defer b.connMux.RUnlock()
+	return b.connClosed
 }

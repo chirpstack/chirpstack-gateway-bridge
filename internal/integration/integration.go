@@ -47,6 +47,9 @@ type Integration interface {
 	// PublishEvent publishes the given event.
 	PublishEvent(lorawan.EUI64, string, uuid.UUID, proto.Message) error
 
+	// PublishState publishes the given state as retained message.
+	PublishState(lorawan.EUI64, string, proto.Message) error
+
 	// SetDownlinkFrameFunc sets the DownlinkFrame handler func.
 	SetDownlinkFrameFunc(func(gw.DownlinkFrame))
 

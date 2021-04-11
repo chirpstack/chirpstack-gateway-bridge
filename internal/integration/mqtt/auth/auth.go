@@ -8,12 +8,17 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pkg/errors"
+
+	"github.com/brocaar/lorawan"
 )
 
 // Authentication defines the authentication interface.
 type Authentication interface {
 	// Init applies the initial configuration.
 	Init(*mqtt.ClientOptions) error
+
+	// GetGatewayID returns the GatewayID if available.
+	GetGatewayID() *lorawan.EUI64
 
 	// Update updates the authentication options.
 	Update(*mqtt.ClientOptions) error

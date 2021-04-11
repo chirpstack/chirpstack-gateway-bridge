@@ -58,6 +58,7 @@ type Config struct {
 		MQTT struct {
 			EventTopicTemplate      string        `mapstructure:"event_topic_template"`
 			CommandTopicTemplate    string        `mapstructure:"command_topic_template"`
+			StateTopicTemplate      string        `mapstructure:"state_topic_template"`
 			KeepAlive               time.Duration `mapstructure:"keep_alive"`
 			MaxReconnectInterval    time.Duration `mapstructure:"max_reconnect_interval"`
 			TerminateOnConnectError bool          `mapstructure:"terminate_on_connect_error"`

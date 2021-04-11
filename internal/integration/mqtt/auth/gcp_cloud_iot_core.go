@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
+	"github.com/brocaar/lorawan"
 )
 
 // GCPCloudIoTCoreAuthentication implements the Google Cloud IoT Core authentication.
@@ -56,6 +57,12 @@ func NewGCPCloudIoTCoreAuthentication(conf config.Config) (Authentication, error
 func (a *GCPCloudIoTCoreAuthentication) Init(opts *mqtt.ClientOptions) error {
 	opts.AddBroker(a.server)
 	opts.SetClientID(a.clientID)
+	return nil
+}
+
+// GetGatewayID returns the GatewayID if available.
+// TODO: implement.
+func (a *GCPCloudIoTCoreAuthentication) GetGatewayID() *lorawan.EUI64 {
 	return nil
 }
 

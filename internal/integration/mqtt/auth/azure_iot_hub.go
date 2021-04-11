@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
+	"github.com/brocaar/lorawan"
 )
 
 // See:
@@ -198,6 +199,12 @@ func (a *AzureIoTHubAuthentication) Init(opts *mqtt.ClientOptions) error {
 	opts.SetUsername(a.username)
 	opts.SetTLSConfig(a.tlsConfig)
 
+	return nil
+}
+
+// GetGatewayID returns the GatewayID if available.
+// TODO: implement.
+func (a *AzureIoTHubAuthentication) GetGatewayID() *lorawan.EUI64 {
 	return nil
 }
 

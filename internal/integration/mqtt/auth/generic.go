@@ -6,8 +6,10 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
+	"github.com/brocaar/lorawan"
 )
 
 // GenericAuthentication implements a generic MQTT authentication.
@@ -57,6 +59,24 @@ func (a *GenericAuthentication) Init(opts *mqtt.ClientOptions) error {
 	}
 
 	return nil
+}
+
+// GetGatewayID returns the GatewayID if available.
+func (a *GenericAuthentication) GetGatewayID() *lorawan.EUI64 {
+	if a.clientID == "" {
+		return nil
+	}
+
+	// Try to decode the client ID as gateway ID.
+	var gatewayID lorawan.EUI64
+	if err := gatewayID.UnmarshalText([]byte(a.clientID)); err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"client_id": a.clientID,
+		}).Warning("integration/mqtt/auth: could not decode client ID to gateway ID")
+		return nil
+	}
+
+	return &gatewayID
 }
 
 // Update updates the authentication options.

@@ -47,6 +47,8 @@ func run(cmd *cobra.Command, args []string) error {
 	log.WithField("signal", <-sigChan).Info("signal received")
 	log.Warning("shutting down server")
 
+	integration.GetIntegration().Stop()
+
 	return nil
 }
 

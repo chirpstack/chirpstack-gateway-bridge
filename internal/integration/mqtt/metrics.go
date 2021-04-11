@@ -11,6 +11,11 @@ var (
 		Help: "The number of gateway events published by the MQTT integration (per event).",
 	}, []string{"event"})
 
+	sc = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "integration_mqtt_state_count",
+		Help: "The number of gateway states published by the MQTT integration (per state).",
+	}, []string{"state"})
+
 	cc = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "integration_mqtt_command_count",
 		Help: "The number of commands received by the MQTT integration (per command).",
@@ -34,6 +39,10 @@ var (
 
 func mqttEventCounter(e string) prometheus.Counter {
 	return pc.With(prometheus.Labels{"event": e})
+}
+
+func mqttStateCounter(s string) prometheus.Counter {
+	return sc.With(prometheus.Labels{"state": s})
 }
 
 func mqttCommandCounter(c string) prometheus.Counter {
