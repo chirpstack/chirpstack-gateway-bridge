@@ -1,4 +1,4 @@
-# ChirpStack Gateway Bridge
+#   ChirpStack Gateway Bridge
 
 [![CircleCI](https://circleci.com/gh/brocaar/chirpstack-gateway-bridge.svg?style=svg)](https://circleci.com/gh/brocaar/chirpstack-gateway-bridge)
 
