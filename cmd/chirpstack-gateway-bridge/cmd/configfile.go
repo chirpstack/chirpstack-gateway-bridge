@@ -223,14 +223,21 @@ marshaler="{{ .Integration.Marshaler }}"
 
   # State topic template.
   #
-  # States are sent by the gateway as retained MQTT messages so that the last
-  # message will be stored by the MQTT broker. When set to a blank string, this
-  # feature will be disabled. This feature is only supported when using the
-  # generic authentication type.
+  # States are sent by the gateway as retained MQTT messages (by default)
+  # so that the last message will be stored by the MQTT broker. When set to
+  # a blank string, this feature will be disabled. This feature is only
+  # supported when using the generic authentication type.
   state_topic_template="{{ .Integration.MQTT.StateTopicTemplate }}"
 
   # Command topic template.
   command_topic_template="{{ .Integration.MQTT.CommandTopicTemplate }}"
+
+  # State retained.
+  #
+  # By default this value is set to true and states are published as retained
+  # MQTT messages. Setting this to false means that states will not be retained
+  # by the MQTT broker.
+  state_retained={{ .Integration.MQTT.StateRetained }}
 
   # Keep alive will set the amount of time (in seconds) that the client should
   # wait before sending a PING request to the broker. This will allow the client

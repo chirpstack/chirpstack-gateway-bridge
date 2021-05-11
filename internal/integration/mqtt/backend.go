@@ -40,6 +40,7 @@ type Backend struct {
 	gatewaysSubscribedMux   sync.Mutex
 	gatewaysSubscribed      map[lorawan.EUI64]struct{}
 	terminateOnConnectError bool
+	stateRetained           bool
 
 	qos                  uint8
 	eventTopicTemplate   *template.Template
@@ -60,6 +61,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		clientOpts:              paho.NewClientOptions(),
 		gateways:                make(map[lorawan.EUI64]struct{}),
 		gatewaysSubscribed:      make(map[lorawan.EUI64]struct{}),
+		stateRetained:           conf.Integration.MQTT.StateRetained,
 	}
 
 	switch conf.Integration.MQTT.Auth.Type {
@@ -349,7 +351,7 @@ func (b *Backend) PublishState(gatewayID lorawan.EUI64, state string, v proto.Me
 		"state":      state,
 		"gateway_id": gatewayID,
 	}).Info("integration/mqtt: publishing state")
-	if token := b.conn.Publish(topic.String(), b.qos, true, bytes); token.Wait() && token.Error() != nil {
+	if token := b.conn.Publish(topic.String(), b.qos, b.stateRetained, bytes); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 	return nil
