@@ -1,8 +1,8 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 PACKAGE_NAME="chirpstack-gateway-bridge"
 PACKAGE_VERSION=$1
-REV="r2"
+REV="r1"
 
 
 PACKAGE_URL="https://artifacts.chirpstack.io/downloads/chirpstack-gateway-bridge/chirpstack-gateway-bridge_${PACKAGE_VERSION}_linux_armv7.tar.gz"
@@ -26,16 +26,16 @@ Description: ChirpStack Gateway Bridge
 EOF
 
 cat > $PACKAGE_DIR/CONTROL/conffiles << EOF
-/user/etc/$PACKAGE_NAME/$PACKAGE_NAME.toml
+/etc/$PACKAGE_NAME/$PACKAGE_NAME.toml
 EOF
 
 # Files
 mkdir -p $PACKAGE_DIR/opt/$PACKAGE_NAME
-mkdir -p $PACKAGE_DIR/user/etc/$PACKAGE_NAME
+mkdir -p $PACKAGE_DIR/etc/$PACKAGE_NAME
 mkdir -p $PACKAGE_DIR/etc/monit.d
 mkdir -p $PACKAGE_DIR/etc/init.d
 
-cp files/$PACKAGE_NAME.toml $PACKAGE_DIR/user/etc/$PACKAGE_NAME/$PACKAGE_NAME.toml
+cp files/$PACKAGE_NAME.toml $PACKAGE_DIR/etc/$PACKAGE_NAME/$PACKAGE_NAME.toml
 cp files/$PACKAGE_NAME.monit $PACKAGE_DIR/etc/monit.d/$PACKAGE_NAME
 cp files/$PACKAGE_NAME.init $PACKAGE_DIR/etc/init.d/$PACKAGE_NAME
 wget -P $PACKAGE_DIR/opt/$PACKAGE_NAME $PACKAGE_URL

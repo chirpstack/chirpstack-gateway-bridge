@@ -67,4 +67,3 @@ marshaler="protobuf"
 
     # Connect with the given password (optional)
     password=""
-

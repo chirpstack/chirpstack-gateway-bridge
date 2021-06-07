@@ -3,7 +3,7 @@
 NAME="chirpstack-gateway-bridge"
 DESC="ChirpStack Gateway Bridge"
 DAEMON_BIN=/opt/$NAME/$NAME
-DAEMON_CONF=/user/etc/$NAME/$NAME.toml
+DAEMON_CONF=/etc/$NAME/$NAME.toml
 DAEMON_PID=/var/run/$NAME.pid
 
 function iptables_accept {
