@@ -1,6 +1,6 @@
 # ChirpStack Gateway Bridge
 
-[![CircleCI](https://circleci.com/gh/brocaar/chirpstack-gateway-bridge.svg?style=svg)](https://circleci.com/gh/brocaar/chirpstack-gateway-bridge)
+![Tests](https://github.com/brocaar/chirpstack-gateway-bridge/actions/workflows/main.yml/badge.svg?branch=master)
 
 ChirpStack Gateway Bridge is a service which converts LoRa<sup>&reg;</sup> Packet Forwarder protocols
 into a ChirpStack Network Server [common data-format](https://github.com/brocaar/chirpstack-api/blob/master/protobuf/gw/gw.proto) (JSON and Protobuf).
