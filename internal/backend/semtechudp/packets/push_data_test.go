@@ -417,6 +417,55 @@ func TestGetUplinkFrame(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "LR-FHSS modulation",
+			PushDataPacket: PushDataPacket{
+				GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+				ProtocolVersion: ProtocolVersion2,
+				Payload: PushDataPayload{
+					RXPK: []RXPK{
+						{
+							Tmst: 1000000,
+							Freq: 868.3,
+							Stat: 1,
+							Modu: "LR-FHSS",
+							DatR: DatR{LRFHSS: "M0CW137"},
+							CodR: "4/6",
+							HPW:  8,
+							Size: 5,
+							Data: []byte{1, 2, 3, 4, 5},
+							RSig: []RSig{
+								{
+									RSSIC: -74,
+								},
+							},
+						},
+					},
+				},
+			},
+			UplinkFrames: []gw.UplinkFrame{
+				{
+					PhyPayload: []byte{1, 2, 3, 4, 5},
+					TxInfo: &gw.UplinkTXInfo{
+						Frequency:  868300000,
+						Modulation: common.Modulation_LR_FHSS,
+						ModulationInfo: &gw.UplinkTXInfo_LrFhssModulationInfo{
+							LrFhssModulationInfo: &gw.LRFHSSModulationInfo{
+								OperatingChannelWidth: 137000,
+								CodeRate:              "4/6",
+								GridSteps:             8,
+							},
+						},
+					},
+					RxInfo: &gw.UplinkRXInfo{
+						GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+						Rssi:      -74,
+						Context:   []byte{0x00, 0x0f, 0x42, 0x40},
+						CrcStatus: gw.CRCStatus_CRC_OK,
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testTable {

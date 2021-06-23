@@ -16,8 +16,11 @@ import (
 	"github.com/brocaar/lorawan"
 )
 
-// loRaDataRateRegex contains a regexp for parsing the data-rate string.
+// loRaDataRateRegex contains a regexp for parsing the LoRa data-rate string.
 var loRaDataRateRegex = regexp.MustCompile(`SF(\d+)BW(\d+)`)
+
+// lrFHSSDataRateRegex contains the regexp for parsing the LR-FHSS data-rate string.
+var lrFHSSDataRateRegex = regexp.MustCompile(`M0CW(\d+)`)
 
 // PushDataPacket type is used by the gateway mainly to forward the RF packets
 // received, and associated metadata, to the server.
@@ -203,8 +206,8 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 	if rxpk.DatR.LoRa != "" {
 		frame.TxInfo.Modulation = common.Modulation_LORA
 
-		match := loRaDataRateRegex.FindStringSubmatch(rxpk.DatR.LoRa)
 		// parse e.g. SF12BW250 into separate variables
+		match := loRaDataRateRegex.FindStringSubmatch(rxpk.DatR.LoRa)
 		if len(match) != 3 {
 			return frame, errors.New("backend/semtechudp/packets: could not parse LoRa data-rate")
 		}
@@ -225,6 +228,31 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 				Bandwidth:       uint32(bw),
 				SpreadingFactor: uint32(sf),
 				CodeRate:        rxpk.CodR,
+			},
+		}
+	}
+
+	// LR-FHSS data-rate
+	if rxpk.DatR.LRFHSS != "" {
+		frame.TxInfo.Modulation = common.Modulation_LR_FHSS
+
+		// parse M0CW137 into CW (OCW) variable
+		match := lrFHSSDataRateRegex.FindStringSubmatch(rxpk.DatR.LRFHSS)
+		if len(match) != 2 {
+			return frame, errors.New("backend/semtechudp/packets: could not parse LR-FHSS data-rate")
+		}
+
+		// cast variable to int
+		ocw, err := strconv.Atoi(match[1])
+		if err != nil {
+			return frame, errors.Wrap(err, "backend/semtechudp/packets: could not convert cw to int")
+		}
+
+		frame.TxInfo.ModulationInfo = &gw.UplinkTXInfo_LrFhssModulationInfo{
+			LrFhssModulationInfo: &gw.LRFHSSModulationInfo{
+				OperatingChannelWidth: uint32(ocw) * 1000, // kHz -> Hz
+				CodeRate:              rxpk.CodR,
+				GridSteps:             uint32(rxpk.HPW),
 			},
 		}
 	}
@@ -302,6 +330,7 @@ type RXPK struct {
 	Modu string       `json:"modu"` // Modulation identifier "LORA" or "FSK"
 	CodR string       `json:"codr"` // LoRa ECC coding rate identifier
 	LSNR float64      `json:"lsnr"` // Lora SNR ratio in dB (signed float, 0.1 dB precision)
+	HPW  uint8        `json:"hpw"`  // LR-FHSS hopping grid number of steps.
 	Data []byte       `json:"data"` // Base64 encoded RF packet payload, padded
 	RSig []RSig       `json:"rsig"` // Received signal information, per antenna (Optional)
 }

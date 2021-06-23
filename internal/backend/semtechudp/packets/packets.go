@@ -102,14 +102,18 @@ func (t *CompactTime) UnmarshalJSON(data []byte) error {
 // DatR implements the data rate which can be either a string (LoRa identifier)
 // or an unsigned integer in case of FSK (bits per second).
 type DatR struct {
-	LoRa string
-	FSK  uint32
+	LRFHSS string
+	LoRa   string
+	FSK    uint32
 }
 
 // MarshalJSON implements the json.Marshaler interface.
 func (d DatR) MarshalJSON() ([]byte, error) {
 	if d.LoRa != "" {
 		return []byte(`"` + d.LoRa + `"`), nil
+	}
+	if d.LRFHSS != "" {
+		return []byte(`"` + d.LRFHSS + `"`), nil
 	}
 	return []byte(strconv.FormatUint(uint64(d.FSK), 10)), nil
 }
@@ -118,7 +122,14 @@ func (d DatR) MarshalJSON() ([]byte, error) {
 func (d *DatR) UnmarshalJSON(data []byte) error {
 	i, err := strconv.ParseUint(string(data), 10, 32)
 	if err != nil {
-		d.LoRa = strings.Trim(string(data), `"`)
+		// remove the trailing and leading quotes
+		str := strings.Trim(string(data), `"`)
+
+		if strings.HasPrefix(str, "SF") {
+			d.LoRa = str
+		} else {
+			d.LRFHSS = str
+		}
 		return nil
 	}
 	d.FSK = uint32(i)
