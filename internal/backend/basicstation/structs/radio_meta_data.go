@@ -2,6 +2,7 @@ package structs
 
 import (
 	"encoding/binary"
+	"math"
 	"time"
 
 	"github.com/brocaar/chirpstack-api/go/v3/common"
@@ -22,6 +23,7 @@ type RadioMetaData struct {
 
 // RadioMetaDataUpInfo contains the radio meta-data uplink info.
 type RadioMetaDataUpInfo struct {
+	RxTime  float64 `json:"rxtime"`
 	RCtx    uint64  `json:"rctx"`
 	XTime   uint64  `json:"xtime"`
 	GPSTime int64   `json:"gpstime"`
@@ -83,6 +85,15 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 			return errors.Wrap(err, "timestamp proto error")
 		}
 
+	} else {
+		sec, nsec := math.Modf(rmd.UpInfo.RxTime)
+		if sec != 0 {
+			val := time.Unix(int64(sec), int64(nsec))
+			pb.RxInfo.Time, err = ptypes.TimestampProto(val)
+			if err != nil {
+				return errors.Wrap(err, "timestamp proto error")
+			}
+		}
 	}
 
 	// Context
