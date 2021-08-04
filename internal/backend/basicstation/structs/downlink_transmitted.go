@@ -17,5 +17,10 @@ func DownlinkTransmittedToProto(gatewayID lorawan.EUI64, dt DownlinkTransmitted)
 	return gw.DownlinkTXAck{
 		GatewayId: gatewayID[:],
 		Token:     dt.DIID,
+		Items: []*gw.DownlinkTXAckItem{
+			{
+				Status: gw.TxAckStatus_OK,
+			},
+		},
 	}, nil
 }

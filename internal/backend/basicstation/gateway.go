@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/stats"
 	"github.com/brocaar/lorawan"
 )
 
@@ -16,7 +17,8 @@ var (
 
 type connection struct {
 	sync.Mutex
-	conn *websocket.Conn
+	conn  *websocket.Conn
+	stats *stats.Collector
 }
 
 type gateways struct {

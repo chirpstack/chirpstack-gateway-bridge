@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/stats"
 	"github.com/brocaar/lorawan"
 )
 
@@ -21,6 +22,7 @@ var gatewayCleanupDuration = -1 * time.Minute
 
 // gateway contains a connection and meta-data for a gateway connection.
 type gateway struct {
+	stats           *stats.Collector
 	addr            *net.UDPAddr
 	lastSeen        time.Time
 	protocolVersion uint8
@@ -55,9 +57,12 @@ func (c *gateways) set(gatewayID lorawan.EUI64, gw gateway) error {
 	c.Lock()
 	defer c.Unlock()
 
-	_, ok := c.gateways[gatewayID]
+	gww, ok := c.gateways[gatewayID]
 	if !ok {
+		gw.stats = stats.NewCollector()
 		connectCounter().Inc()
+	} else {
+		gw.stats = gww.stats
 	}
 
 	if c.subscribeEventFunc != nil {
