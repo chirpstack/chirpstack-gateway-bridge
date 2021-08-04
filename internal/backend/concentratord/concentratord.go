@@ -90,7 +90,7 @@ func (b *Backend) dialCommandSock() error {
 	}
 
 	log.WithFields(log.Fields{
-		"command_url": b.eventURL,
+		"command_url": b.commandURL,
 	}).Info("backend/concentratord: connected to command socket")
 
 	return nil
