@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"

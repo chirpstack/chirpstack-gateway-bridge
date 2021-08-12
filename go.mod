@@ -5,10 +5,10 @@ go 1.16
 require (
 	github.com/brocaar/chirpstack-api/go/v3 v3.11.0
 	github.com/brocaar/lorawan v0.0.0-20201030140234-f23da2d4a303
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.3.0
 	github.com/go-zeromq/zmq4 v0.7.0
 	github.com/gofrs/uuid v3.3.0+incompatible
+	github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/golang/protobuf v1.4.3
 	github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c // indirect
 	github.com/goreleaser/goreleaser v0.106.0
