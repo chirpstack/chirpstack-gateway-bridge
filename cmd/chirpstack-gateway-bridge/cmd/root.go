@@ -15,7 +15,7 @@ import (
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 )
 
-var cfgFile string // config file
+var cfgFiles *[]string // config file
 var version string
 
 var rootCmd = &cobra.Command{
@@ -30,7 +30,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "path to configuration file (optional)")
+	cfgFiles = rootCmd.PersistentFlags().StringSliceP("config", "c", []string{}, "path to configuration file (optional)")
 	rootCmd.PersistentFlags().Int("log-level", 4, "debug=5, info=4, error=2, fatal=1, panic=0")
 
 	viper.BindPFlag("general.log_level", rootCmd.PersistentFlags().Lookup("log-level"))
@@ -88,14 +88,22 @@ func Execute(v string) {
 }
 
 func initConfig() {
-	if cfgFile != "" {
-		b, err := ioutil.ReadFile(cfgFile)
-		if err != nil {
-			log.WithError(err).WithField("config", cfgFile).Fatal("error loading config file")
+	if cfgFiles != nil {
+		var filesMerged []byte
+		for _, cfgFile := range *cfgFiles {
+			cfgFileContent, err := ioutil.ReadFile(cfgFile)
+			if err != nil {
+				log.WithError(err).WithField("config", cfgFile).Fatal("error loading config file")
+			}
+			filesMerged = bytes.Join([][]byte{
+				filesMerged,
+				cfgFileContent,
+			}, []byte("\n"))
 		}
+
 		viper.SetConfigType("toml")
-		if err := viper.ReadConfig(bytes.NewBuffer(b)); err != nil {
-			log.WithError(err).WithField("config", cfgFile).Fatal("error loading config file")
+		if err := viper.ReadConfig(bytes.NewBuffer(filesMerged)); err != nil {
+			log.WithError(err).WithField("config", cfgFiles).Fatal("error loading config file")
 		}
 	} else {
 		viper.SetConfigName("chirpstack-gateway-bridge")
