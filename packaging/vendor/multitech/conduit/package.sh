@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 PACKAGE_NAME="chirpstack-gateway-bridge"
 PACKAGE_VERSION=$1
