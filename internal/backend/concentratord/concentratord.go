@@ -362,6 +362,7 @@ func (b *Backend) handleUplinkFrame(bb []byte) error {
 		return nil
 	}
 
+	// Hz to kHz
 	loRaModInfo := pl.GetTxInfo().GetLoraModulationInfo()
 	if loRaModInfo != nil {
 		loRaModInfo.Bandwidth = loRaModInfo.Bandwidth / 1000
@@ -387,6 +388,24 @@ func (b *Backend) handleGatewayStats(bb []byte) error {
 
 	var statsID uuid.UUID
 	copy(statsID[:], pl.GetStatsId())
+
+	// Hz to kHz
+	for i := range pl.RxPacketsPerModulation {
+		if mod := pl.RxPacketsPerModulation[i].GetModulation(); mod != nil {
+			if lora := mod.GetLora(); lora != nil {
+				lora.Bandwidth = lora.Bandwidth / 1000
+			}
+		}
+	}
+
+	// Hz to kHz
+	for i := range pl.TxPacketsPerModulation {
+		if mod := pl.TxPacketsPerModulation[i].GetModulation(); mod != nil {
+			if lora := mod.GetLora(); lora != nil {
+				lora.Bandwidth = lora.Bandwidth / 1000
+			}
+		}
+	}
 
 	log.WithFields(log.Fields{
 		"stats_id": statsID,
