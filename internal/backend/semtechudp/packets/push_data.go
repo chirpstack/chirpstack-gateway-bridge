@@ -162,13 +162,14 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 			Frequency: uint32(rxpk.Freq * 1000000),
 		},
 		RxInfo: &gw.UplinkRXInfo{
-			GatewayId: gatewayID,
-			Rssi:      int32(rxpk.RSSI),
-			LoraSnr:   rxpk.LSNR,
-			Channel:   uint32(rxpk.Chan),
-			RfChain:   uint32(rxpk.RFCh),
-			Board:     uint32(rxpk.Brd),
-			Context:   make([]byte, 4),
+			GatewayId:       gatewayID,
+			Rssi:            int32(rxpk.RSSI),
+			LoraSnr:         rxpk.LSNR,
+			Channel:         uint32(rxpk.Chan),
+			RfChain:         uint32(rxpk.RFCh),
+			Board:           uint32(rxpk.Brd),
+			Context:         make([]byte, 4),
+			FrequencyOffset: int32(rxpk.FOff),
 		},
 	}
 
@@ -333,6 +334,7 @@ type RXPK struct {
 	HPW  uint8        `json:"hpw"`  // LR-FHSS hopping grid number of steps.
 	Data []byte       `json:"data"` // Base64 encoded RF packet payload, padded
 	RSig []RSig       `json:"rsig"` // Received signal information, per antenna (Optional)
+	FOff int32        `json:"foff"` // The frequency offset of the received signal from the channel it was received on.
 }
 
 // RSig contains the received signal information per antenna.
