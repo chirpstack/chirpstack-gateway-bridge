@@ -14,6 +14,7 @@ import (
 	"github.com/brocaar/chirpstack-api/go/v3/common"
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/gps"
 )
 
 // loRaDataRateRegex contains a regexp for parsing the LoRa data-rate string.
@@ -202,6 +203,29 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 		frame.RxInfo.TimeSinceGpsEpoch = ptypes.DurationProto(d)
 	}
 
+	// Plain fine-timestamp (SX1302 / SX1303)
+	if rxpk.Tmms != nil && rxpk.FTime != nil {
+		d := time.Duration(*rxpk.Tmms) * time.Millisecond
+
+		// take the seconds from the gps time
+		d = d - (d % time.Second)
+		// add the nanos from the fine-timestamp
+		d = d + (time.Duration(*rxpk.FTime) * time.Nanosecond)
+
+		t := time.Time(gps.NewTimeFromTimeSinceGPSEpoch(d))
+		tProto, err := ptypes.TimestampProto(t)
+		if err != nil {
+			return frame, errors.Wrap(err, "backend/semtechudp/packets: could not convert timestamp to proto timestamp")
+		}
+
+		frame.RxInfo.FineTimestampType = gw.FineTimestampType_PLAIN
+		frame.RxInfo.FineTimestamp = &gw.UplinkRXInfo_PlainFineTimestamp{
+			PlainFineTimestamp: &gw.PlainFineTimestamp{
+				Time: tProto,
+			},
+		}
+	}
+
 	// LoRa data-rate
 	if rxpk.DatR.LoRa != "" {
 		frame.TxInfo.Modulation = common.Modulation_LORA
@@ -315,24 +339,25 @@ type Stat struct {
 
 // RXPK contain a RF packet and associated metadata.
 type RXPK struct {
-	Time *CompactTime `json:"time"` // UTC time of pkt RX, us precision, ISO 8601 'compact' format (e.g. 2013-03-31T16:21:17.528002Z)
-	Tmms *int64       `json:"tmms"` // GPS time of pkt RX, number of milliseconds since 06.Jan.1980
-	Tmst uint32       `json:"tmst"` // Internal timestamp of "RX finished" event (32b unsigned)
-	AESK uint8        `json:"aesk"` //AES key index used for encrypting fine timestamps
-	Chan uint8        `json:"chan"` // Concentrator "IF" channel used for RX (unsigned integer)
-	RFCh uint8        `json:"rfch"` // Concentrator "RF chain" used for RX (unsigned integer)
-	Stat int8         `json:"stat"` // CRC status: 1 = OK, -1 = fail, 0 = no CRC
-	Freq float64      `json:"freq"` // RX central frequency in MHz (unsigned float, Hz precision)
-	Brd  uint32       `json:"brd"`  // Concentrator board used for RX (unsigned integer)
-	RSSI int16        `json:"rssi"` // RSSI in dBm (signed integer, 1 dB precision)
-	Size uint16       `json:"size"` // RF packet payload size in bytes (unsigned integer)
-	DatR DatR         `json:"datr"` // LoRa datarate identifier (eg. SF12BW500) || FSK datarate (unsigned, in bits per second)
-	Modu string       `json:"modu"` // Modulation identifier "LORA" or "FSK"
-	CodR string       `json:"codr"` // LoRa ECC coding rate identifier
-	LSNR float64      `json:"lsnr"` // Lora SNR ratio in dB (signed float, 0.1 dB precision)
-	HPW  uint8        `json:"hpw"`  // LR-FHSS hopping grid number of steps.
-	Data []byte       `json:"data"` // Base64 encoded RF packet payload, padded
-	RSig []RSig       `json:"rsig"` // Received signal information, per antenna (Optional)
+	Time  *CompactTime `json:"time"`  // UTC time of pkt RX, us precision, ISO 8601 'compact' format (e.g. 2013-03-31T16:21:17.528002Z)
+	Tmms  *int64       `json:"tmms"`  // GPS time of pkt RX, number of milliseconds since 06.Jan.1980
+	Tmst  uint32       `json:"tmst"`  // Internal timestamp of "RX finished" event (32b unsigned)
+	FTime *uint32      `json:"ftime"` // Fine timestamp, number of nanoseconds since last PPS [0..999999999] (Optional)
+	AESK  uint8        `json:"aesk"`  // AES key index used for encrypting fine timestamps
+	Chan  uint8        `json:"chan"`  // Concentrator "IF" channel used for RX (unsigned integer)
+	RFCh  uint8        `json:"rfch"`  // Concentrator "RF chain" used for RX (unsigned integer)
+	Stat  int8         `json:"stat"`  // CRC status: 1 = OK, -1 = fail, 0 = no CRC
+	Freq  float64      `json:"freq"`  // RX central frequency in MHz (unsigned float, Hz precision)
+	Brd   uint32       `json:"brd"`   // Concentrator board used for RX (unsigned integer)
+	RSSI  int16        `json:"rssi"`  // RSSI in dBm (signed integer, 1 dB precision)
+	Size  uint16       `json:"size"`  // RF packet payload size in bytes (unsigned integer)
+	DatR  DatR         `json:"datr"`  // LoRa datarate identifier (eg. SF12BW500) || FSK datarate (unsigned, in bits per second)
+	Modu  string       `json:"modu"`  // Modulation identifier "LORA" or "FSK"
+	CodR  string       `json:"codr"`  // LoRa ECC coding rate identifier
+	LSNR  float64      `json:"lsnr"`  // Lora SNR ratio in dB (signed float, 0.1 dB precision)
+	HPW   uint8        `json:"hpw"`   // LR-FHSS hopping grid number of steps.
+	Data  []byte       `json:"data"`  // Base64 encoded RF packet payload, padded
+	RSig  []RSig       `json:"rsig"`  // Received signal information, per antenna (Optional)
 }
 
 // RSig contains the received signal information per antenna.

@@ -11,6 +11,7 @@ import (
 	"github.com/brocaar/chirpstack-api/go/v3/common"
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
+	"github.com/brocaar/lorawan/gps"
 )
 
 func TestPushDataTest(t *testing.T) {
@@ -151,6 +152,10 @@ func TestGetUplinkFrame(t *testing.T) {
 	assert.Nil(err)
 
 	tmms := int64(10 * time.Minute / time.Millisecond)
+	ftime := uint32(999999999)
+
+	ft := time.Time(gps.NewTimeFromTimeSinceGPSEpoch((time.Duration(tmms) * time.Millisecond) + (time.Duration(ftime) * time.Nanosecond)))
+	ftProto, _ := ptypes.TimestampProto(ft)
 
 	testTable := []struct {
 		Name           string
@@ -462,6 +467,71 @@ func TestGetUplinkFrame(t *testing.T) {
 						Rssi:      -74,
 						Context:   []byte{0x00, 0x0f, 0x42, 0x40},
 						CrcStatus: gw.CRCStatus_CRC_OK,
+					},
+				},
+			},
+		},
+		{
+			Name: "With plain fine-timestamp (ftime)",
+			PushDataPacket: PushDataPacket{
+				GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+				ProtocolVersion: ProtocolVersion2,
+				Payload: PushDataPayload{
+					RXPK: []RXPK{
+						{
+							Time:  &ctNow,
+							Tmms:  &tmms,
+							FTime: &ftime,
+							Tmst:  1000000,
+							Freq:  868.3,
+							Brd:   2,
+							Chan:  1,
+							RFCh:  3,
+							Stat:  1,
+							Modu:  "LORA",
+							DatR:  DatR{LoRa: "SF12BW500"},
+							CodR:  "4/5",
+							RSSI:  -60,
+							LSNR:  5.5,
+							Size:  5,
+							Data:  []byte{1, 2, 3, 4, 5},
+						},
+					},
+				},
+			},
+			UplinkFrames: []gw.UplinkFrame{
+				{
+					PhyPayload: []byte{1, 2, 3, 4, 5},
+					TxInfo: &gw.UplinkTXInfo{
+						Frequency:  868300000,
+						Modulation: common.Modulation_LORA,
+						ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
+							LoraModulationInfo: &gw.LoRaModulationInfo{
+								Bandwidth:             500,
+								SpreadingFactor:       12,
+								CodeRate:              "4/5",
+								PolarizationInversion: false,
+							},
+						},
+					},
+					RxInfo: &gw.UplinkRXInfo{
+						GatewayId:         []byte{1, 2, 3, 4, 5, 6, 7, 8},
+						Time:              pbTime,
+						TimeSinceGpsEpoch: ptypes.DurationProto(10 * time.Minute),
+						Rssi:              -60,
+						LoraSnr:           5.5,
+						Channel:           1,
+						RfChain:           3,
+						Board:             2,
+						Antenna:           0,
+						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
+						CrcStatus:         gw.CRCStatus_CRC_OK,
+						FineTimestampType: gw.FineTimestampType_PLAIN,
+						FineTimestamp: &gw.UplinkRXInfo_PlainFineTimestamp{
+							PlainFineTimestamp: &gw.PlainFineTimestamp{
+								Time: ftProto,
+							},
+						},
 					},
 				},
 			},
