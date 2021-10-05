@@ -17,7 +17,7 @@ mkdir -p $PACKAGE_DIR/CONTROL
 cat > $PACKAGE_DIR/CONTROL/control << EOF
 Package: $PACKAGE_NAME
 Version: $PACKAGE_VERSION-$REV
-Architecture: kona_micro
+Architecture: kona
 Maintainer: Orne Brocaar <info@brocaar.com>
 Priority: optional
 Section: network
