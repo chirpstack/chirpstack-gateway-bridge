@@ -209,6 +209,7 @@ type="{{ .Backend.Type }}"
 
 # Integration configuration.
 [integration]
+type="{{.Integration.Type }}"
 # Payload marshaler.
 #
 # This defines how the MQTT payloads are encoded. Valid options are:
@@ -391,6 +392,14 @@ marshaler="{{ .Integration.Marshaler }}"
     tls_cert="{{ .Integration.MQTT.Auth.AzureIoTHub.TLSCert }}"
     tls_key="{{ .Integration.MQTT.Auth.AzureIoTHub.TLSKey }}"
 
+  # ZeroMQ integration configuration.
+  [integration.zmq]
+  # Event topic template.
+  event_url="{{ .Integration.ZMQ.EventURL }}"
+  command_url="{{ .Integration.ZMQ.CommandURL }}"
+
+  # Command topic template.
+  command_topic_template="{{ .Integration.ZMQ.CommandTopicTemplate }}"
 
 # Metrics configuration.
 [metrics]

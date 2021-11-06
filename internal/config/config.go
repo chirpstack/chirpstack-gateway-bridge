@@ -101,6 +101,12 @@ type Config struct {
 				} `mapstructure:"azure_iot_hub"`
 			} `mapstructure:"auth"`
 		} `mapstructure:"mqtt"`
+
+		ZMQ struct {
+			EventURL      				string        `mapstructure:"event_url"`
+			CommandURL    				string        `mapstructure:"command_url"`
+			CommandTopicTemplate	string        `mapstructure:"command_topic_template"`
+		} `mapstructure:"zmq"`
 	} `mapstructure:"integration"`
 
 	Metrics struct {

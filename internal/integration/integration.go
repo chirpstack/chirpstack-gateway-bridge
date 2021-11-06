@@ -8,6 +8,7 @@ import (
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration/mqtt"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration/zmq"
 	"github.com/brocaar/lorawan"
 )
 
@@ -24,9 +25,18 @@ var integration Integration
 // Setup configures the integration.
 func Setup(conf config.Config) error {
 	var err error
-	integration, err = mqtt.NewBackend(conf)
+
+	switch conf.Integration.Type {
+	case "mqtt":
+		integration, err = mqtt.NewBackend(conf)
+	case "zmq":
+		integration, err = zmq.NewBackend(conf)
+	default:
+		return fmt.Error("unknown integration type: %s", conf.Integration.Type)
+	}
+
 	if err != nil {
-		return errors.Wrap(err, "setup mqtt integration error")
+		return errors.Wrap(err, "new integration error")
 	}
 
 	return nil
