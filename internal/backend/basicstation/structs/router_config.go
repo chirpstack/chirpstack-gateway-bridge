@@ -113,7 +113,7 @@ func GetRouterConfig(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lor
 	}
 	for i := 0; i < 16; i++ {
 		dr, err := b.GetDataRate(i)
-		if err != nil {
+		if err != nil || (dr.Modulation != band.LoRaModulation && dr.Modulation != band.FSKModulation) {
 			c.DRs = append(c.DRs, []int{-1, 0, 0})
 			continue
 		}
