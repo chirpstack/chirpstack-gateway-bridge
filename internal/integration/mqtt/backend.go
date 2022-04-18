@@ -272,6 +272,11 @@ func (b *Backend) SetGatewaySubscription(subscribe bool, gatewayID lorawan.EUI64
 		delete(b.gateways, gatewayID)
 	}
 
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"subscribe":  subscribe,
+	}).Debug("integration/mqtt: gateway subscription set")
+
 	return nil
 }
 
@@ -288,6 +293,12 @@ func (b *Backend) subscribeGateway(gatewayID lorawan.EUI64) error {
 	if token := b.conn.Subscribe(topic.String(), b.qos, b.handleCommand); token.WaitTimeout(b.maxTokenWait) && token.Error() != nil {
 		return errors.Wrap(token.Error(), "subscribe topic error")
 	}
+
+	log.WithFields(log.Fields{
+		"topic": topic.String(),
+		"qos":   b.qos,
+	}).Debug("integration/mqtt: subscribed to topic")
+
 	return nil
 }
 
@@ -303,6 +314,10 @@ func (b *Backend) unsubscribeGateway(gatewayID lorawan.EUI64) error {
 	if token := b.conn.Unsubscribe(topic.String()); token.WaitTimeout(b.maxTokenWait) && token.Error() != nil {
 		return errors.Wrap(token.Error(), "unsubscribe topic error")
 	}
+
+	log.WithFields(log.Fields{
+		"topic": topic.String(),
+	}).Debug("integration/mqtt: unsubscribed from topic")
 
 	return nil
 }
