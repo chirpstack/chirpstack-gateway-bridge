@@ -63,6 +63,7 @@ type Config struct {
 			KeepAlive               time.Duration `mapstructure:"keep_alive"`
 			MaxReconnectInterval    time.Duration `mapstructure:"max_reconnect_interval"`
 			TerminateOnConnectError bool          `mapstructure:"terminate_on_connect_error"`
+			MaxTokenWait            time.Duration `mapstructure:"max_token_wait"`
 
 			Auth struct {
 				Type string `mapstructure:"type"`

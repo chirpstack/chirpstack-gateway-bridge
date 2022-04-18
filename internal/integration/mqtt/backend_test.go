@@ -64,6 +64,7 @@ func (ts *MQTTBackendTestSuite) SetupSuite() {
 	conf.Integration.MQTT.Auth.Generic.Password = password
 	conf.Integration.MQTT.Auth.Generic.CleanSession = true
 	conf.Integration.MQTT.Auth.Generic.ClientID = ts.gatewayID.String()
+	conf.Integration.MQTT.MaxTokenWait = time.Second
 
 	var err error
 	ts.backend, err = NewBackend(conf)
