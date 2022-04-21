@@ -432,7 +432,7 @@ func (b *Backend) handleTXACK(up udpPacket) error {
 
 		txAck := gw.DownlinkTXAck{
 			GatewayId:  p.GatewayMAC[:],
-			Token:      uint32(p.RandomToken),
+			Token:      frame.Token,
 			DownlinkId: frame.DownlinkId,
 			Items:      txAckItems,
 		}
