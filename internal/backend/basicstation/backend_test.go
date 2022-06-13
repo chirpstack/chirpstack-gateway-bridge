@@ -378,6 +378,48 @@ func (ts *BackendTestSuite) TestProprietaryDataFrame() {
 	}, &stats))
 }
 
+func (ts *BackendTestSuite) TestRequestTimesync() {
+	assert := require.New(ts.T())
+	ts.backend.timesyncInterval = time.Hour
+	gatewayID := lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8}
+
+	lastTimesyncBefore, err := ts.backend.gateways.getLastTimesync(gatewayID)
+	assert.NoError(err)
+
+	upf := structs.UplinkDataFrame{
+		RadioMetaData: structs.RadioMetaData{
+			DR:        5,
+			Frequency: 868100000,
+			UpInfo: structs.RadioMetaDataUpInfo{
+				RCtx:  1,
+				XTime: 2,
+				RSSI:  120,
+				SNR:   5.5,
+			},
+		},
+		MessageType: structs.UplinkDataFrameMessage,
+		MHDR:        0x40, // unconfirmed data-up
+		DevAddr:     -10,
+		FCtrl:       0x80, // ADR
+		FCnt:        400,
+		FOpts:       "0102", // invalid, but for the purpose of testing
+		MIC:         -20,
+		FPort:       -1,
+	}
+	assert.NoError(ts.wsClient.WriteJSON(upf))
+
+	var timesyncReq structs.TimeSyncGPSTimeTransfer
+	assert.NoError(ts.wsClient.ReadJSON(&timesyncReq))
+
+	assert.EqualValues(timesyncReq.XTime, 2)
+	assert.True(timesyncReq.GPSTime > 0)
+
+	lastTimesyncAfter, err := ts.backend.gateways.getLastTimesync(gatewayID)
+	assert.NoError(err)
+
+	assert.NotEqual(lastTimesyncBefore, lastTimesyncAfter)
+}
+
 func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 	assert := require.New(ts.T())
 	id, err := uuid.NewV4()

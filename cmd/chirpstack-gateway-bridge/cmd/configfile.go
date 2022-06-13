@@ -133,6 +133,13 @@ type="{{ .Backend.Type }}"
   # Ping interval.
   ping_interval="{{ .Backend.BasicStation.PingInterval }}"
 
+  # Timesync interval.
+  #
+  # This defines the interval in which the ChirpStack Gateway Bridge sends
+  # a timesync request to the gateway. Setting this to 0 disables sending
+  # timesync requests.
+  timesync_interval="{{ .Backend.BasicStation.TimesyncInterval }}"
+
   # Read timeout.
   #
   # This interval must be greater than the configured ping interval.

@@ -12,3 +12,11 @@ type TimeSyncResponse struct {
 	TxTime      int64       `json:"txtime"`
 	GPSTime     int64       `json:"gpstime"`
 }
+
+// TimeSyncGPSTimeTransfer implements the GPS time transfer
+// that is initiated by the NS.
+type TimeSyncGPSTimeTransfer struct {
+	MessageType MessageType `json:"msgtype"`
+	XTime       uint64      `json:"xtime"`
+	GPSTime     int64       `json:"gpstime"`
+}

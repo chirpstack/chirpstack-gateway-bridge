@@ -52,10 +52,11 @@ type Backend struct {
 	scheme   string
 	isClosed bool
 
-	statsInterval time.Duration
-	pingInterval  time.Duration
-	readTimeout   time.Duration
-	writeTimeout  time.Duration
+	statsInterval    time.Duration
+	pingInterval     time.Duration
+	timesyncInterval time.Duration
+	readTimeout      time.Duration
+	writeTimeout     time.Duration
 
 	gateways gateways
 
@@ -89,10 +90,11 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		tlsCert: conf.Backend.BasicStation.TLSCert,
 		tlsKey:  conf.Backend.BasicStation.TLSKey,
 
-		statsInterval: conf.Backend.BasicStation.StatsInterval,
-		pingInterval:  conf.Backend.BasicStation.PingInterval,
-		readTimeout:   conf.Backend.BasicStation.ReadTimeout,
-		writeTimeout:  conf.Backend.BasicStation.WriteTimeout,
+		statsInterval:    conf.Backend.BasicStation.StatsInterval,
+		pingInterval:     conf.Backend.BasicStation.PingInterval,
+		timesyncInterval: conf.Backend.BasicStation.TimesyncInterval,
+		readTimeout:      conf.Backend.BasicStation.ReadTimeout,
+		writeTimeout:     conf.Backend.BasicStation.WriteTimeout,
 
 		region:       band.Name(conf.Backend.BasicStation.Region),
 		frequencyMin: conf.Backend.BasicStation.FrequencyMin,
@@ -504,6 +506,7 @@ func (b *Backend) handleGateway(r *http.Request, conn *connection) {
 				continue
 			}
 			b.handleUplinkDataFrame(gatewayID, pl)
+			b.sendTimesyncRequest(gatewayID, pl.RadioMetaData.UpInfo)
 		case structs.JoinRequestMessage:
 			// handle join-request
 			var pl structs.JoinRequest
@@ -516,6 +519,7 @@ func (b *Backend) handleGateway(r *http.Request, conn *connection) {
 				continue
 			}
 			b.handleJoinRequest(gatewayID, pl)
+			b.sendTimesyncRequest(gatewayID, pl.RadioMetaData.UpInfo)
 		case structs.ProprietaryDataFrameMessage:
 			// handle proprietary uplink
 			var pl structs.UplinkProprietaryFrame
@@ -528,6 +532,7 @@ func (b *Backend) handleGateway(r *http.Request, conn *connection) {
 				continue
 			}
 			b.handleProprietaryDataFrame(gatewayID, pl)
+			b.sendTimesyncRequest(gatewayID, pl.RadioMetaData.UpInfo)
 		case structs.DownlinkTransmittedMessage:
 			// handle downlink transmitted
 			var pl structs.DownlinkTransmitted
@@ -752,7 +757,7 @@ func (b *Backend) handleTimeSync(gatewayID lorawan.EUI64, v structs.TimeSyncRequ
 		"gateway_id": gatewayID,
 		"txtime":     resp.TxTime,
 		"gpstime":    resp.GPSTime,
-	}).Info("backend/basicstation: timesync message sent to gateway")
+	}).Info("backend/basicstation: timesync response sent to gateway")
 }
 
 func (b *Backend) sendToGateway(gatewayID lorawan.EUI64, v interface{}) error {
@@ -842,4 +847,49 @@ func (b *Backend) websocketWrap(handler func(*http.Request, *connection), w http
 
 	handler(r, &c)
 	done <- struct{}{}
+}
+
+func (b *Backend) sendTimesyncRequest(gatewayID lorawan.EUI64, upInfo structs.RadioMetaDataUpInfo) {
+	// Nothing to do
+	if b.timesyncInterval == 0 {
+		return
+	}
+
+	lastTimesync, err := b.gateways.getLastTimesync(gatewayID)
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"gateway_id": gatewayID,
+		}).Error("backend/basicstation: get last timesync timestamp error")
+		return
+	}
+
+	// Interval has not been reached yet
+	if lastTimesync.Add(b.timesyncInterval).After(time.Now()) {
+		return
+	}
+
+	// Set last timesync
+	if err := b.gateways.setLastTimesync(gatewayID, time.Now()); err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"gateway_id": gatewayID,
+		}).Error("backend/basicstation: set last timesync timestamp error")
+		return
+	}
+
+	timesync := structs.TimeSyncGPSTimeTransfer{
+		MessageType: structs.TimeSyncMessage,
+		XTime:       upInfo.XTime,
+		GPSTime:     int64(gps.Time(time.Now()).TimeSinceGPSEpoch() / time.Microsecond),
+	}
+
+	if err := b.sendToGateway(gatewayID, &timesync); err != nil {
+		log.WithError(err).Error("backend/basicstation: send to gateway error")
+		return
+	}
+
+	log.WithFields(log.Fields{
+		"gateway_id": gatewayID,
+		"xtime":      timesync.XTime,
+		"gpstime":    timesync.GPSTime,
+	}).Info("backend/basicstation: timesync request sent to gateway")
 }

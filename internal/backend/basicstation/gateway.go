@@ -3,6 +3,7 @@ package basicstation
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -17,8 +18,9 @@ var (
 
 type connection struct {
 	sync.Mutex
-	conn  *websocket.Conn
-	stats *stats.Collector
+	conn         *websocket.Conn
+	stats        *stats.Collector
+	lastTimesync time.Time
 }
 
 type gateways struct {
@@ -48,6 +50,33 @@ func (g *gateways) set(id lorawan.EUI64, c *connection) error {
 	if g.subscribeEventFunc != nil {
 		g.subscribeEventFunc(events.Subscribe{Subscribe: true, GatewayID: id})
 	}
+
+	return nil
+}
+
+func (g *gateways) getLastTimesync(id lorawan.EUI64) (time.Time, error) {
+	g.RLock()
+	defer g.RUnlock()
+
+	gw, ok := g.gateways[id]
+	if !ok {
+		return time.Time{}, errGatewayDoesNotExist
+	}
+
+	return gw.lastTimesync, nil
+}
+
+func (g *gateways) setLastTimesync(id lorawan.EUI64, ts time.Time) error {
+	g.Lock()
+	defer g.Unlock()
+
+	gw, ok := g.gateways[id]
+	if !ok {
+		return errGatewayDoesNotExist
+	}
+
+	gw.lastTimesync = ts
+	g.gateways[id] = gw
 
 	return nil
 }
