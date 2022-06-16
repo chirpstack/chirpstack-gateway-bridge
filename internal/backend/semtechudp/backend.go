@@ -511,7 +511,6 @@ func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats gw.GatewayStats) {
 		stats.RxPacketsPerModulation = s.RxPacketsPerModulation
 		stats.TxPacketsPerModulation = s.TxPacketsPerModulation
 		stats.TxPacketsPerStatus = s.TxPacketsPerStatus
-		stats.Location = s.Location
 	}
 
 	if b.gatewayStatsFunc != nil {
