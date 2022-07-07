@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine AS development
+FROM golang:1.18-alpine AS development
 
 ENV PROJECT_PATH=/chirpstack-gateway-bridge
 ENV PATH=$PATH:$PROJECT_PATH/build
