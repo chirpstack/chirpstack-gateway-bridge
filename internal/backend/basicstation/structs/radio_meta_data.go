@@ -3,7 +3,6 @@ package structs
 import (
 	"encoding/binary"
 	"math"
-	"os"
 	"time"
 
 	"github.com/brocaar/chirpstack-api/go/v3/common"
@@ -76,6 +75,17 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 		CrcStatus: gw.CRCStatus_CRC_OK,
 	}
 
+	if rxTime := rmd.UpInfo.RxTime; rxTime != 0 {
+		sec, nsec := math.Modf(rmd.UpInfo.RxTime)
+		if sec != 0 {
+			val := time.Unix(int64(sec), int64(nsec))
+			pb.RxInfo.Time, err = ptypes.TimestampProto(val)
+			if err != nil {
+				return errors.Wrap(err, "rxtime/timestamp proto error")
+			}
+		}
+	}
+
 	if gpsTime := rmd.UpInfo.GPSTime; gpsTime != 0 {
 		gpsTimeDur := time.Duration(gpsTime) * time.Microsecond
 		gpsTimeTime := time.Time(gps.NewTimeFromTimeSinceGPSEpoch(gpsTimeDur))
@@ -86,19 +96,6 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 			return errors.Wrap(err, "GPSTime/timestamp proto error")
 		}
 
-	}
-
-	// The WORKAROUND_IGNORE_RX_TIME flag is a workaround in case the reported
-	// rxtime from the Basics Station must be ignored (e.g. it is not accurate).
-	if rxTime := rmd.UpInfo.RxTime; rxTime != 0 && os.Getenv("WORKAROUND_IGNORE_RX_TIME") == "" {
-		sec, nsec := math.Modf(rmd.UpInfo.RxTime)
-		if sec != 0 {
-			val := time.Unix(int64(sec), int64(nsec))
-			pb.RxInfo.Time, err = ptypes.TimestampProto(val)
-			if err != nil {
-				return errors.Wrap(err, "rxtime/timestamp proto error")
-			}
-		}
 	}
 
 	// Context
