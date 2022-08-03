@@ -9,16 +9,15 @@ import (
 	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration/mqtt/auth"
 	"github.com/brocaar/lorawan"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // Backend implements a MQTT backend.
@@ -30,10 +29,10 @@ type Backend struct {
 	connClosed bool
 	clientOpts *paho.ClientOptions
 
-	downlinkFrameFunc             func(gw.DownlinkFrame)
-	gatewayConfigurationFunc      func(gw.GatewayConfiguration)
-	gatewayCommandExecRequestFunc func(gw.GatewayCommandExecRequest)
-	rawPacketForwarderCommandFunc func(gw.RawPacketForwarderCommand)
+	downlinkFrameFunc             func(*gw.DownlinkFrame)
+	gatewayConfigurationFunc      func(*gw.GatewayConfiguration)
+	gatewayCommandExecRequestFunc func(*gw.GatewayCommandExecRequest)
+	rawPacketForwarderCommandFunc func(*gw.RawPacketForwarderCommand)
 
 	gatewaysMux             sync.RWMutex
 	gateways                map[lorawan.EUI64]struct{}
@@ -97,19 +96,16 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	switch conf.Integration.Marshaler {
 	case "json":
 		b.marshal = func(msg proto.Message) ([]byte, error) {
-			marshaler := &jsonpb.Marshaler{
-				EnumsAsInts:  false,
-				EmitDefaults: true,
-			}
-			str, err := marshaler.MarshalToString(msg)
-			return []byte(str), err
+			return protojson.MarshalOptions{
+				EmitUnpopulated: true,
+			}.Marshal(msg)
 		}
 
 		b.unmarshal = func(b []byte, msg proto.Message) error {
-			unmarshaler := &jsonpb.Unmarshaler{
-				AllowUnknownFields: true, // we don't want to fail on unknown fields
-			}
-			return unmarshaler.Unmarshal(bytes.NewReader(b), msg)
+			return protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+				AllowPartial:   true,
+			}.Unmarshal(b, msg)
 		}
 	case "protobuf":
 		b.marshal = func(msg proto.Message) ([]byte, error) {
@@ -163,7 +159,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		// the last will and testament.
 		if b.stateTopicTemplate != nil {
 			pl := gw.ConnState{
-				GatewayId: gatewayID[:],
+				GatewayId: gatewayID.String(),
 				State:     gw.ConnState_OFFLINE,
 			}
 			bb, err := b.marshal(&pl)
@@ -210,7 +206,7 @@ func (b *Backend) Stop() error {
 	// Set gateway state to offline for all gateways.
 	for gatewayID := range b.gateways {
 		pl := gw.ConnState{
-			GatewayId: gatewayID[:],
+			GatewayId: gatewayID.String(),
 			State:     gw.ConnState_OFFLINE,
 		}
 		if err := b.PublishState(gatewayID, "conn", &pl); err != nil {
@@ -224,22 +220,22 @@ func (b *Backend) Stop() error {
 }
 
 // SetDownlinkFrameFunc sets the DownlinkFrame handler func.
-func (b *Backend) SetDownlinkFrameFunc(f func(gw.DownlinkFrame)) {
+func (b *Backend) SetDownlinkFrameFunc(f func(*gw.DownlinkFrame)) {
 	b.downlinkFrameFunc = f
 }
 
 // SetGatewayConfigurationFunc sets the GatewayConfiguration handler func.
-func (b *Backend) SetGatewayConfigurationFunc(f func(gw.GatewayConfiguration)) {
+func (b *Backend) SetGatewayConfigurationFunc(f func(*gw.GatewayConfiguration)) {
 	b.gatewayConfigurationFunc = f
 }
 
 // SetGatewayCommandExecRequestFunc sets the GatewayCommandExecRequest handler func.
-func (b *Backend) SetGatewayCommandExecRequestFunc(f func(gw.GatewayCommandExecRequest)) {
+func (b *Backend) SetGatewayCommandExecRequestFunc(f func(*gw.GatewayCommandExecRequest)) {
 	b.gatewayCommandExecRequestFunc = f
 }
 
 // SetRawPacketForwarderCommandFunc sets the RawPacketForwarderCommand handler func.
-func (b *Backend) SetRawPacketForwarderCommandFunc(f func(gw.RawPacketForwarderCommand)) {
+func (b *Backend) SetRawPacketForwarderCommandFunc(f func(*gw.RawPacketForwarderCommand)) {
 	b.rawPacketForwarderCommandFunc = f
 }
 
@@ -323,18 +319,19 @@ func (b *Backend) unsubscribeGateway(gatewayID lorawan.EUI64) error {
 }
 
 // PublishEvent publishes the given event.
-func (b *Backend) PublishEvent(gatewayID lorawan.EUI64, event string, id uuid.UUID, v proto.Message) error {
+func (b *Backend) PublishEvent(gatewayID lorawan.EUI64, event string, id uint32, v proto.Message) error {
 	mqttEventCounter(event).Inc()
-	idPrefix := map[string]string{
-		"up":    "uplink_",
-		"ack":   "downlink_",
-		"stats": "stats_",
-		"exec":  "exec_",
-		"raw":   "raw_",
+
+	fields := log.Fields{}
+	if event == "up" {
+		fields["uplink_id"] = id
 	}
-	return b.publishEvent(gatewayID, event, log.Fields{
-		idPrefix[event] + "id": id,
-	}, v)
+
+	if event == "down" {
+		fields["downlink_id"] = id
+	}
+
+	return b.publishEvent(gatewayID, event, fields, v)
 }
 
 // PublishState publishes the given state as retained message.
@@ -489,7 +486,7 @@ func (b *Backend) subscribeLoop() {
 
 		for _, gatewayID := range subscribe {
 			statePL := gw.ConnState{
-				GatewayId: gatewayID[:],
+				GatewayId: gatewayID.String(),
 				State:     gw.ConnState_ONLINE,
 			}
 
@@ -506,7 +503,7 @@ func (b *Backend) subscribeLoop() {
 
 		for _, gatewayID := range unsubscribe {
 			statePL := gw.ConnState{
-				GatewayId: gatewayID[:],
+				GatewayId: gatewayID.String(),
 				State:     gw.ConnState_OFFLINE,
 			}
 
@@ -542,36 +539,20 @@ func (b *Backend) handleDownlinkFrame(c paho.Client, msg paho.Message) {
 		return
 	}
 
-	var downID uuid.UUID
-	copy(downID[:], downlinkFrame.GetDownlinkId())
-
-	// For backwards compatibility.
-	if len(downlinkFrame.Items) == 0 && (downlinkFrame.TxInfo != nil && len(downlinkFrame.PhyPayload) != 0) {
-		downlinkFrame.Items = append(downlinkFrame.Items, &gw.DownlinkFrameItem{
-			PhyPayload: downlinkFrame.PhyPayload,
-			TxInfo:     downlinkFrame.TxInfo,
-		})
-
-		downlinkFrame.GatewayId = downlinkFrame.Items[0].GetTxInfo().GetGatewayId()
-	}
-
 	if len(downlinkFrame.Items) == 0 {
 		log.WithFields(log.Fields{
-			"downlink_id": downID,
+			"downlink_id": downlinkFrame.GetDownlinkId(),
 		}).Error("integration/mqtt: downlink must have at least one item")
 		return
 	}
 
-	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], downlinkFrame.GatewayId)
-
 	log.WithFields(log.Fields{
-		"gateway_id":  gatewayID,
-		"downlink_id": downID,
+		"gateway_id":  downlinkFrame.GetGatewayId(),
+		"downlink_id": downlinkFrame.GetDownlinkId(),
 	}).Info("integration/mqtt: downlink frame received")
 
 	if b.downlinkFrameFunc != nil {
-		b.downlinkFrameFunc(downlinkFrame)
+		b.downlinkFrameFunc(&downlinkFrame)
 	}
 }
 
@@ -587,7 +568,7 @@ func (b *Backend) handleGatewayConfiguration(c paho.Client, msg paho.Message) {
 	}
 
 	if b.gatewayConfigurationFunc != nil {
-		b.gatewayConfigurationFunc(gatewayConfig)
+		b.gatewayConfigurationFunc(&gatewayConfig)
 	}
 }
 
@@ -601,17 +582,19 @@ func (b *Backend) handleGatewayCommandExecRequest(c paho.Client, msg paho.Messag
 	}
 
 	var gatewayID lorawan.EUI64
-	var execID uuid.UUID
-	copy(gatewayID[:], gatewayCommandExecRequest.GetGatewayId())
-	copy(execID[:], gatewayCommandExecRequest.GetExecId())
+	if err := gatewayID.UnmarshalText([]byte(gatewayCommandExecRequest.GetGatewayId())); err != nil {
+		log.WithFields(log.Fields{
+			"topic": msg.Topic(),
+		}).WithError(err).Error("integration/mqtt: decode gateway id error")
+		return
+	}
 
 	log.WithFields(log.Fields{
 		"gateway_id": gatewayID,
-		"exec_id":    execID,
 	}).Info("integration/mqtt: gateway command execution request received")
 
 	if b.gatewayCommandExecRequestFunc != nil {
-		b.gatewayCommandExecRequestFunc(gatewayCommandExecRequest)
+		b.gatewayCommandExecRequestFunc(&gatewayCommandExecRequest)
 	}
 }
 
@@ -625,17 +608,19 @@ func (b *Backend) handleRawPacketForwarderCommand(c paho.Client, msg paho.Messag
 	}
 
 	var gatewayID lorawan.EUI64
-	var rawID uuid.UUID
-	copy(gatewayID[:], rawPacketForwarderCommand.GetGatewayId())
-	copy(rawID[:], rawPacketForwarderCommand.GetRawId())
+	if err := gatewayID.UnmarshalText([]byte(rawPacketForwarderCommand.GetGatewayId())); err != nil {
+		log.WithFields(log.Fields{
+			"topic": msg.Topic(),
+		}).WithError(err).Error("integration/mqtt: decode gateway id error")
+		return
+	}
 
 	log.WithFields(log.Fields{
 		"gateway_id": gatewayID,
-		"raw_id":     rawID,
 	}).Info("integration/mqtt: raw packet-forwarder command received")
 
 	if b.rawPacketForwarderCommandFunc != nil {
-		b.rawPacketForwarderCommandFunc(rawPacketForwarderCommand)
+		b.rawPacketForwarderCommandFunc(&rawPacketForwarderCommand)
 	}
 }
 

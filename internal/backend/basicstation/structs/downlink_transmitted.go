@@ -1,8 +1,8 @@
 package structs
 
 import (
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // DownlinkTransmitted implements the downlink transmitted message.
@@ -13,11 +13,11 @@ type DownlinkTransmitted struct {
 }
 
 // DownlinkTransmittedToProto converts the DownlinkTransmitted to the protobuf struct.
-func DownlinkTransmittedToProto(gatewayID lorawan.EUI64, dt DownlinkTransmitted) (gw.DownlinkTXAck, error) {
-	return gw.DownlinkTXAck{
-		GatewayId: gatewayID[:],
-		Token:     dt.DIID,
-		Items: []*gw.DownlinkTXAckItem{
+func DownlinkTransmittedToProto(gatewayID lorawan.EUI64, dt DownlinkTransmitted) (gw.DownlinkTxAck, error) {
+	return gw.DownlinkTxAck{
+		GatewayId:  gatewayID.String(),
+		DownlinkId: dt.DIID,
+		Items: []*gw.DownlinkTxAckItem{
 			{
 				Status: gw.TxAckStatus_OK,
 			},

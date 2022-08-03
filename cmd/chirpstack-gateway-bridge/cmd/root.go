@@ -131,12 +131,6 @@ func initConfig() {
 		log.WithError(err).Fatal("unmarshal config error")
 	}
 
-	// backwards compatibility when BasicStation filters have been configured.
-	if config.C.Backend.Type == "basic_station" && (len(config.C.Backend.BasicStation.Filters.NetIDs) != 0 || len(config.C.Backend.BasicStation.Filters.JoinEUIs) != 0) {
-		config.C.Filters.NetIDs = config.C.Backend.BasicStation.Filters.NetIDs
-		config.C.Filters.JoinEUIs = config.C.Backend.BasicStation.Filters.JoinEUIs
-	}
-
 	// migrate server to servers
 	if config.C.Integration.MQTT.Auth.Generic.Server != "" {
 		config.C.Integration.MQTT.Auth.Generic.Servers = []string{config.C.Integration.MQTT.Auth.Generic.Server}

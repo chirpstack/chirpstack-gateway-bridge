@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
-	"github.com/gofrs/uuid"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
+	"google.golang.org/protobuf/proto"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 	log "github.com/sirupsen/logrus"
@@ -86,26 +86,28 @@ func (ts *MQTTBackendTestSuite) TestLastWill() {
 
 	assert.True(ts.backend.clientOpts.WillEnabled)
 	assert.Equal("gateway/0807060504030201/state/conn", ts.backend.clientOpts.WillTopic)
-	assert.Equal(`{"gatewayID":"CAcGBQQDAgE=","state":"OFFLINE"}`, string(ts.backend.clientOpts.WillPayload))
+	assert.Equal(`{"gatewayIdLegacy":"","gatewayId":"0807060504030201","state":"OFFLINE"}`, string(ts.backend.clientOpts.WillPayload))
 	assert.True(ts.backend.clientOpts.WillRetained)
 }
 
 func (ts *MQTTBackendTestSuite) TestConnStateOnline() {
 	assert := require.New(ts.T())
 
-	connStateChan := make(chan gw.ConnState)
+	connStateChan := make(chan *gw.ConnState)
 	token := ts.mqttClient.Subscribe("gateway/0807060504030201/state/conn", 0, func(c paho.Client, msg paho.Message) {
 		var pl gw.ConnState
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
-		connStateChan <- pl
+		connStateChan <- &pl
 	})
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.Equal(gw.ConnState{
-		GatewayId: ts.gatewayID[:],
+	pl := <-connStateChan
+
+	assert.True(proto.Equal(&gw.ConnState{
+		GatewayId: ts.gatewayID.String(),
 		State:     gw.ConnState_ONLINE,
-	}, <-connStateChan)
+	}, pl))
 
 	token = ts.mqttClient.Unsubscribe("gateway/0807060504030201/state/conn")
 	token.Wait()
@@ -116,7 +118,7 @@ func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 	assert := require.New(ts.T())
 
 	gatewayID := lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8}
-	connStateChan := make(chan gw.ConnState)
+	connStateChan := make(chan *gw.ConnState)
 
 	assert.NoError(ts.backend.SetGatewaySubscription(true, gatewayID))
 	_, ok := ts.backend.gateways[gatewayID]
@@ -130,15 +132,17 @@ func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 	token := ts.mqttClient.Subscribe("gateway/0102030405060708/state/conn", 0, func(c paho.Client, msg paho.Message) {
 		var pl gw.ConnState
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
-		connStateChan <- pl
+		connStateChan <- &pl
 	})
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.Equal(gw.ConnState{
-		GatewayId: gatewayID[:],
+	pl := <-connStateChan
+
+	assert.True(proto.Equal(&gw.ConnState{
+		GatewayId: gatewayID.String(),
 		State:     gw.ConnState_ONLINE,
-	}, <-connStateChan)
+	}, pl))
 
 	ts.T().Run("Unsubscribe", func(t *testing.T) {
 		assert := require.New(t)
@@ -147,10 +151,12 @@ func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 		_, ok := ts.backend.gateways[gatewayID]
 		assert.False(ok)
 
-		assert.Equal(gw.ConnState{
-			GatewayId: gatewayID[:],
+		pl := <-connStateChan
+
+		assert.True(proto.Equal(&gw.ConnState{
+			GatewayId: gatewayID.String(),
 			State:     gw.ConnState_OFFLINE,
-		}, <-connStateChan)
+		}, pl))
 	})
 
 	token = ts.mqttClient.Unsubscribe("gateway/0102030405060708/state/conn")
@@ -160,83 +166,75 @@ func (ts *MQTTBackendTestSuite) TestSubscribeGateway() {
 
 func (ts *MQTTBackendTestSuite) TestPublishUplinkFrame() {
 	assert := require.New(ts.T())
-	id, err := uuid.NewV4()
-	assert.NoError(err)
 
 	uplink := gw.UplinkFrame{
 		PhyPayload: []byte{1, 2, 3, 4},
-		RxInfo: &gw.UplinkRXInfo{
-			UplinkId: id[:],
+		RxInfo: &gw.UplinkRxInfo{
+			UplinkId: 123,
 		},
 	}
 
-	uplinkFrameChan := make(chan gw.UplinkFrame)
+	uplinkFrameChan := make(chan *gw.UplinkFrame)
 	token := ts.mqttClient.Subscribe("gateway/+/event/up", 0, func(c paho.Client, msg paho.Message) {
 		var pl gw.UplinkFrame
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
-		uplinkFrameChan <- pl
+		uplinkFrameChan <- &pl
 	})
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "up", id, &uplink))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "up", uplink.GetRxInfo().GetUplinkId(), &uplink))
 	uplinkReceived := <-uplinkFrameChan
-	assert.Equal(uplink, uplinkReceived)
+	assert.True(proto.Equal(&uplink, uplinkReceived))
 }
 
 func (ts *MQTTBackendTestSuite) TestGatewayStats() {
 	assert := require.New(ts.T())
-	id, err := uuid.NewV4()
-	assert.NoError(err)
 
 	stats := gw.GatewayStats{
-		GatewayId: ts.gatewayID[:],
-		StatsId:   id[:],
+		GatewayId: ts.gatewayID.String(),
 	}
 
-	statsChan := make(chan gw.GatewayStats)
+	statsChan := make(chan *gw.GatewayStats)
 	token := ts.mqttClient.Subscribe("gateway/+/event/stats", 0, func(c paho.Client, msg paho.Message) {
 		var pl gw.GatewayStats
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
-		statsChan <- stats
+		statsChan <- &stats
 	})
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "stats", id, &stats))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "stats", 0, &stats))
 	statsReceived := <-statsChan
-	assert.Equal(stats, statsReceived)
+	assert.True(proto.Equal(&stats, statsReceived))
 }
 
-func (ts *MQTTBackendTestSuite) TestPublishDownlinkTXAck() {
+func (ts *MQTTBackendTestSuite) TestPublishDownlinkTxAck() {
 	assert := require.New(ts.T())
-	id, err := uuid.NewV4()
-	assert.NoError(err)
 
-	txAck := gw.DownlinkTXAck{
-		GatewayId:  ts.gatewayID[:],
-		Token:      1234,
-		DownlinkId: id[:],
-		Items: []*gw.DownlinkTXAckItem{
+	txAck := gw.DownlinkTxAck{
+		GatewayId:  ts.gatewayID.String(),
+		DownlinkId: 1234,
+		Items: []*gw.DownlinkTxAckItem{
 			{
 				Status: gw.TxAckStatus_OK,
 			},
 		},
 	}
 
-	txAckChan := make(chan gw.DownlinkTXAck)
+	txAckChan := make(chan *gw.DownlinkTxAck)
 	token := ts.mqttClient.Subscribe("gateway/+/event/ack", 0, func(c paho.Client, msg paho.Message) {
-		var pl gw.DownlinkTXAck
+		var pl gw.DownlinkTxAck
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
-		txAckChan <- pl
+		txAckChan <- &pl
 	})
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "ack", id, &txAck))
+	assert.NoError(ts.backend.PublishEvent(ts.gatewayID, "ack", txAck.GetDownlinkId(), &txAck))
 
 	txAckReceived := <-txAckChan
-	assert.Equal(txAck, txAckReceived)
+	assert.True(proto.Equal(&txAck, txAckReceived))
 }
 
 func (ts *MQTTBackendTestSuite) TestPublishConnState() {
@@ -244,22 +242,22 @@ func (ts *MQTTBackendTestSuite) TestPublishConnState() {
 
 	// We publish first
 	state := gw.ConnState{
-		GatewayId: ts.gatewayID[:],
+		GatewayId: ts.gatewayID.String(),
 		State:     gw.ConnState_ONLINE,
 	}
 	assert.NoError(ts.backend.PublishState(ts.gatewayID, "conn", &state))
 
 	// And then subscribe to test that the message has been retained
-	stateChan := make(chan gw.ConnState)
+	stateChan := make(chan *gw.ConnState)
 	token := ts.mqttClient.Subscribe("gateway/0807060504030201/state/conn", 0, func(c paho.Client, msg paho.Message) {
 		var pl gw.ConnState
 		assert.NoError(ts.backend.unmarshal(msg.Payload(), &pl))
-		stateChan <- pl
+		stateChan <- &pl
 	})
 	token.Wait()
 	assert.NoError(token.Error())
 
-	assert.Equal(state, <-stateChan)
+	assert.True(proto.Equal(&state, <-stateChan))
 
 	token = ts.mqttClient.Unsubscribe("gateway/0807060504030201/state/conn")
 	token.Wait()
@@ -268,8 +266,8 @@ func (ts *MQTTBackendTestSuite) TestPublishConnState() {
 
 func (ts *MQTTBackendTestSuite) TestDownlinkFrameHandler() {
 	assert := require.New(ts.T())
-	downlinkFrameChan := make(chan gw.DownlinkFrame, 1)
-	ts.backend.SetDownlinkFrameFunc(func(pl gw.DownlinkFrame) {
+	downlinkFrameChan := make(chan *gw.DownlinkFrame, 1)
+	ts.backend.SetDownlinkFrameFunc(func(pl *gw.DownlinkFrame) {
 		downlinkFrameChan <- pl
 	})
 
@@ -289,18 +287,18 @@ func (ts *MQTTBackendTestSuite) TestDownlinkFrameHandler() {
 	assert.NoError(token.Error())
 
 	receivedDownlink := <-downlinkFrameChan
-	assert.Equal(downlink, receivedDownlink)
+	assert.True(proto.Equal(&downlink, receivedDownlink))
 }
 
 func (ts *MQTTBackendTestSuite) TestGatewayConfigHandler() {
 	assert := require.New(ts.T())
-	gatewayConfigurationChan := make(chan gw.GatewayConfiguration, 1)
-	ts.backend.SetGatewayConfigurationFunc(func(pl gw.GatewayConfiguration) {
+	gatewayConfigurationChan := make(chan *gw.GatewayConfiguration, 1)
+	ts.backend.SetGatewayConfigurationFunc(func(pl *gw.GatewayConfiguration) {
 		gatewayConfigurationChan <- pl
 	})
 
 	config := gw.GatewayConfiguration{
-		GatewayId: ts.gatewayID[:],
+		GatewayId: ts.gatewayID.String(),
 		Version:   "123",
 	}
 
@@ -312,22 +310,19 @@ func (ts *MQTTBackendTestSuite) TestGatewayConfigHandler() {
 	assert.NoError(token.Error())
 
 	receivedConfig := <-gatewayConfigurationChan
-	assert.Equal(config, receivedConfig)
+	assert.True(proto.Equal(&config, receivedConfig))
 }
 
 func (ts *MQTTBackendTestSuite) TestGatewayCommandExecRequest() {
 	assert := require.New(ts.T())
-	gatewayComandExecRequestChan := make(chan gw.GatewayCommandExecRequest, 1)
-	ts.backend.SetGatewayCommandExecRequestFunc(func(pl gw.GatewayCommandExecRequest) {
+	gatewayComandExecRequestChan := make(chan *gw.GatewayCommandExecRequest, 1)
+	ts.backend.SetGatewayCommandExecRequestFunc(func(pl *gw.GatewayCommandExecRequest) {
 		gatewayComandExecRequestChan <- pl
 	})
 
-	id, err := uuid.NewV4()
-	assert.NoError(err)
-
 	execReq := gw.GatewayCommandExecRequest{
-		GatewayId: ts.gatewayID[:],
-		ExecId:    id[:],
+		GatewayId: ts.gatewayID.String(),
+		ExecId:    123,
 		Command:   "reboot",
 		Environment: map[string]string{
 			"FOO": "bar",
@@ -342,22 +337,18 @@ func (ts *MQTTBackendTestSuite) TestGatewayCommandExecRequest() {
 	assert.NoError(token.Error())
 
 	receivedExecReq := <-gatewayComandExecRequestChan
-	assert.Equal(execReq, receivedExecReq)
+	assert.True(proto.Equal(&execReq, receivedExecReq))
 }
 
 func (ts *MQTTBackendTestSuite) TestRawPacketForwarderCommand() {
 	assert := require.New(ts.T())
-	rawPacketForwarderCommandChan := make(chan gw.RawPacketForwarderCommand, 1)
-	ts.backend.SetRawPacketForwarderCommandFunc(func(pl gw.RawPacketForwarderCommand) {
+	rawPacketForwarderCommandChan := make(chan *gw.RawPacketForwarderCommand, 1)
+	ts.backend.SetRawPacketForwarderCommandFunc(func(pl *gw.RawPacketForwarderCommand) {
 		rawPacketForwarderCommandChan <- pl
 	})
 
-	id, err := uuid.NewV4()
-	assert.NoError(err)
-
 	pl := gw.RawPacketForwarderCommand{
-		GatewayId: ts.gatewayID[:],
-		RawId:     id[:],
+		GatewayId: ts.gatewayID.String(),
 		Payload:   []byte{0x01, 0x02, 0x03, 0x04},
 	}
 
@@ -369,7 +360,7 @@ func (ts *MQTTBackendTestSuite) TestRawPacketForwarderCommand() {
 	assert.NoError(token.Error())
 
 	received := <-rawPacketForwarderCommandChan
-	assert.Equal(pl, received)
+	assert.True(proto.Equal(&pl, received))
 }
 
 func TestMQTTBackend(t *testing.T) {

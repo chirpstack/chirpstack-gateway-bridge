@@ -6,15 +6,14 @@ import (
 	"time"
 
 	"github.com/go-zeromq/zmq4"
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // Backend implements a ConcentratorD backend.
@@ -26,18 +25,16 @@ type Backend struct {
 	commandMux        sync.Mutex
 
 	// Callback functions for handling events.
-	downlinkTxAckFunc           func(gw.DownlinkTXAck)
-	gatewayStatsFunc            func(gw.GatewayStats)
-	uplinkFrameFunc             func(gw.UplinkFrame)
-	rawPacketForwarderEventFunc func(gw.RawPacketForwarderEvent)
+	downlinkTxAckFunc           func(*gw.DownlinkTxAck)
+	gatewayStatsFunc            func(*gw.GatewayStats)
+	uplinkFrameFunc             func(*gw.UplinkFrame)
+	rawPacketForwarderEventFunc func(*gw.RawPacketForwarderEvent)
 	subscribeEventFunc          func(events.Subscribe)
 
 	eventURL   string
 	commandURL string
 
 	gatewayID lorawan.EUI64
-
-	crcCheck bool
 }
 
 // NewBackend creates a new Backend.
@@ -50,8 +47,6 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	b := Backend{
 		eventURL:   conf.Backend.Concentratord.EventURL,
 		commandURL: conf.Backend.Concentratord.CommandURL,
-
-		crcCheck: conf.Backend.Concentratord.CRCCheck,
 	}
 
 	return &b, nil
@@ -166,22 +161,22 @@ func (b *Backend) Stop() error {
 }
 
 // SetDownlinkTxAckFunc sets the DownlinkTXAck handler func.
-func (b *Backend) SetDownlinkTxAckFunc(f func(gw.DownlinkTXAck)) {
+func (b *Backend) SetDownlinkTxAckFunc(f func(*gw.DownlinkTxAck)) {
 	b.downlinkTxAckFunc = f
 }
 
 // SetGatewayStatsFunc sets the GatewayStats handler func.
-func (b *Backend) SetGatewayStatsFunc(f func(gw.GatewayStats)) {
+func (b *Backend) SetGatewayStatsFunc(f func(*gw.GatewayStats)) {
 	b.gatewayStatsFunc = f
 }
 
 // SetUplinkFrameFunc sets the UplinkFrame handler func.
-func (b *Backend) SetUplinkFrameFunc(f func(gw.UplinkFrame)) {
+func (b *Backend) SetUplinkFrameFunc(f func(*gw.UplinkFrame)) {
 	b.uplinkFrameFunc = f
 }
 
 // SetRawPacketForwarderEventFunc sets the RawPacketForwarderEvent handler func.
-func (b *Backend) SetRawPacketForwarderEventFunc(f func(gw.RawPacketForwarderEvent)) {
+func (b *Backend) SetRawPacketForwarderEventFunc(f func(*gw.RawPacketForwarderEvent)) {
 	b.rawPacketForwarderEventFunc = f
 }
 
@@ -191,22 +186,12 @@ func (b *Backend) SetSubscribeEventFunc(f func(events.Subscribe)) {
 }
 
 // SendDownlinkFrame sends the given downlink frame.
-func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
-	for i := range pl.GetItems() {
-		loRaModInfo := pl.Items[i].GetTxInfo().GetLoraModulationInfo()
-		if loRaModInfo != nil {
-			loRaModInfo.Bandwidth = loRaModInfo.Bandwidth * 1000
-		}
-	}
-
-	var downlinkID uuid.UUID
-	copy(downlinkID[:], pl.GetDownlinkId())
-
+func (b *Backend) SendDownlinkFrame(pl *gw.DownlinkFrame) error {
 	log.WithFields(log.Fields{
-		"downlink_id": downlinkID,
+		"downlink_id": pl.GetDownlinkId(),
 	}).Info("backend/concentratord: forwarding downlink command")
 
-	bb, err := b.commandRequest("down", &pl)
+	bb, err := b.commandRequest("down", pl)
 	if err != nil {
 		log.WithError(err).Fatal("backend/concentratord: send downlink command error")
 	}
@@ -214,13 +199,13 @@ func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
 		return errors.New("no reply receieved, check concentratord logs for error")
 	}
 
-	var ack gw.DownlinkTXAck
+	var ack gw.DownlinkTxAck
 	if err = proto.Unmarshal(bb, &ack); err != nil {
 		return errors.Wrap(err, "protobuf unmarshal error")
 	}
 
 	if b.downlinkTxAckFunc != nil {
-		b.downlinkTxAckFunc(ack)
+		b.downlinkTxAckFunc(&ack)
 	}
 
 	commandCounter("down").Inc()
@@ -228,25 +213,12 @@ func (b *Backend) SendDownlinkFrame(pl gw.DownlinkFrame) error {
 	return nil
 }
 
-// ApplyConfiguration is not implemented.
-func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
-	for i := range config.Channels {
-		loRaModConfig := config.Channels[i].GetLoraModulationConfig()
-		if loRaModConfig != nil {
-			loRaModConfig.Bandwidth = loRaModConfig.Bandwidth * 1000
-		}
-
-		fskModConfig := config.Channels[i].GetFskModulationConfig()
-		if fskModConfig != nil {
-			fskModConfig.Bandwidth = fskModConfig.Bandwidth * 1000
-		}
-	}
-
+func (b *Backend) ApplyConfiguration(config *gw.GatewayConfiguration) error {
 	log.WithFields(log.Fields{
 		"version": config.Version,
 	}).Info("backend/concentratord: forwarding configuration command")
 
-	_, err := b.commandRequest("config", &config)
+	_, err := b.commandRequest("config", config)
 	if err != nil {
 		log.WithError(err).Fatal("backend/concentratord: send configuration command error")
 	}
@@ -257,7 +229,7 @@ func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
 }
 
 // RawPacketForwarderCommand is not implemented.
-func (b *Backend) RawPacketForwarderCommand(gw.RawPacketForwarderCommand) error {
+func (b *Backend) RawPacketForwarderCommand(*gw.RawPacketForwarderCommand) error {
 	return nil
 }
 
@@ -351,29 +323,12 @@ func (b *Backend) handleUplinkFrame(bb []byte) error {
 		return errors.Wrap(err, "protobuf unmarshal error")
 	}
 
-	var uplinkID uuid.UUID
-	copy(uplinkID[:], pl.GetRxInfo().GetUplinkId())
-
-	if b.crcCheck && pl.GetRxInfo().GetCrcStatus() != gw.CRCStatus_CRC_OK {
-		log.WithFields(log.Fields{
-			"uplink_id":  uplinkID,
-			"crc_status": pl.GetRxInfo().GetCrcStatus(),
-		}).Debug("backend/concentratord: ignoring uplink event, CRC is not valid")
-		return nil
-	}
-
-	// Hz to kHz
-	loRaModInfo := pl.GetTxInfo().GetLoraModulationInfo()
-	if loRaModInfo != nil {
-		loRaModInfo.Bandwidth = loRaModInfo.Bandwidth / 1000
-	}
-
 	log.WithFields(log.Fields{
-		"uplink_id": uplinkID,
+		"uplink_id": pl.GetRxInfo().GetUplinkId(),
 	}).Info("backend/concentratord: uplink event received")
 
 	if b.uplinkFrameFunc != nil {
-		b.uplinkFrameFunc(pl)
+		b.uplinkFrameFunc(&pl)
 	}
 
 	return nil
@@ -386,33 +341,12 @@ func (b *Backend) handleGatewayStats(bb []byte) error {
 		return errors.Wrap(err, "protobuf unmarshal error")
 	}
 
-	var statsID uuid.UUID
-	copy(statsID[:], pl.GetStatsId())
-
-	// Hz to kHz
-	for i := range pl.RxPacketsPerModulation {
-		if mod := pl.RxPacketsPerModulation[i].GetModulation(); mod != nil {
-			if lora := mod.GetLora(); lora != nil {
-				lora.Bandwidth = lora.Bandwidth / 1000
-			}
-		}
-	}
-
-	// Hz to kHz
-	for i := range pl.TxPacketsPerModulation {
-		if mod := pl.TxPacketsPerModulation[i].GetModulation(); mod != nil {
-			if lora := mod.GetLora(); lora != nil {
-				lora.Bandwidth = lora.Bandwidth / 1000
-			}
-		}
-	}
-
 	log.WithFields(log.Fields{
-		"stats_id": statsID,
+		"gateway_id": pl.GetGatewayId(),
 	}).Info("backend/concentratord: stats event received")
 
 	if b.gatewayStatsFunc != nil {
-		b.gatewayStatsFunc(pl)
+		b.gatewayStatsFunc(&pl)
 	}
 
 	return nil

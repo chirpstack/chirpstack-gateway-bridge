@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // radioBandwidthPerChannelBandwidth defines the bandwidth that a single radio
@@ -34,17 +33,12 @@ func (c channelByMinRadioCenterFrequency) Less(i, j int) bool {
 func (c channelByMinRadioCenterFrequency) minRadioCenterFreq(i int) uint32 {
 	var channelBandwidth uint32
 
-	switch c[i].Modulation {
-	case common.Modulation_LORA:
-		modInfo := c[i].GetLoraModulationConfig()
-		if modInfo != nil {
-			channelBandwidth = modInfo.Bandwidth * 1000
-		}
-	case common.Modulation_FSK:
-		modInfo := c[i].GetFskModulationConfig()
-		if modInfo != nil {
-			channelBandwidth = modInfo.Bandwidth * 1000
-		}
+	if lora := c[i].GetLoraModulationConfig(); lora != nil {
+		channelBandwidth = lora.Bandwidth
+	}
+
+	if fsk := c[i].GetFskModulationConfig(); fsk != nil {
+		channelBandwidth = fsk.Bandwidth
 	}
 
 	radioBandwidth, ok := radioBandwidthPerChannelBandwidth[channelBandwidth]
@@ -64,17 +58,12 @@ func GetRadioFrequencies(channels []*gw.ChannelConfiguration) ([2]uint32, error)
 	for _, c := range channels {
 		var channelBandwidth uint32
 
-		switch c.Modulation {
-		case common.Modulation_LORA:
-			modInfo := c.GetLoraModulationConfig()
-			if modInfo != nil {
-				channelBandwidth = modInfo.Bandwidth * 1000
-			}
-		case common.Modulation_FSK:
-			modInfo := c.GetFskModulationConfig()
-			if modInfo != nil {
-				channelBandwidth = modInfo.Bandwidth * 1000
-			}
+		if lora := c.GetLoraModulationConfig(); lora != nil {
+			channelBandwidth = lora.Bandwidth
+		}
+
+		if fsk := c.GetFskModulationConfig(); fsk != nil {
+			channelBandwidth = fsk.Bandwidth
 		}
 
 		channelMax := c.Frequency + (channelBandwidth / 2)
@@ -110,17 +99,12 @@ func GetRadioFrequencies(channels []*gw.ChannelConfiguration) ([2]uint32, error)
 func GetRadioForChannel(radios [2]uint32, c *gw.ChannelConfiguration) (int, error) {
 	var channelBandwidth uint32
 
-	switch c.Modulation {
-	case common.Modulation_LORA:
-		modInfo := c.GetLoraModulationConfig()
-		if modInfo != nil {
-			channelBandwidth = modInfo.Bandwidth * 1000
-		}
-	case common.Modulation_FSK:
-		modInfo := c.GetFskModulationConfig()
-		if modInfo != nil {
-			channelBandwidth = modInfo.Bandwidth * 1000
-		}
+	if lora := c.GetLoraModulationConfig(); lora != nil {
+		channelBandwidth = lora.Bandwidth
+	}
+
+	if fsk := c.GetFskModulationConfig(); fsk != nil {
+		channelBandwidth = fsk.Bandwidth
 	}
 
 	channelMin := c.Frequency - (channelBandwidth / 2)

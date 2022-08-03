@@ -20,36 +20,29 @@ type Config struct {
 		Type string `mapstructure:"type"`
 
 		SemtechUDP struct {
-			UDPBind      string `mapstructure:"udp_bind"`
-			SkipCRCCheck bool   `mapstructure:"skip_crc_check"`
-			FakeRxTime   bool   `mapstructure:"fake_rx_time"`
+			UDPBind    string `mapstructure:"udp_bind"`
+			FakeRxTime bool   `mapstructure:"fake_rx_time"`
 		} `mapstructure:"semtech_udp"`
 
 		BasicStation struct {
-			Bind             string        `mapstructure:"bind"`
-			TLSCert          string        `mapstructure:"tls_cert"`
-			TLSKey           string        `mapstructure:"tls_key"`
-			CACert           string        `mapstructure:"ca_cert"`
-			StatsInterval    time.Duration `mapstructure:"stats_interval"`
-			PingInterval     time.Duration `mapstructure:"ping_interval"`
-			TimesyncInterval time.Duration `mapstructure:"timesync_interval"`
-			ReadTimeout      time.Duration `mapstructure:"read_timeout"`
-			WriteTimeout     time.Duration `mapstructure:"write_timeout"`
-			// TODO: remove Filters in the next major release, use global filters instead
-			Filters struct {
-				NetIDs   []string    `mapstructure:"net_ids"`
-				JoinEUIs [][2]string `mapstructure:"join_euis"`
-			} `mapstructure:"filters"`
-			Region        string                     `mapstructure:"region"`
-			FrequencyMin  uint32                     `mapstructure:"frequency_min"`
-			FrequencyMax  uint32                     `mapstructure:"frequency_max"`
-			Concentrators []BasicStationConcentrator `mapstructure:"concentrators"`
+			Bind             string                     `mapstructure:"bind"`
+			TLSCert          string                     `mapstructure:"tls_cert"`
+			TLSKey           string                     `mapstructure:"tls_key"`
+			CACert           string                     `mapstructure:"ca_cert"`
+			StatsInterval    time.Duration              `mapstructure:"stats_interval"`
+			PingInterval     time.Duration              `mapstructure:"ping_interval"`
+			TimesyncInterval time.Duration              `mapstructure:"timesync_interval"`
+			ReadTimeout      time.Duration              `mapstructure:"read_timeout"`
+			WriteTimeout     time.Duration              `mapstructure:"write_timeout"`
+			Region           string                     `mapstructure:"region"`
+			FrequencyMin     uint32                     `mapstructure:"frequency_min"`
+			FrequencyMax     uint32                     `mapstructure:"frequency_max"`
+			Concentrators    []BasicStationConcentrator `mapstructure:"concentrators"`
 		} `mapstructure:"basic_station"`
 
 		Concentratord struct {
 			EventURL   string `mapstructure:"event_url"`
 			CommandURL string `mapstructure:"command_url"`
-			CRCCheck   bool   `mapstructure:"crc_check"`
 		} `mapstructure:"concentratord"`
 	} `mapstructure:"backend"`
 

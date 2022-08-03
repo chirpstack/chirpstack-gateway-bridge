@@ -1,28 +1,25 @@
 package basicstation
 
 import (
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/websocket"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation/structs"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/stats"
@@ -30,6 +27,7 @@ import (
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 	"github.com/brocaar/lorawan/gps"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // websocket upgrade parameters
@@ -60,10 +58,10 @@ type Backend struct {
 
 	gateways gateways
 
-	downlinkTxAckFunc           func(gw.DownlinkTXAck)
-	uplinkFrameFunc             func(gw.UplinkFrame)
-	gatewayStatsFunc            func(gw.GatewayStats)
-	rawPacketForwarderEventFunc func(gw.RawPacketForwarderEvent)
+	downlinkTxAckFunc           func(*gw.DownlinkTxAck)
+	uplinkFrameFunc             func(*gw.UplinkFrame)
+	gatewayStatsFunc            func(*gw.GatewayStats)
+	rawPacketForwarderEventFunc func(*gw.RawPacketForwarderEvent)
 
 	band         band.Band
 	region       band.Name
@@ -176,22 +174,22 @@ func NewBackend(conf config.Config) (*Backend, error) {
 }
 
 // SetDownlinkTxAckFunc sets the DownlinkTXAck handler func.
-func (b *Backend) SetDownlinkTxAckFunc(f func(gw.DownlinkTXAck)) {
+func (b *Backend) SetDownlinkTxAckFunc(f func(*gw.DownlinkTxAck)) {
 	b.downlinkTxAckFunc = f
 }
 
 // SetGatewayStatsFunc sets the GatewayStats handler func.
-func (b *Backend) SetGatewayStatsFunc(f func(gw.GatewayStats)) {
+func (b *Backend) SetGatewayStatsFunc(f func(*gw.GatewayStats)) {
 	b.gatewayStatsFunc = f
 }
 
 // SetUplinkFrameFunc sets the UplinkFrame handler func.
-func (b *Backend) SetUplinkFrameFunc(f func(gw.UplinkFrame)) {
+func (b *Backend) SetUplinkFrameFunc(f func(*gw.UplinkFrame)) {
 	b.uplinkFrameFunc = f
 }
 
 // SetRawPacketForwarderEventFunc sets the RawPacketForwarderEvent handler func.
-func (b *Backend) SetRawPacketForwarderEventFunc(f func(gw.RawPacketForwarderEvent)) {
+func (b *Backend) SetRawPacketForwarderEventFunc(f func(*gw.RawPacketForwarderEvent)) {
 	b.rawPacketForwarderEventFunc = f
 }
 
@@ -201,19 +199,9 @@ func (b *Backend) SetSubscribeEventFunc(f func(events.Subscribe)) {
 }
 
 // SendDownlinkFrame sends the given downlink frame.
-func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
+func (b *Backend) SendDownlinkFrame(df *gw.DownlinkFrame) error {
 	b.Lock()
 	defer b.Unlock()
-
-	// for backwards compatibility
-	if df.Token == 0 {
-		tokenB := make([]byte, 2)
-		if _, err := rand.Read(tokenB); err != nil {
-			return errors.Wrap(err, "read random bytes error")
-		}
-
-		df.Token = uint32(binary.BigEndian.Uint16(tokenB))
-	}
 
 	pl, err := structs.DownlinkFrameFromProto(b.band, df)
 	if err != nil {
@@ -221,12 +209,12 @@ func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 	}
 
 	var gatewayID lorawan.EUI64
-	var downID uuid.UUID
-	copy(gatewayID[:], df.GetGatewayId())
-	copy(downID[:], df.GetDownlinkId())
+	if err := gatewayID.UnmarshalText([]byte(df.GetGatewayId())); err != nil {
+		return errors.Wrap(err, "decode gateway id error")
+	}
 
 	// Store downlink under DIID in cache
-	b.diidCache.SetDefault(fmt.Sprintf("%d", pl.DIID), df)
+	b.diidCache.SetDefault(fmt.Sprintf("%d", df.GetDownlinkId()), df)
 
 	websocketSendCounter("dnmsg").Inc()
 	if err := b.sendToGateway(gatewayID, pl); err != nil {
@@ -235,24 +223,23 @@ func (b *Backend) SendDownlinkFrame(df gw.DownlinkFrame) error {
 
 	log.WithFields(log.Fields{
 		"gateway_id":  gatewayID,
-		"downlink_id": downID,
+		"downlink_id": df.GetDownlinkId(),
 	}).Info("backend/basicstation: downlink-frame message sent to gateway")
 
 	return nil
 }
 
 // ApplyConfiguration is not implemented.
-func (b *Backend) ApplyConfiguration(gwConfig gw.GatewayConfiguration) error {
+func (b *Backend) ApplyConfiguration(gwConfig *gw.GatewayConfiguration) error {
 	return nil
 }
 
 // RawPacketForwarderCommand sends the given raw command to the packet-forwarder.
-func (b *Backend) RawPacketForwarderCommand(pl gw.RawPacketForwarderCommand) error {
+func (b *Backend) RawPacketForwarderCommand(pl *gw.RawPacketForwarderCommand) error {
 	var gatewayID lorawan.EUI64
-	var rawID uuid.UUID
-
-	copy(gatewayID[:], pl.GatewayId)
-	copy(rawID[:], pl.RawId)
+	if err := gatewayID.UnmarshalText([]byte(pl.GetGatewayId())); err != nil {
+		return errors.Wrap(err, "decode gateway id error")
+	}
 
 	if len(pl.Payload) == 0 {
 		return errors.New("raw packet-forwarder command payload is empty")
@@ -270,7 +257,6 @@ func (b *Backend) RawPacketForwarderCommand(pl gw.RawPacketForwarderCommand) err
 
 	log.WithFields(log.Fields{
 		"gateway_id": gatewayID,
-		"raw_id":     rawID,
 	}).Info("backend/basicstation: raw packet-forwarder command sent to gateway")
 
 	return nil
@@ -419,16 +405,9 @@ func (b *Backend) handleGateway(r *http.Request, conn *connection) {
 		for {
 			select {
 			case <-statsTicker.C:
-				id, err := uuid.NewV4()
-				if err != nil {
-					log.WithError(err).Error("backend/basicstation: new uuid error")
-					continue
-				}
-
 				stats := conn.stats.ExportStats()
-				stats.GatewayId = gatewayID[:]
-				stats.Time = ptypes.TimestampNow()
-				stats.StatsId = id[:]
+				stats.GatewayId = gatewayID.String()
+				stats.Time = timestamppb.Now()
 
 				if b.gatewayStatsFunc != nil {
 					b.gatewayStatsFunc(stats)
@@ -593,22 +572,15 @@ func (b *Backend) handleJoinRequest(gatewayID lorawan.EUI64, v structs.JoinReque
 	}
 
 	// set uplink id
-	uplinkID, err := uuid.NewV4()
-	if err != nil {
-		log.WithError(err).WithFields(log.Fields{
-			"gateway_id": gatewayID,
-		}).Error("backend/basicstation: get random uplink id error")
-		return
-	}
-	uplinkFrame.RxInfo.UplinkId = uplinkID[:]
+	uplinkFrame.RxInfo.UplinkId = rand.Uint32()
 
 	if conn, err := b.gateways.get(gatewayID); err == nil {
-		conn.stats.CountUplink(&uplinkFrame)
+		conn.stats.CountUplink(uplinkFrame)
 	}
 
 	log.WithFields(log.Fields{
 		"gateway_id": gatewayID,
-		"uplink_id":  uplinkID,
+		"uplink_id":  uplinkFrame.RxInfo.UplinkId,
 	}).Info("backend/basicstation: join-request received")
 
 	if b.uplinkFrameFunc != nil {
@@ -626,22 +598,15 @@ func (b *Backend) handleProprietaryDataFrame(gatewayID lorawan.EUI64, v structs.
 	}
 
 	// set uplink id
-	uplinkID, err := uuid.NewV4()
-	if err != nil {
-		log.WithError(err).WithFields(log.Fields{
-			"gateway_id": gatewayID,
-		}).Error("backend/basicstation: get random uplink id error")
-		return
-	}
-	uplinkFrame.RxInfo.UplinkId = uplinkID[:]
+	uplinkFrame.RxInfo.UplinkId = rand.Uint32()
 
 	if conn, err := b.gateways.get(gatewayID); err == nil {
-		conn.stats.CountUplink(&uplinkFrame)
+		conn.stats.CountUplink(uplinkFrame)
 	}
 
 	log.WithFields(log.Fields{
 		"gateway_id": gatewayID,
-		"uplink_id":  uplinkID,
+		"uplink_id":  uplinkFrame.RxInfo.UplinkId,
 	}).Info("backend/basicstation: proprietary uplink frame received")
 
 	if b.uplinkFrameFunc != nil {
@@ -662,24 +627,21 @@ func (b *Backend) handleDownlinkTransmittedMessage(gatewayID lorawan.EUI64, v st
 	}
 
 	if v, ok := b.diidCache.Get(fmt.Sprintf("%d", v.DIID)); ok {
-		pl := v.(gw.DownlinkFrame)
+		pl := v.(*gw.DownlinkFrame)
 		txack.DownlinkId = pl.DownlinkId
 
 		if conn, err := b.gateways.get(gatewayID); err == nil {
-			conn.stats.CountDownlink(&pl, &txack)
+			conn.stats.CountDownlink(pl, &txack)
 		}
 	}
 
-	var downID uuid.UUID
-	copy(downID[:], txack.GetDownlinkId())
-
 	log.WithFields(log.Fields{
 		"gateway_id":  gatewayID,
-		"downlink_id": downID,
+		"downlink_id": txack.GetDownlinkId(),
 	}).Info("backend/basicstation: downlink transmitted message received")
 
 	if b.downlinkTxAckFunc != nil {
-		b.downlinkTxAckFunc(txack)
+		b.downlinkTxAckFunc(&txack)
 	}
 }
 
@@ -693,23 +655,16 @@ func (b *Backend) handleUplinkDataFrame(gatewayID lorawan.EUI64, v structs.Uplin
 	}
 
 	// set uplink id
-	uplinkID, err := uuid.NewV4()
-	if err != nil {
-		log.WithError(err).WithFields(log.Fields{
-			"gateway_id": gatewayID,
-		}).Error("backend/basicstation: get random uplink id error")
-		return
-	}
-	uplinkFrame.RxInfo.UplinkId = uplinkID[:]
+	uplinkFrame.RxInfo.UplinkId = rand.Uint32()
 
 	// count metrics
 	if conn, err := b.gateways.get(gatewayID); err == nil {
-		conn.stats.CountUplink(&uplinkFrame)
+		conn.stats.CountUplink(uplinkFrame)
 	}
 
 	log.WithFields(log.Fields{
 		"gateway_id": gatewayID,
-		"uplink_id":  uplinkID,
+		"uplink_id":  uplinkFrame.RxInfo.UplinkId,
 	}).Info("backend/basicstation: uplink frame received")
 
 	if b.uplinkFrameFunc != nil {
@@ -718,27 +673,17 @@ func (b *Backend) handleUplinkDataFrame(gatewayID lorawan.EUI64, v structs.Uplin
 }
 
 func (b *Backend) handleRawPacketForwarderEvent(gatewayID lorawan.EUI64, pl []byte) {
-	rawID, err := uuid.NewV4()
-	if err != nil {
-		log.WithError(err).WithFields(log.Fields{
-			"gateway_id": gatewayID,
-		}).Error("backend/basicstation: get random raw id error")
-		return
-	}
-
 	rawEvent := gw.RawPacketForwarderEvent{
-		GatewayId: gatewayID[:],
-		RawId:     rawID[:],
+		GatewayId: gatewayID.String(),
 		Payload:   pl,
 	}
 
 	log.WithFields(log.Fields{
 		"gateway_id": gatewayID,
-		"raw_id":     rawID,
 	}).Info("backend/basicstation: raw packet-forwarder event received")
 
 	if b.rawPacketForwarderEventFunc != nil {
-		b.rawPacketForwarderEventFunc(rawEvent)
+		b.rawPacketForwarderEventFunc(&rawEvent)
 	}
 }
 

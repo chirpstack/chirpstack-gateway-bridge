@@ -5,9 +5,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // JoinRequest implements the join-request message.
@@ -23,10 +23,10 @@ type JoinRequest struct {
 }
 
 // JoinRequestToProto converts the JoinRequest to the protobuf struct.
-func JoinRequestToProto(loraBand band.Band, gatewayID lorawan.EUI64, jr JoinRequest) (gw.UplinkFrame, error) {
+func JoinRequestToProto(loraBand band.Band, gatewayID lorawan.EUI64, jr JoinRequest) (*gw.UplinkFrame, error) {
 	var pb gw.UplinkFrame
 	if err := SetRadioMetaDataToProto(loraBand, gatewayID, jr.RadioMetaData, &pb); err != nil {
-		return pb, errors.Wrap(err, "set radio meta-data error")
+		return &pb, errors.Wrap(err, "set radio meta-data error")
 	}
 
 	// MHDR
@@ -56,5 +56,5 @@ func JoinRequestToProto(loraBand band.Band, gatewayID lorawan.EUI64, jr JoinRequ
 	binary.LittleEndian.PutUint32(mic, uint32(jr.MIC))
 	pb.PhyPayload = append(pb.PhyPayload, mic...)
 
-	return pb, nil
+	return &pb, nil
 }

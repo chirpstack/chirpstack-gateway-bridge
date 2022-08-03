@@ -3,10 +3,9 @@ package structs
 import (
 	"testing"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +13,7 @@ func TestUplinkProprietaryFrameToProto(t *testing.T) {
 	tests := []struct {
 		Name  string
 		In    UplinkProprietaryFrame
-		Out   gw.UplinkFrame
+		Out   *gw.UplinkFrame
 		Error error
 	}{
 		{
@@ -33,25 +32,25 @@ func TestUplinkProprietaryFrameToProto(t *testing.T) {
 				MessageType: ProprietaryDataFrameMessage,
 				FRMPayload:  "01020304",
 			},
-			Out: gw.UplinkFrame{
+			Out: &gw.UplinkFrame{
 				PhyPayload: []byte{0x01, 0x02, 0x03, 0x04},
-				TxInfo: &gw.UplinkTXInfo{
-					Frequency:  868100000,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							Bandwidth:       125,
-							SpreadingFactor: 7,
-							CodeRate:        "4/5",
+				TxInfo: &gw.UplinkTxInfo{
+					Frequency: 868100000,
+					Modulation: &gw.Modulation{
+						Parameters: &gw.Modulation_Lora{
+							Lora: &gw.LoraModulationInfo{
+								Bandwidth:       125000,
+								SpreadingFactor: 7,
+								CodeRate:        gw.CodeRate_CR_4_5,
+							},
 						},
 					},
 				},
-				RxInfo: &gw.UplinkRXInfo{
-					GatewayId: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+				RxInfo: &gw.UplinkRxInfo{
+					GatewayId: "0102030405060708",
 					Rssi:      120,
-					LoraSnr:   5.5,
+					Snr:       5.5,
 					Context:   []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
-					CrcStatus: gw.CRCStatus_CRC_OK,
 				},
 			},
 		},

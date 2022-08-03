@@ -6,9 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // UplinkDataFrame implements the uplink data-frame message.
@@ -27,10 +27,10 @@ type UplinkDataFrame struct {
 }
 
 // UplinkDataFrameToProto converts the UplinkDataFrame to the protobuf struct.
-func UplinkDataFrameToProto(loraBand band.Band, gatewayID lorawan.EUI64, updf UplinkDataFrame) (gw.UplinkFrame, error) {
+func UplinkDataFrameToProto(loraBand band.Band, gatewayID lorawan.EUI64, updf UplinkDataFrame) (*gw.UplinkFrame, error) {
 	var pb gw.UplinkFrame
 	if err := SetRadioMetaDataToProto(loraBand, gatewayID, updf.RadioMetaData, &pb); err != nil {
-		return pb, errors.Wrap(err, "set radio meta-data error")
+		return &pb, errors.Wrap(err, "set radio meta-data error")
 	}
 
 	// MHDR
@@ -52,7 +52,7 @@ func UplinkDataFrameToProto(loraBand band.Band, gatewayID lorawan.EUI64, updf Up
 	// FOpts
 	b, err := hex.DecodeString(updf.FOpts)
 	if err != nil {
-		return pb, errors.Wrap(err, "decode FOpts error")
+		return &pb, errors.Wrap(err, "decode FOpts error")
 	}
 	pb.PhyPayload = append(pb.PhyPayload, b...)
 
@@ -64,7 +64,7 @@ func UplinkDataFrameToProto(loraBand band.Band, gatewayID lorawan.EUI64, updf Up
 		if len(updf.FRMPayload) != 0 {
 			b, err = hex.DecodeString(updf.FRMPayload)
 			if err != nil {
-				return pb, errors.Wrap(err, "decode FRMPayload error")
+				return &pb, errors.Wrap(err, "decode FRMPayload error")
 			}
 			pb.PhyPayload = append(pb.PhyPayload, b...)
 		}
@@ -75,5 +75,5 @@ func UplinkDataFrameToProto(loraBand band.Band, gatewayID lorawan.EUI64, updf Up
 	binary.LittleEndian.PutUint32(mic, uint32(updf.MIC))
 	pb.PhyPayload = append(pb.PhyPayload, mic...)
 
-	return pb, nil
+	return &pb, nil
 }

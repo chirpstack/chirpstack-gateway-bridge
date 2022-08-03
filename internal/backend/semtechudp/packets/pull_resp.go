@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // PullRespPacket is used by the server to send RF packets and associated
@@ -82,7 +80,7 @@ type TXPK struct {
 }
 
 // GetPullRespPacket returns a PullRespPacket for the given gw.DownlinkFrame.
-func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.DownlinkFrame, index int) (PullRespPacket, error) {
+func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame *gw.DownlinkFrame, index int) (PullRespPacket, error) {
 	if index > len(frame.Items)-1 {
 		return PullRespPacket{}, fmt.Errorf("invalid frame index: %d", index)
 	}
@@ -97,7 +95,6 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 			TXPK: TXPK{
 				Freq: float64(txInfo.GetFrequency()) / 1000000,
 				Powe: uint8(txInfo.GetPower()),
-				Modu: txInfo.GetModulation().String(),
 				Size: uint16(len(item.PhyPayload)),
 				Data: item.PhyPayload,
 				Ant:  uint8(txInfo.GetAntenna()),
@@ -106,68 +103,49 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame gw.Downlink
 		},
 	}
 
-	if txInfo.GetModulation() == common.Modulation_LORA {
-		modInfo := txInfo.GetLoraModulationInfo()
-		if modInfo == nil {
-			return packet, errors.New("gateway: lora_modulation_info must not be nil")
-		}
-		packet.Payload.TXPK.DatR.LoRa = fmt.Sprintf("SF%dBW%d", modInfo.SpreadingFactor, modInfo.Bandwidth)
-		packet.Payload.TXPK.CodR = modInfo.CodeRate
-		packet.Payload.TXPK.IPol = modInfo.PolarizationInversion
-	}
+	if lora := txInfo.GetModulation().GetLora(); lora != nil {
+		packet.Payload.TXPK.Modu = "LORA"
+		packet.Payload.TXPK.DatR.LoRa = fmt.Sprintf("SF%dBW%d", lora.SpreadingFactor, lora.Bandwidth/1000)
+		packet.Payload.TXPK.IPol = lora.PolarizationInversion
 
-	if txInfo.GetModulation() == common.Modulation_FSK {
-		modInfo := txInfo.GetFskModulationInfo()
-		if modInfo == nil {
-			return packet, errors.New("gateway: fsk_modulation_info must not be nil")
-		}
-		packet.Payload.TXPK.DatR.FSK = modInfo.Datarate
-		packet.Payload.TXPK.FDev = uint16(modInfo.FrequencyDeviation)
-
-		// TODO: cleanup in next major release
-		if packet.Payload.TXPK.FDev == 0 {
-			packet.Payload.TXPK.FDev = uint16(modInfo.Datarate / 2)
+		switch lora.GetCodeRate() {
+		case gw.CodeRate_CR_4_5:
+			packet.Payload.TXPK.CodR = "4/5"
+		case gw.CodeRate_CR_4_6:
+			packet.Payload.TXPK.CodR = "4/6"
+		case gw.CodeRate_CR_4_7:
+			packet.Payload.TXPK.CodR = "4/7"
+		case gw.CodeRate_CR_4_8:
+			packet.Payload.TXPK.CodR = "4/8"
+		default:
+			return PullRespPacket{}, fmt.Errorf("invalid CodeRate: %s", lora.GetCodeRate())
 		}
 	}
 
-	switch txInfo.GetTiming() {
-	case gw.DownlinkTiming_IMMEDIATELY:
+	if fsk := txInfo.GetModulation().GetFsk(); fsk != nil {
+		packet.Payload.TXPK.Modu = "FSK"
+		packet.Payload.TXPK.DatR.FSK = fsk.Datarate
+		packet.Payload.TXPK.FDev = uint16(fsk.FrequencyDeviation)
+	}
+
+	if imm := txInfo.GetTiming().GetImmediately(); imm != nil {
 		packet.Payload.TXPK.Imme = true
+	}
 
-	case gw.DownlinkTiming_DELAY:
-		timingInfo := txInfo.GetDelayTimingInfo()
-		if timingInfo == nil {
-			return packet, errors.New("delay_timing_info must not be nil")
-		}
-
-		delay, err := ptypes.Duration(timingInfo.Delay)
-		if err != nil {
-			return packet, errors.Wrap(err, "get delay duration error")
-		}
-
+	if delay := txInfo.GetTiming().GetDelay(); delay != nil {
 		if len(txInfo.GetContext()) < 4 {
 			return packet, fmt.Errorf("context must contain at least 4 bytes, got: %d", len(txInfo.GetContext()))
 		}
+
 		timestamp := binary.BigEndian.Uint32(txInfo.GetContext()[0:4])
-		timestamp += uint32(delay / time.Microsecond)
+		timestamp += uint32(delay.GetDelay().AsDuration() / time.Microsecond)
 		packet.Payload.TXPK.Tmst = &timestamp
+	}
 
-	case gw.DownlinkTiming_GPS_EPOCH:
-		timingInfo := txInfo.GetGpsEpochTimingInfo()
-		if timingInfo == nil {
-			return packet, errors.New("gps_epoch_timing must not be nil")
-		}
-
-		dur, err := ptypes.Duration(timingInfo.TimeSinceGpsEpoch)
-		if err != nil {
-			return packet, errors.Wrap(err, "parse time_since_gps_epoch error")
-		}
-
+	if gpsEpoch := txInfo.GetTiming().GetGpsEpoch(); gpsEpoch != nil {
+		dur := gpsEpoch.TimeSinceGpsEpoch.AsDuration()
 		durMS := int64(dur / time.Millisecond)
 		packet.Payload.TXPK.Tmms = &durMS
-
-	default:
-		return packet, fmt.Errorf("unexpected downlink timing: %s", txInfo.GetTiming())
 	}
 
 	return packet, nil

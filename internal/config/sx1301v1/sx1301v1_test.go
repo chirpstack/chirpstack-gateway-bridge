@@ -6,8 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 func TestGetRadioFrequencies(t *testing.T) {
@@ -21,11 +20,10 @@ func TestGetRadioFrequencies(t *testing.T) {
 			Name: "one channel",
 			Channels: []*gw.ChannelConfiguration{
 				{
-					Frequency:  868100000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868100000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
@@ -36,29 +34,26 @@ func TestGetRadioFrequencies(t *testing.T) {
 			Name: "channels don't fit",
 			Channels: []*gw.ChannelConfiguration{
 				{
-					Frequency:  867100000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 867100000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
 				{
-					Frequency:  868100000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868100000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
 				{
-					Frequency:  869100000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 869100000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
@@ -69,29 +64,26 @@ func TestGetRadioFrequencies(t *testing.T) {
 			Name: "EU868 three channels",
 			Channels: []*gw.ChannelConfiguration{
 				{
-					Frequency:  868100000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868100000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
 				{
-					Frequency:  868300000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868300000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
 				{
-					Frequency:  868500000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868500000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
@@ -102,98 +94,88 @@ func TestGetRadioFrequencies(t *testing.T) {
 			Name: "EU868 8 channels + single SF + FSK",
 			Channels: []*gw.ChannelConfiguration{
 				{
-					Frequency:  868100000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868100000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
 				{
-					Frequency:  868300000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868300000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
 				{
-					Frequency:  868500000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868500000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth: 125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth: 125000,
 						},
 					},
 				},
 				{
-					Frequency:  867100000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 867100000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10, 11, 12},
 						},
 					},
 				},
 				{
-					Frequency:  867300000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 867300000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10, 11, 12},
 						},
 					},
 				},
 				{
-					Frequency:  867500000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 867500000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10, 11, 12},
 						},
 					},
 				},
 				{
-					Frequency:  867700000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 867700000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10, 11, 12},
 						},
 					},
 				},
 				{
-					Frequency:  867900000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 867900000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10, 11, 12},
 						},
 					},
 				},
 				{
-					Frequency:  868300000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 868300000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        250,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        250000,
 							SpreadingFactors: []uint32{7},
 						},
 					},
 				},
 				{
-					Frequency:  868800000,
-					Modulation: common.Modulation_FSK,
+					Frequency: 868800000,
 					ModulationConfig: &gw.ChannelConfiguration_FskModulationConfig{
-						FskModulationConfig: &gw.FSKModulationConfig{
-							Bandwidth: 125,
+						FskModulationConfig: &gw.FskModulationConfig{
+							Bandwidth: 125000,
 							Bitrate:   50000,
 						},
 					},
@@ -205,91 +187,82 @@ func TestGetRadioFrequencies(t *testing.T) {
 			Name: "US915 0-7 + 64",
 			Channels: []*gw.ChannelConfiguration{
 				{
-					Frequency:  902300000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 902300000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10},
 						},
 					},
 				},
 				{
-					Frequency:  902500000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 902500000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10},
 						},
 					},
 				},
 				{
-					Frequency:  902700000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 902700000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10},
 						},
 					},
 				},
 				{
-					Frequency:  902900000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 902900000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10},
 						},
 					},
 				},
 				{
-					Frequency:  903100000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 903100000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10},
 						},
 					},
 				},
 				{
-					Frequency:  903300000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 903300000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10},
 						},
 					},
 				},
 				{
-					Frequency:  903500000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 903500000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10},
 						},
 					},
 				},
 				{
-					Frequency:  903700000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 903700000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        125,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        125000,
 							SpreadingFactors: []uint32{7, 8, 9, 10},
 						},
 					},
 				},
 				{
-					Frequency:  903000000,
-					Modulation: common.Modulation_LORA,
+					Frequency: 903000000,
 					ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-						LoraModulationConfig: &gw.LoRaModulationConfig{
-							Bandwidth:        500,
+						LoraModulationConfig: &gw.LoraModulationConfig{
+							Bandwidth:        500000,
 							SpreadingFactors: []uint32{8},
 						},
 					},
@@ -325,11 +298,10 @@ func TestGetRadioForChannel(t *testing.T) {
 			Name:             "Radio 0",
 			RadioFrequencies: [2]uint32{868500000},
 			Channel: &gw.ChannelConfiguration{
-				Frequency:  868100000,
-				Modulation: common.Modulation_LORA,
+				Frequency: 868100000,
 				ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-					LoraModulationConfig: &gw.LoRaModulationConfig{
-						Bandwidth: 125,
+					LoraModulationConfig: &gw.LoraModulationConfig{
+						Bandwidth: 125000,
 					},
 				},
 			},
@@ -339,11 +311,10 @@ func TestGetRadioForChannel(t *testing.T) {
 			Name:             "Out of bandwidth",
 			RadioFrequencies: [2]uint32{868500000},
 			Channel: &gw.ChannelConfiguration{
-				Frequency:  869100000,
-				Modulation: common.Modulation_LORA,
+				Frequency: 869100000,
 				ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-					LoraModulationConfig: &gw.LoRaModulationConfig{
-						Bandwidth: 125,
+					LoraModulationConfig: &gw.LoraModulationConfig{
+						Bandwidth: 125000,
 					},
 				},
 			},
@@ -353,11 +324,10 @@ func TestGetRadioForChannel(t *testing.T) {
 			Name:             "Radio 1",
 			RadioFrequencies: [2]uint32{867500000, 868500000},
 			Channel: &gw.ChannelConfiguration{
-				Frequency:  868100000,
-				Modulation: common.Modulation_LORA,
+				Frequency: 868100000,
 				ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-					LoraModulationConfig: &gw.LoRaModulationConfig{
-						Bandwidth: 125,
+					LoraModulationConfig: &gw.LoraModulationConfig{
+						Bandwidth: 125000,
 					},
 				},
 			},

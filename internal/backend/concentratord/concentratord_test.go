@@ -8,15 +8,15 @@ import (
 	"testing"
 
 	"github.com/go-zeromq/zmq4"
-	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 type BackendTestSuite struct {
@@ -46,7 +46,6 @@ func (ts *BackendTestSuite) SetupTest() {
 	var conf config.Config
 	conf.Backend.Concentratord.EventURL = fmt.Sprintf("ipc://%s/events", tempDir)
 	conf.Backend.Concentratord.CommandURL = fmt.Sprintf("ipc://%s/commands", tempDir)
-	conf.Backend.Concentratord.CRCCheck = true
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -84,13 +83,13 @@ func (ts *BackendTestSuite) TearDownTest() {
 
 func (ts *BackendTestSuite) TestGatewayStats() {
 	assert := require.New(ts.T())
-	gatewayStatsChan := make(chan gw.GatewayStats, 1)
-	ts.backend.gatewayStatsFunc = func(pl gw.GatewayStats) {
+	gatewayStatsChan := make(chan *gw.GatewayStats, 1)
+	ts.backend.gatewayStatsFunc = func(pl *gw.GatewayStats) {
 		gatewayStatsChan <- pl
 	}
 
 	stats := gw.GatewayStats{
-		GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		GatewayId: "0102030405060708",
 	}
 	b, err := proto.Marshal(&stats)
 	assert.NoError(err)
@@ -103,20 +102,20 @@ func (ts *BackendTestSuite) TestGatewayStats() {
 	}))
 
 	recv := <-gatewayStatsChan
-	assert.True(proto.Equal(&stats, &recv))
+	assert.True(proto.Equal(&stats, recv))
 }
 
 func (ts *BackendTestSuite) TestUplinkFrame() {
 	assert := require.New(ts.T())
-	uplinkFrameChan := make(chan gw.UplinkFrame, 1)
-	ts.backend.uplinkFrameFunc = func(pl gw.UplinkFrame) {
+	uplinkFrameChan := make(chan *gw.UplinkFrame, 1)
+	ts.backend.uplinkFrameFunc = func(pl *gw.UplinkFrame) {
 		uplinkFrameChan <- pl
 	}
 
 	uf := gw.UplinkFrame{
 		PhyPayload: []byte{1, 2, 3, 4},
-		RxInfo: &gw.UplinkRXInfo{
-			CrcStatus: gw.CRCStatus_CRC_OK,
+		RxInfo: &gw.UplinkRxInfo{
+			GatewayId: "0102030405060708",
 		},
 	}
 	b, err := proto.Marshal(&uf)
@@ -130,24 +129,24 @@ func (ts *BackendTestSuite) TestUplinkFrame() {
 	}))
 
 	recv := <-uplinkFrameChan
-	assert.True(proto.Equal(&uf, &recv))
+	assert.True(proto.Equal(&uf, recv))
 }
 
 func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	assert := require.New(ts.T())
-	txAckChan := make(chan gw.DownlinkTXAck, 1)
-	ts.backend.downlinkTxAckFunc = func(pl gw.DownlinkTXAck) {
+	txAckChan := make(chan *gw.DownlinkTxAck, 1)
+	ts.backend.downlinkTxAckFunc = func(pl *gw.DownlinkTxAck) {
 		txAckChan <- pl
 	}
 
 	down := gw.DownlinkFrame{
-		GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		GatewayId: "0102030405060708",
 	}
 	downB, err := proto.Marshal(&down)
 	assert.NoError(err)
 
-	ack := gw.DownlinkTXAck{
-		GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+	ack := gw.DownlinkTxAck{
+		GatewayId: "0102030405060708",
 	}
 	ackB, err := proto.Marshal(&ack)
 	assert.NoError(err)
@@ -160,17 +159,17 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 		assert.NoError(ts.repSock.Send(zmq4.NewMsg(ackB)))
 	}()
 
-	assert.NoError(ts.backend.SendDownlinkFrame(down))
+	assert.NoError(ts.backend.SendDownlinkFrame(&down))
 
 	recv := <-txAckChan
-	assert.True(proto.Equal(&ack, &recv))
+	assert.True(proto.Equal(&ack, recv))
 }
 
 func (ts *BackendTestSuite) TestApplyConfiguration() {
 	assert := require.New(ts.T())
 
 	config := gw.GatewayConfiguration{
-		GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		GatewayId: "0102030405060708",
 		Version:   "config-a",
 	}
 	configB, err := proto.Marshal(&config)
@@ -184,7 +183,7 @@ func (ts *BackendTestSuite) TestApplyConfiguration() {
 		assert.NoError(ts.repSock.Send(zmq4.NewMsg([]byte{})))
 	}()
 
-	assert.NoError(ts.backend.ApplyConfiguration(config))
+	assert.NoError(ts.backend.ApplyConfiguration(&config))
 }
 
 func TestBackend(t *testing.T) {

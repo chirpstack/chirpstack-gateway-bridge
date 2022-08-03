@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 	"github.com/brocaar/lorawan/gps"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 func TestJoinRequestToProto(t *testing.T) {
@@ -19,8 +19,7 @@ func TestJoinRequestToProto(t *testing.T) {
 	b, err := band.GetConfig(band.EU868, false, lorawan.DwellTimeNoLimit)
 	assert.NoError(err)
 
-	pTime, err := ptypes.TimestampProto(time.Time(gps.NewTimeFromTimeSinceGPSEpoch(5 * time.Second)))
-	assert.NoError(err)
+	pTime := timestamppb.New(time.Time(gps.NewTimeFromTimeSinceGPSEpoch(5 * time.Second)))
 
 	jr := JoinRequest{
 		RadioMetaData: RadioMetaData{
@@ -46,27 +45,27 @@ func TestJoinRequestToProto(t *testing.T) {
 	pb, err := JoinRequestToProto(b, lorawan.EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, jr)
 	assert.NoError(err)
 
-	assert.Equal(gw.UplinkFrame{
+	assert.Equal(&gw.UplinkFrame{
 		PhyPayload: []byte{0x00, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x02, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x03, 0x14, 0x00, 0xf6, 0xff, 0xff, 0xff},
-		TxInfo: &gw.UplinkTXInfo{
-			Frequency:  868100000,
-			Modulation: common.Modulation_LORA,
-			ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-				LoraModulationInfo: &gw.LoRaModulationInfo{
-					Bandwidth:       125,
-					SpreadingFactor: 7,
-					CodeRate:        "4/5",
+		TxInfo: &gw.UplinkTxInfo{
+			Frequency: 868100000,
+			Modulation: &gw.Modulation{
+				Parameters: &gw.Modulation_Lora{
+					Lora: &gw.LoraModulationInfo{
+						Bandwidth:       125000,
+						SpreadingFactor: 7,
+						CodeRate:        gw.CodeRate_CR_4_5,
+					},
 				},
 			},
 		},
-		RxInfo: &gw.UplinkRXInfo{
-			GatewayId:         []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+		RxInfo: &gw.UplinkRxInfo{
+			GatewayId:         "0102030405060708",
 			Time:              pTime,
-			TimeSinceGpsEpoch: ptypes.DurationProto(5 * time.Second),
+			TimeSinceGpsEpoch: durationpb.New(5 * time.Second),
 			Rssi:              120,
-			LoraSnr:           5.5,
+			Snr:               5.5,
 			Context:           []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
-			CrcStatus:         gw.CRCStatus_CRC_OK,
 		},
 	}, pb)
 

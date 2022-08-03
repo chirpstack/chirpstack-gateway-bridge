@@ -7,12 +7,9 @@ builds:
   - main: cmd/chirpstack-gateway-bridge/main.go
     binary: chirpstack-gateway-bridge
     goos:
-      - windows
-      - darwin
       - linux
     goarch:
       - amd64
-      - 386
       - arm
       - arm64
       - mips
@@ -20,9 +17,6 @@ builds:
       - 5
       - 6
       - 7
-    ignore:
-      - goos: darwin
-        goarch: 386
     hooks:
       post: ./packaging/scripts/compress-mips.sh
 

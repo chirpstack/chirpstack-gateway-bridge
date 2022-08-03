@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
-	"github.com/brocaar/lorawan/gps"
+	"github.com/chirpstack/chirpstack/api/go/v4/common"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 func TestPushDataTest(t *testing.T) {
@@ -55,8 +55,7 @@ func TestGetGatewayStats(t *testing.T) {
 
 	now := time.Now().Truncate(time.Second)
 	ecNow := ExpandedTime(now)
-	pbTime, err := ptypes.TimestampProto(now)
-	assert.Nil(err)
+	pbTime := timestamppb.New(now)
 
 	testTable := []struct {
 		PushDataPacket PushDataPacket
@@ -89,7 +88,7 @@ func TestGetGatewayStats(t *testing.T) {
 				},
 			},
 			GatewayStats: &gw.GatewayStats{
-				GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+				GatewayId: "0102030405060708",
 				Time:      pbTime,
 				Location: &common.Location{
 					Latitude:  1.123,
@@ -120,7 +119,7 @@ func TestGetGatewayStats(t *testing.T) {
 				},
 			},
 			GatewayStats: &gw.GatewayStats{
-				GatewayId:           []byte{1, 2, 3, 4, 5, 6, 7, 8},
+				GatewayId:           "0102030405060708",
 				Time:                pbTime,
 				RxPacketsReceived:   1,
 				RxPacketsReceivedOk: 2,
@@ -133,35 +132,24 @@ func TestGetGatewayStats(t *testing.T) {
 	for _, test := range testTable {
 		s, err := test.PushDataPacket.GetGatewayStats()
 		assert.Nil(err)
-
-		if s != nil {
-			assert.Len(s.StatsId, 16)
-			s.StatsId = nil
-		}
-
 		assert.Equal(test.GatewayStats, s)
 	}
 }
 
 func TestGetUplinkFrame(t *testing.T) {
-	assert := assert.New(t)
-
 	now := time.Now().Truncate(time.Second)
 	ctNow := CompactTime(now)
-	pbTime, err := ptypes.TimestampProto(now)
-	assert.Nil(err)
+	pbTime := timestamppb.New(now)
 
 	tmms := int64(10 * time.Minute / time.Millisecond)
 	ftime := uint32(999999999)
 
-	ft := time.Time(gps.NewTimeFromTimeSinceGPSEpoch((time.Duration(tmms) * time.Millisecond) + (time.Duration(ftime) * time.Nanosecond)))
-	ftProto, _ := ptypes.TimestampProto(ft)
+	ft := durationpb.New((time.Duration(tmms) * time.Millisecond) + (time.Duration(ftime) * time.Nanosecond))
 
 	testTable := []struct {
 		Name           string
 		PushDataPacket PushDataPacket
-		UplinkFrames   []gw.UplinkFrame
-		SkipCRCCheck   bool
+		UplinkFrames   []*gw.UplinkFrame
 	}{
 		{
 			Name: "no payload",
@@ -199,63 +187,6 @@ func TestGetUplinkFrame(t *testing.T) {
 			},
 		},
 		{
-			Name:         "uplink with invalid crc - skip crc check",
-			SkipCRCCheck: true,
-			PushDataPacket: PushDataPacket{
-				GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
-				ProtocolVersion: ProtocolVersion2,
-				Payload: PushDataPayload{
-					RXPK: []RXPK{
-						{
-							Time: &ctNow,
-							Tmst: 1000000,
-							Freq: 868.3,
-							Brd:  2,
-							Chan: 1,
-							RFCh: 3,
-							Stat: -1,
-							Modu: "LORA",
-							DatR: DatR{LoRa: "SF12BW500"},
-							CodR: "4/5",
-							RSSI: -60,
-							LSNR: 5.5,
-							Size: 5,
-							Data: []byte{1, 2, 3, 4, 5},
-						},
-					},
-				},
-			},
-			UplinkFrames: []gw.UplinkFrame{
-				{
-					PhyPayload: []byte{1, 2, 3, 4, 5},
-					TxInfo: &gw.UplinkTXInfo{
-						Frequency:  868300000,
-						Modulation: common.Modulation_LORA,
-						ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-							LoraModulationInfo: &gw.LoRaModulationInfo{
-								Bandwidth:             500,
-								SpreadingFactor:       12,
-								CodeRate:              "4/5",
-								PolarizationInversion: false,
-							},
-						},
-					},
-					RxInfo: &gw.UplinkRXInfo{
-						GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
-						Time:      pbTime,
-						Rssi:      -60,
-						LoraSnr:   5.5,
-						Channel:   1,
-						RfChain:   3,
-						Board:     2,
-						Antenna:   0,
-						Context:   []byte{0x00, 0x0f, 0x42, 0x40},
-						CrcStatus: gw.CRCStatus_BAD_CRC,
-					},
-				},
-			},
-		},
-		{
 			Name: "uplink with gps time",
 			PushDataPacket: PushDataPacket{
 				GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
@@ -282,33 +213,31 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 				},
 			},
-			UplinkFrames: []gw.UplinkFrame{
+			UplinkFrames: []*gw.UplinkFrame{
 				{
 					PhyPayload: []byte{1, 2, 3, 4, 5},
-					TxInfo: &gw.UplinkTXInfo{
-						Frequency:  868300000,
-						Modulation: common.Modulation_LORA,
-						ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-							LoraModulationInfo: &gw.LoRaModulationInfo{
-								Bandwidth:             500,
-								SpreadingFactor:       12,
-								CodeRate:              "4/5",
-								PolarizationInversion: false,
+					TxInfo: &gw.UplinkTxInfo{
+						Frequency: 868300000,
+						Modulation: &gw.Modulation{
+							Parameters: &gw.Modulation_Lora{
+								Lora: &gw.LoraModulationInfo{
+									Bandwidth:             500000,
+									SpreadingFactor:       12,
+									CodeRate:              gw.CodeRate_CR_4_5,
+									PolarizationInversion: false,
+								},
 							},
 						},
 					},
-					RxInfo: &gw.UplinkRXInfo{
-						GatewayId:         []byte{1, 2, 3, 4, 5, 6, 7, 8},
+					RxInfo: &gw.UplinkRxInfo{
+						GatewayId:         "0102030405060708",
 						Time:              pbTime,
-						TimeSinceGpsEpoch: ptypes.DurationProto(10 * time.Minute),
+						TimeSinceGpsEpoch: durationpb.New(10 * time.Minute),
 						Rssi:              -60,
-						LoraSnr:           5.5,
-						Channel:           1,
-						RfChain:           3,
+						Snr:               5.5,
 						Board:             2,
 						Antenna:           0,
 						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
-						CrcStatus:         gw.CRCStatus_CRC_OK,
 					},
 				},
 			},
@@ -356,68 +285,57 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 				},
 			},
-			UplinkFrames: []gw.UplinkFrame{
+			UplinkFrames: []*gw.UplinkFrame{
 				{
 					PhyPayload: []byte{1, 2, 3, 4, 5},
-					TxInfo: &gw.UplinkTXInfo{
-						Frequency:  868300000,
-						Modulation: common.Modulation_LORA,
-						ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-							LoraModulationInfo: &gw.LoRaModulationInfo{
-								Bandwidth:             500,
-								SpreadingFactor:       12,
-								CodeRate:              "4/5",
-								PolarizationInversion: false,
+					TxInfo: &gw.UplinkTxInfo{
+						Frequency: 868300000,
+						Modulation: &gw.Modulation{
+							Parameters: &gw.Modulation_Lora{
+								Lora: &gw.LoraModulationInfo{
+									Bandwidth:             500000,
+									SpreadingFactor:       12,
+									CodeRate:              gw.CodeRate_CR_4_5,
+									PolarizationInversion: false,
+								},
 							},
 						},
 					},
-					RxInfo: &gw.UplinkRXInfo{
-						GatewayId:         []byte{1, 2, 3, 4, 5, 6, 7, 8},
+					RxInfo: &gw.UplinkRxInfo{
+						GatewayId:         "0102030405060708",
 						Time:              pbTime,
-						TimeSinceGpsEpoch: ptypes.DurationProto(10 * time.Minute),
+						TimeSinceGpsEpoch: durationpb.New(10 * time.Minute),
 						Rssi:              -70,
-						LoraSnr:           6.6,
-						Channel:           9,
-						RfChain:           3,
+						Snr:               6.6,
 						Board:             2,
 						Antenna:           8,
-						FineTimestampType: gw.FineTimestampType_ENCRYPTED,
-						FineTimestamp: &gw.UplinkRXInfo_EncryptedFineTimestamp{
-							EncryptedFineTimestamp: &gw.EncryptedFineTimestamp{
-								AesKeyIndex: 7,
-								EncryptedNs: []byte{2, 3, 4, 5},
-							},
-						},
-						Context:   []byte{0x00, 0x0f, 0x42, 0x40},
-						CrcStatus: gw.CRCStatus_CRC_OK,
+						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
 					},
 				},
 				{
 					PhyPayload: []byte{1, 2, 3, 4, 5},
-					TxInfo: &gw.UplinkTXInfo{
-						Frequency:  868300000,
-						Modulation: common.Modulation_LORA,
-						ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-							LoraModulationInfo: &gw.LoRaModulationInfo{
-								Bandwidth:             500,
-								SpreadingFactor:       12,
-								CodeRate:              "4/5",
-								PolarizationInversion: false,
+					TxInfo: &gw.UplinkTxInfo{
+						Frequency: 868300000,
+						Modulation: &gw.Modulation{
+							Parameters: &gw.Modulation_Lora{
+								Lora: &gw.LoraModulationInfo{
+									Bandwidth:             500000,
+									SpreadingFactor:       12,
+									CodeRate:              gw.CodeRate_CR_4_5,
+									PolarizationInversion: false,
+								},
 							},
 						},
 					},
-					RxInfo: &gw.UplinkRXInfo{
-						GatewayId:         []byte{1, 2, 3, 4, 5, 6, 7, 8},
+					RxInfo: &gw.UplinkRxInfo{
+						GatewayId:         "0102030405060708",
 						Time:              pbTime,
-						TimeSinceGpsEpoch: ptypes.DurationProto(10 * time.Minute),
+						TimeSinceGpsEpoch: durationpb.New(10 * time.Minute),
 						Rssi:              -80,
-						LoraSnr:           7.7,
-						Channel:           10,
-						RfChain:           3,
+						Snr:               7.7,
 						Board:             2,
 						Antenna:           9,
 						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
-						CrcStatus:         gw.CRCStatus_CRC_OK,
 					},
 				},
 			},
@@ -448,25 +366,25 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 				},
 			},
-			UplinkFrames: []gw.UplinkFrame{
+			UplinkFrames: []*gw.UplinkFrame{
 				{
 					PhyPayload: []byte{1, 2, 3, 4, 5},
-					TxInfo: &gw.UplinkTXInfo{
-						Frequency:  868300000,
-						Modulation: common.Modulation_LR_FHSS,
-						ModulationInfo: &gw.UplinkTXInfo_LrFhssModulationInfo{
-							LrFhssModulationInfo: &gw.LRFHSSModulationInfo{
-								OperatingChannelWidth: 137000,
-								CodeRate:              "4/6",
-								GridSteps:             8,
+					TxInfo: &gw.UplinkTxInfo{
+						Frequency: 868300000,
+						Modulation: &gw.Modulation{
+							Parameters: &gw.Modulation_LrFhss{
+								LrFhss: &gw.LrFhssModulationInfo{
+									OperatingChannelWidth: 137000,
+									CodeRate:              gw.CodeRate_CR_4_6,
+									GridSteps:             8,
+								},
 							},
 						},
 					},
-					RxInfo: &gw.UplinkRXInfo{
-						GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
+					RxInfo: &gw.UplinkRxInfo{
+						GatewayId: "0102030405060708",
 						Rssi:      -74,
 						Context:   []byte{0x00, 0x0f, 0x42, 0x40},
-						CrcStatus: gw.CRCStatus_CRC_OK,
 					},
 				},
 			},
@@ -499,39 +417,32 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 				},
 			},
-			UplinkFrames: []gw.UplinkFrame{
+			UplinkFrames: []*gw.UplinkFrame{
 				{
 					PhyPayload: []byte{1, 2, 3, 4, 5},
-					TxInfo: &gw.UplinkTXInfo{
-						Frequency:  868300000,
-						Modulation: common.Modulation_LORA,
-						ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-							LoraModulationInfo: &gw.LoRaModulationInfo{
-								Bandwidth:             500,
-								SpreadingFactor:       12,
-								CodeRate:              "4/5",
-								PolarizationInversion: false,
+					TxInfo: &gw.UplinkTxInfo{
+						Frequency: 868300000,
+						Modulation: &gw.Modulation{
+							Parameters: &gw.Modulation_Lora{
+								Lora: &gw.LoraModulationInfo{
+									Bandwidth:             500000,
+									SpreadingFactor:       12,
+									CodeRate:              gw.CodeRate_CR_4_5,
+									PolarizationInversion: false,
+								},
 							},
 						},
 					},
-					RxInfo: &gw.UplinkRXInfo{
-						GatewayId:         []byte{1, 2, 3, 4, 5, 6, 7, 8},
-						Time:              pbTime,
-						TimeSinceGpsEpoch: ptypes.DurationProto(10 * time.Minute),
-						Rssi:              -60,
-						LoraSnr:           5.5,
-						Channel:           1,
-						RfChain:           3,
-						Board:             2,
-						Antenna:           0,
-						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
-						CrcStatus:         gw.CRCStatus_CRC_OK,
-						FineTimestampType: gw.FineTimestampType_PLAIN,
-						FineTimestamp: &gw.UplinkRXInfo_PlainFineTimestamp{
-							PlainFineTimestamp: &gw.PlainFineTimestamp{
-								Time: ftProto,
-							},
-						},
+					RxInfo: &gw.UplinkRxInfo{
+						GatewayId:             "0102030405060708",
+						Time:                  pbTime,
+						TimeSinceGpsEpoch:     durationpb.New(10 * time.Minute),
+						FineTimeSinceGpsEpoch: ft,
+						Rssi:                  -60,
+						Snr:                   5.5,
+						Board:                 2,
+						Antenna:               0,
+						Context:               []byte{0x00, 0x0f, 0x42, 0x40},
 					},
 				},
 			},
@@ -541,12 +452,12 @@ func TestGetUplinkFrame(t *testing.T) {
 	for _, test := range testTable {
 		t.Run(test.Name, func(t *testing.T) {
 			assert := require.New(t)
-			f, err := test.PushDataPacket.GetUplinkFrames(test.SkipCRCCheck, false)
+			f, err := test.PushDataPacket.GetUplinkFrames(false)
 			assert.Nil(err)
 
 			for _, ff := range f {
-				assert.Len(ff.RxInfo.UplinkId, 16)
-				ff.RxInfo.UplinkId = nil
+				assert.NotEqual(ff.RxInfo.UplinkId, 0)
+				ff.RxInfo.UplinkId = 0
 			}
 
 			assert.Equal(test.UplinkFrames, f)

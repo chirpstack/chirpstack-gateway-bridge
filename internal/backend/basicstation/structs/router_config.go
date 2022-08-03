@@ -4,12 +4,11 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config/sx1301v1"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 	"github.com/pkg/errors"
 )
 
@@ -136,11 +135,10 @@ func GetRouterConfig(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lor
 
 		for _, freq := range concentratorConf.MultiSF.Frequencies {
 			channelConfigs = append(channelConfigs, &gw.ChannelConfiguration{
-				Frequency:  freq,
-				Modulation: common.Modulation_LORA,
+				Frequency: freq,
 				ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-					LoraModulationConfig: &gw.LoRaModulationConfig{
-						Bandwidth:        125,
+					LoraModulationConfig: &gw.LoraModulationConfig{
+						Bandwidth:        125000,
 						SpreadingFactors: []uint32{7, 8, 9, 10, 11, 12},
 					},
 				},
@@ -149,11 +147,10 @@ func GetRouterConfig(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lor
 
 		if fskFreq := concentratorConf.FSK.Frequency; fskFreq != 0 {
 			channelConfigs = append(channelConfigs, &gw.ChannelConfiguration{
-				Frequency:  fskFreq,
-				Modulation: common.Modulation_FSK,
+				Frequency: fskFreq,
 				ModulationConfig: &gw.ChannelConfiguration_FskModulationConfig{
-					FskModulationConfig: &gw.FSKModulationConfig{
-						Bandwidth: 125,
+					FskModulationConfig: &gw.FskModulationConfig{
+						Bandwidth: 125000,
 						Bitrate:   50000,
 					},
 				},
@@ -162,11 +159,10 @@ func GetRouterConfig(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lor
 
 		if loraSTDFreq := concentratorConf.LoRaSTD.Frequency; loraSTDFreq != 0 {
 			channelConfigs = append(channelConfigs, &gw.ChannelConfiguration{
-				Frequency:  loraSTDFreq,
-				Modulation: common.Modulation_LORA,
+				Frequency: loraSTDFreq,
 				ModulationConfig: &gw.ChannelConfiguration_LoraModulationConfig{
-					LoraModulationConfig: &gw.LoRaModulationConfig{
-						Bandwidth:        concentratorConf.LoRaSTD.Bandwidth / 1000,
+					LoraModulationConfig: &gw.LoraModulationConfig{
+						Bandwidth:        concentratorConf.LoRaSTD.Bandwidth,
 						SpreadingFactors: []uint32{concentratorConf.LoRaSTD.SpreadingFactor},
 					},
 				},
@@ -199,20 +195,14 @@ func GetRouterConfig(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lor
 				return c, errors.Wrap(err, "get radio for channel error")
 			}
 
-			switch channel.Modulation {
-			case common.Modulation_LORA:
-				modInfo := channel.GetLoraModulationConfig()
-				if modInfo == nil {
-					continue
-				}
-
-				if len(modInfo.SpreadingFactors) == 1 {
+			if lora := channel.GetLoraModulationConfig(); lora != nil {
+				if len(lora.SpreadingFactors) == 1 {
 					c.SX1301Conf[concentratorNum].ChanLoRaStd = SX1301ConfChanLoRaStd{
 						Enable:          true,
 						Radio:           r,
 						IF:              int(channel.Frequency) - int(radioFrequencies[r]),
-						Bandwidth:       modInfo.Bandwidth * 1000,
-						SpreadingFactor: modInfo.SpreadingFactors[0],
+						Bandwidth:       lora.Bandwidth,
+						SpreadingFactor: lora.SpreadingFactors[0],
 					}
 
 				} else {
@@ -243,7 +233,9 @@ func GetRouterConfig(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lor
 
 					channelI++
 				}
-			case common.Modulation_FSK:
+			}
+
+			if fsk := channel.GetFskModulationConfig(); fsk != nil {
 				c.SX1301Conf[concentratorNum].ChanFSK = SX1301ConfChanFSK{
 					Enable: true,
 				}

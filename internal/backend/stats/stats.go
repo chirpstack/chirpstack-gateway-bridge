@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"sync"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
-	"github.com/golang/protobuf/proto"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
+	"google.golang.org/protobuf/proto"
 )
 
 type Collector struct {
@@ -33,26 +33,9 @@ func (c *Collector) CountUplink(uf *gw.UplinkFrame) {
 	c.Lock()
 	defer c.Unlock()
 
-	mod := gw.Modulation{}
-	if params := uf.GetTxInfo().GetLoraModulationInfo(); params != nil {
-		mod.Parameters = &gw.Modulation_Lora{
-			Lora: params,
-		}
-	}
+	mod := uf.GetTxInfo().GetModulation()
 
-	if params := uf.GetTxInfo().GetFskModulationInfo(); params != nil {
-		mod.Parameters = &gw.Modulation_Fsk{
-			Fsk: params,
-		}
-	}
-
-	if params := uf.GetTxInfo().GetLrFhssModulationInfo(); params != nil {
-		mod.Parameters = &gw.Modulation_LrFhss{
-			LrFhss: params,
-		}
-	}
-
-	b, err := proto.Marshal(&mod)
+	b, err := proto.Marshal(mod)
 	if err != nil {
 		return
 	}
@@ -63,7 +46,7 @@ func (c *Collector) CountUplink(uf *gw.UplinkFrame) {
 	c.rxPerModulationCount[modStr] = c.rxPerModulationCount[modStr] + 1
 }
 
-func (c *Collector) CountDownlink(dl *gw.DownlinkFrame, ack *gw.DownlinkTXAck) {
+func (c *Collector) CountDownlink(dl *gw.DownlinkFrame, ack *gw.DownlinkTxAck) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -76,20 +59,9 @@ func (c *Collector) CountDownlink(dl *gw.DownlinkFrame, ack *gw.DownlinkTXAck) {
 		c.txStatusCount[status] = c.txStatusCount[status] + 1
 
 		if item.Status == gw.TxAckStatus_OK && i < len(dl.Items) {
-			mod := gw.Modulation{}
-			if params := dl.Items[i].GetTxInfo().GetLoraModulationInfo(); params != nil {
-				mod.Parameters = &gw.Modulation_Lora{
-					Lora: params,
-				}
-			}
+			mod := dl.Items[i].GetTxInfo().GetModulation()
 
-			if params := dl.Items[i].GetTxInfo().GetFskModulationInfo(); params != nil {
-				mod.Parameters = &gw.Modulation_Fsk{
-					Fsk: params,
-				}
-			}
-
-			b, err := proto.Marshal(&mod)
+			b, err := proto.Marshal(mod)
 			if err != nil {
 				return
 			}
@@ -103,7 +75,7 @@ func (c *Collector) CountDownlink(dl *gw.DownlinkFrame, ack *gw.DownlinkTXAck) {
 
 }
 
-func (c *Collector) ExportStats() gw.GatewayStats {
+func (c *Collector) ExportStats() *gw.GatewayStats {
 	c.Lock()
 	defer c.Unlock()
 
@@ -154,7 +126,7 @@ func (c *Collector) ExportStats() gw.GatewayStats {
 	}
 
 	c.reset()
-	return stats
+	return &stats
 }
 
 func (c *Collector) reset() {

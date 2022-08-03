@@ -4,10 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
-	"github.com/golang/protobuf/ptypes"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func TestPullResp(t *testing.T) {
@@ -49,42 +48,44 @@ func TestGetPullRespPacket(t *testing.T) {
 
 	tests := []struct {
 		Name           string
-		DownlinkFrame  gw.DownlinkFrame
+		DownlinkFrame  *gw.DownlinkFrame
 		PullRespPacket PullRespPacket
 		Error          error
 	}{
 		{
 			Name: "delay timing - lora",
-			DownlinkFrame: gw.DownlinkFrame{
+			DownlinkFrame: &gw.DownlinkFrame{
 				Items: []*gw.DownlinkFrameItem{
 					{
 						PhyPayload: []byte{1, 2, 3, 4},
-						TxInfo: &gw.DownlinkTXInfo{
-							GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-							Frequency:  868100000,
-							Power:      14,
-							Modulation: common.Modulation_LORA,
-							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-								LoraModulationInfo: &gw.LoRaModulationInfo{
-									SpreadingFactor:       12,
-									Bandwidth:             125,
-									PolarizationInversion: true,
-									CodeRate:              "4/5",
+						TxInfo: &gw.DownlinkTxInfo{
+							Frequency: 868100000,
+							Power:     14,
+							Modulation: &gw.Modulation{
+								Parameters: &gw.Modulation_Lora{
+									Lora: &gw.LoraModulationInfo{
+										SpreadingFactor:       12,
+										Bandwidth:             125000,
+										PolarizationInversion: true,
+										CodeRate:              gw.CodeRate_CR_4_5,
+									},
 								},
 							},
 							Board:   1,
 							Antenna: 2,
-							Timing:  gw.DownlinkTiming_DELAY,
-							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-								DelayTimingInfo: &gw.DelayTimingInfo{
-									Delay: ptypes.DurationProto(time.Second),
+							Timing: &gw.Timing{
+								Parameters: &gw.Timing_Delay{
+									Delay: &gw.DelayTimingInfo{
+										Delay: durationpb.New(time.Second),
+									},
 								},
 							},
 							Context: []byte{0x00, 0x0f, 0x42, 0x40},
 						},
 					},
 				},
-				Token: 1234,
+				DownlinkId: 1234,
+				GatewayId:  "0102030405060708",
 			},
 			PullRespPacket: PullRespPacket{
 				ProtocolVersion: ProtocolVersion2,
@@ -110,34 +111,36 @@ func TestGetPullRespPacket(t *testing.T) {
 		},
 		{
 			Name: "delay timing - fsk",
-			DownlinkFrame: gw.DownlinkFrame{
+			DownlinkFrame: &gw.DownlinkFrame{
 				Items: []*gw.DownlinkFrameItem{
 					{
 						PhyPayload: []byte{1, 2, 3, 4},
-						TxInfo: &gw.DownlinkTXInfo{
-							GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-							Frequency:  868100000,
-							Power:      14,
-							Modulation: common.Modulation_FSK,
-							ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
-								FskModulationInfo: &gw.FSKModulationInfo{
-									Datarate:           50000,
-									FrequencyDeviation: 25000,
+						TxInfo: &gw.DownlinkTxInfo{
+							Frequency: 868100000,
+							Power:     14,
+							Modulation: &gw.Modulation{
+								Parameters: &gw.Modulation_Fsk{
+									Fsk: &gw.FskModulationInfo{
+										Datarate:           50000,
+										FrequencyDeviation: 25000,
+									},
 								},
 							},
 							Board:   1,
 							Antenna: 2,
-							Timing:  gw.DownlinkTiming_DELAY,
-							TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-								DelayTimingInfo: &gw.DelayTimingInfo{
-									Delay: ptypes.DurationProto(time.Second),
+							Timing: &gw.Timing{
+								Parameters: &gw.Timing_Delay{
+									Delay: &gw.DelayTimingInfo{
+										Delay: durationpb.New(time.Second),
+									},
 								},
 							},
 							Context: []byte{0x00, 0x0f, 0x42, 0x40},
 						},
 					},
 				},
-				Token: 1234,
+				DownlinkId: 1234,
+				GatewayId:  "0102030405060708",
 			},
 			PullRespPacket: PullRespPacket{
 				ProtocolVersion: ProtocolVersion2,
@@ -162,30 +165,35 @@ func TestGetPullRespPacket(t *testing.T) {
 		},
 		{
 			Name: "immmediately",
-			DownlinkFrame: gw.DownlinkFrame{
+			DownlinkFrame: &gw.DownlinkFrame{
 				Items: []*gw.DownlinkFrameItem{
 					{
 						PhyPayload: []byte{1, 2, 3, 4},
-						TxInfo: &gw.DownlinkTXInfo{
-							GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-							Frequency:  868100000,
-							Power:      14,
-							Modulation: common.Modulation_LORA,
-							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-								LoraModulationInfo: &gw.LoRaModulationInfo{
-									SpreadingFactor:       12,
-									Bandwidth:             125,
-									PolarizationInversion: true,
-									CodeRate:              "4/5",
+						TxInfo: &gw.DownlinkTxInfo{
+							Frequency: 868100000,
+							Power:     14,
+							Modulation: &gw.Modulation{
+								Parameters: &gw.Modulation_Lora{
+									Lora: &gw.LoraModulationInfo{
+										SpreadingFactor:       12,
+										Bandwidth:             125000,
+										PolarizationInversion: true,
+										CodeRate:              gw.CodeRate_CR_4_5,
+									},
 								},
 							},
 							Board:   1,
 							Antenna: 2,
-							Timing:  gw.DownlinkTiming_IMMEDIATELY,
+							Timing: &gw.Timing{
+								Parameters: &gw.Timing_Immediately{
+									Immediately: &gw.ImmediatelyTimingInfo{},
+								},
+							},
 						},
 					},
 				},
-				Token: 1234,
+				DownlinkId: 1234,
+				GatewayId:  "0102030405060708",
 			},
 			PullRespPacket: PullRespPacket{
 				ProtocolVersion: ProtocolVersion2,
@@ -211,35 +219,37 @@ func TestGetPullRespPacket(t *testing.T) {
 		},
 		{
 			Name: "gps epoch",
-			DownlinkFrame: gw.DownlinkFrame{
+			DownlinkFrame: &gw.DownlinkFrame{
 				Items: []*gw.DownlinkFrameItem{
 					{
 						PhyPayload: []byte{1, 2, 3, 4},
-						TxInfo: &gw.DownlinkTXInfo{
-							GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-							Frequency:  868100000,
-							Power:      14,
-							Modulation: common.Modulation_LORA,
-							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-								LoraModulationInfo: &gw.LoRaModulationInfo{
-									SpreadingFactor:       12,
-									Bandwidth:             125,
-									PolarizationInversion: true,
-									CodeRate:              "4/5",
+						TxInfo: &gw.DownlinkTxInfo{
+							Frequency: 868100000,
+							Power:     14,
+							Modulation: &gw.Modulation{
+								Parameters: &gw.Modulation_Lora{
+									Lora: &gw.LoraModulationInfo{
+										SpreadingFactor:       12,
+										Bandwidth:             125000,
+										PolarizationInversion: true,
+										CodeRate:              gw.CodeRate_CR_4_5,
+									},
 								},
 							},
 							Board:   1,
 							Antenna: 2,
-							Timing:  gw.DownlinkTiming_GPS_EPOCH,
-							TimingInfo: &gw.DownlinkTXInfo_GpsEpochTimingInfo{
-								GpsEpochTimingInfo: &gw.GPSEpochTimingInfo{
-									TimeSinceGpsEpoch: ptypes.DurationProto(5 * time.Second),
+							Timing: &gw.Timing{
+								Parameters: &gw.Timing_GpsEpoch{
+									GpsEpoch: &gw.GPSEpochTimingInfo{
+										TimeSinceGpsEpoch: durationpb.New(time.Second * 5),
+									},
 								},
 							},
 						},
 					},
 				},
-				Token: 1234,
+				DownlinkId: 1234,
+				GatewayId:  "0102030405060708",
 			},
 			PullRespPacket: PullRespPacket{
 				ProtocolVersion: ProtocolVersion2,

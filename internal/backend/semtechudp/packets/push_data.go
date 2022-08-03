@@ -3,18 +3,18 @@ package packets
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strconv"
 	"time"
 
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
-	"github.com/brocaar/lorawan/gps"
+	"github.com/chirpstack/chirpstack/api/go/v4/common"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // loRaDataRateRegex contains a regexp for parsing the LoRa data-rate string.
@@ -56,7 +56,7 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 	}
 
 	stats := gw.GatewayStats{
-		GatewayId:           p.GatewayMAC[:],
+		GatewayId:           p.GatewayMAC.String(),
 		RxPacketsReceived:   p.Payload.Stat.RXNb,
 		RxPacketsReceivedOk: p.Payload.Stat.RXOK,
 		TxPacketsEmitted:    p.Payload.Stat.TXNb,
@@ -64,11 +64,7 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 	}
 
 	// time
-	ts, err := ptypes.TimestampProto(time.Time(p.Payload.Stat.Time))
-	if err != nil {
-		return nil, errors.Wrap(err, "timestamp proto error")
-	}
-	stats.Time = ts
+	stats.Time = timestamppb.New(time.Time(p.Payload.Stat.Time))
 
 	// location
 	if p.Payload.Stat.Lati != 0 && p.Payload.Stat.Long != 0 && p.Payload.Stat.Alti != 0 {
@@ -80,54 +76,34 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 		}
 	}
 
-	// set stats id
-	statsID, err := uuid.NewV4()
-	if err != nil {
-		return nil, errors.Wrap(err, "new uuid error")
-	}
-	stats.StatsId = statsID[:]
-
 	return &stats, nil
 }
 
 // GetUplinkFrames returns a slice of gw.UplinkFrame.
-func (p PushDataPacket) GetUplinkFrames(skipCRCCheck bool, FakeRxInfoTime bool) ([]gw.UplinkFrame, error) {
-	var frames []gw.UplinkFrame
+func (p PushDataPacket) GetUplinkFrames(FakeRxInfoTime bool) ([]*gw.UplinkFrame, error) {
+	var frames []*gw.UplinkFrame
 
 	for i := range p.Payload.RXPK {
 		// validate CRC
-		if p.Payload.RXPK[i].Stat != 1 && !skipCRCCheck {
+		if p.Payload.RXPK[i].Stat != 1 {
 			continue
 		}
 
 		if len(p.Payload.RXPK[i].RSig) == 0 {
-			frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i], FakeRxInfoTime)
+			frame, err := getUplinkFrame(p.GatewayMAC, p.Payload.RXPK[i], FakeRxInfoTime)
 			if err != nil {
 				return nil, errors.Wrap(err, "backend/semtechudp/packets: get uplink frame error")
 			}
-
-			// add random uplink id
-			uplinkID, err := uuid.NewV4()
-			if err != nil {
-				return nil, errors.Wrap(err, "backend/semtechudp/packets: get random uplink id error")
-			}
-			frame.RxInfo.UplinkId = uplinkID[:]
-
+			frame.RxInfo.UplinkId = uint32(p.RandomToken)
 			frames = append(frames, frame)
 		} else {
 			for j := range p.Payload.RXPK[i].RSig {
-				frame, err := getUplinkFrame(p.GatewayMAC[:], p.Payload.RXPK[i], FakeRxInfoTime)
+				frame, err := getUplinkFrame(p.GatewayMAC, p.Payload.RXPK[i], FakeRxInfoTime)
 				if err != nil {
 					return nil, errors.Wrap(err, "backend/semtechudp/packets: get uplink frame error")
 				}
 				frame = setUplinkFrameRSig(frame, p.Payload.RXPK[i], p.Payload.RXPK[i].RSig[j])
-
-				// add random uplink id
-				uplinkID, err := uuid.NewV4()
-				if err != nil {
-					return nil, errors.Wrap(err, "backend/semtechudp/packets: get random uplink id error")
-				}
-				frame.RxInfo.UplinkId = uplinkID[:]
+				frame.RxInfo.UplinkId = uint32(p.RandomToken)
 
 				frames = append(frames, frame)
 			}
@@ -137,49 +113,31 @@ func (p PushDataPacket) GetUplinkFrames(skipCRCCheck bool, FakeRxInfoTime bool) 
 	return frames, nil
 }
 
-func setUplinkFrameRSig(frame gw.UplinkFrame, rxPK RXPK, rSig RSig) gw.UplinkFrame {
+func setUplinkFrameRSig(frame *gw.UplinkFrame, rxPK RXPK, rSig RSig) *gw.UplinkFrame {
 	frame.RxInfo.Antenna = uint32(rSig.Ant)
-	frame.RxInfo.Channel = uint32(rSig.Chan)
 	frame.RxInfo.Rssi = int32(rSig.RSSIC)
-	frame.RxInfo.LoraSnr = rSig.LSNR
+	frame.RxInfo.Snr = rSig.LSNR
 
 	if len(rSig.ETime) != 0 {
-		frame.RxInfo.FineTimestampType = gw.FineTimestampType_ENCRYPTED
-		frame.RxInfo.FineTimestamp = &gw.UplinkRXInfo_EncryptedFineTimestamp{
-			EncryptedFineTimestamp: &gw.EncryptedFineTimestamp{
-				EncryptedNs: rSig.ETime,
-				AesKeyIndex: uint32(rxPK.AESK),
-			},
-		}
+		// TODO: handle decrypt and expose as plain fine-timestamp.
 	}
 
 	return frame
 }
 
-func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.UplinkFrame, error) {
+func getUplinkFrame(gatewayID lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) (*gw.UplinkFrame, error) {
 	frame := gw.UplinkFrame{
 		PhyPayload: rxpk.Data,
-		TxInfo: &gw.UplinkTXInfo{
+		TxInfo: &gw.UplinkTxInfo{
 			Frequency: uint32(rxpk.Freq * 1000000),
 		},
-		RxInfo: &gw.UplinkRXInfo{
-			GatewayId: gatewayID,
+		RxInfo: &gw.UplinkRxInfo{
+			GatewayId: gatewayID.String(),
 			Rssi:      int32(rxpk.RSSI),
-			LoraSnr:   rxpk.LSNR,
-			Channel:   uint32(rxpk.Chan),
-			RfChain:   uint32(rxpk.RFCh),
+			Snr:       float32(rxpk.LSNR),
 			Board:     uint32(rxpk.Brd),
 			Context:   make([]byte, 4),
 		},
-	}
-
-	switch rxpk.Stat {
-	case 1:
-		frame.RxInfo.CrcStatus = gw.CRCStatus_CRC_OK
-	case -1:
-		frame.RxInfo.CrcStatus = gw.CRCStatus_BAD_CRC
-	default:
-		frame.RxInfo.CrcStatus = gw.CRCStatus_NO_CRC
 	}
 
 	// Context
@@ -187,20 +145,15 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 
 	// Time.
 	if rxpk.Time != nil && !time.Time(*rxpk.Time).IsZero() {
-		ts, err := ptypes.TimestampProto(time.Time(*rxpk.Time))
-		if err != nil {
-			return frame, errors.Wrap(err, "backend/semtechudp/packets: timestamp proto error")
-		}
-		frame.RxInfo.Time = ts
+		frame.RxInfo.Time = timestamppb.New(time.Time(*rxpk.Time))
 	} else if FakeRxInfoTime {
-		ts, _ := ptypes.TimestampProto(time.Now().UTC())
-		frame.RxInfo.Time = ts
+		frame.RxInfo.Time = timestamppb.Now()
 	}
 
 	// Time since GPS epoch
 	if rxpk.Tmms != nil {
 		d := time.Duration(*rxpk.Tmms) * time.Millisecond
-		frame.RxInfo.TimeSinceGpsEpoch = ptypes.DurationProto(d)
+		frame.RxInfo.TimeSinceGpsEpoch = durationpb.New(d)
 	}
 
 	// Plain fine-timestamp (SX1302 / SX1303)
@@ -212,87 +165,136 @@ func getUplinkFrame(gatewayID []byte, rxpk RXPK, FakeRxInfoTime bool) (gw.Uplink
 		// add the nanos from the fine-timestamp
 		d = d + (time.Duration(*rxpk.FTime) * time.Nanosecond)
 
-		t := time.Time(gps.NewTimeFromTimeSinceGPSEpoch(d))
-		tProto, err := ptypes.TimestampProto(t)
-		if err != nil {
-			return frame, errors.Wrap(err, "backend/semtechudp/packets: could not convert timestamp to proto timestamp")
-		}
-
-		frame.RxInfo.FineTimestampType = gw.FineTimestampType_PLAIN
-		frame.RxInfo.FineTimestamp = &gw.UplinkRXInfo_PlainFineTimestamp{
-			PlainFineTimestamp: &gw.PlainFineTimestamp{
-				Time: tProto,
-			},
-		}
+		frame.RxInfo.FineTimeSinceGpsEpoch = durationpb.New(d)
 	}
 
 	// LoRa data-rate
 	if rxpk.DatR.LoRa != "" {
-		frame.TxInfo.Modulation = common.Modulation_LORA
-
 		// parse e.g. SF12BW250 into separate variables
 		match := loRaDataRateRegex.FindStringSubmatch(rxpk.DatR.LoRa)
 		if len(match) != 3 {
-			return frame, errors.New("backend/semtechudp/packets: could not parse LoRa data-rate")
+			return &frame, errors.New("backend/semtechudp/packets: could not parse LoRa data-rate")
 		}
 
 		// cast variables to ints
 		sf, err := strconv.Atoi(match[1])
 		if err != nil {
-			return frame, errors.Wrap(err, "backend/semtechudp/packets: could not convert sf to int")
+			return &frame, errors.Wrap(err, "backend/semtechudp/packets: could not convert sf to int")
 		}
 
 		bw, err := strconv.Atoi(match[2])
 		if err != nil {
-			return frame, errors.Wrap(err, "backend/semtechudp/packets: could not parse bandwidth to int")
+			return &frame, errors.Wrap(err, "backend/semtechudp/packets: could not parse bandwidth to int")
 		}
 
-		frame.TxInfo.ModulationInfo = &gw.UplinkTXInfo_LoraModulationInfo{
-			LoraModulationInfo: &gw.LoRaModulationInfo{
-				Bandwidth:       uint32(bw),
-				SpreadingFactor: uint32(sf),
-				CodeRate:        rxpk.CodR,
+		cr := gw.CodeRate_CR_UNDEFINED
+		switch rxpk.CodR {
+		case "4/5":
+			cr = gw.CodeRate_CR_4_5
+		case "4/6":
+			cr = gw.CodeRate_CR_4_6
+		case "4/7":
+			cr = gw.CodeRate_CR_4_7
+		case "4/8":
+			cr = gw.CodeRate_CR_4_8
+		case "3/8":
+			cr = gw.CodeRate_CR_3_8
+		case "2/6":
+			cr = gw.CodeRate_CR_2_6
+		case "1/4":
+			cr = gw.CodeRate_CR_1_4
+		case "1/6":
+			cr = gw.CodeRate_CR_1_6
+		case "5/6":
+			cr = gw.CodeRate_CR_5_6
+		case "4/5LI":
+			cr = gw.CodeRate_CR_LI_4_5
+		case "4/6LI":
+			cr = gw.CodeRate_CR_LI_4_6
+		case "4/8LI":
+			cr = gw.CodeRate_CR_LI_4_8
+		default:
+			return &frame, errors.New(fmt.Sprintf("backend/semtechudp:packets: invalid CodR: %s", rxpk.CodR))
+		}
+
+		frame.TxInfo.Modulation = &gw.Modulation{
+			Parameters: &gw.Modulation_Lora{
+				Lora: &gw.LoraModulationInfo{
+					Bandwidth:       uint32(bw) * 1000,
+					SpreadingFactor: uint32(sf),
+					CodeRate:        cr,
+				},
 			},
 		}
 	}
 
 	// LR-FHSS data-rate
 	if rxpk.DatR.LRFHSS != "" {
-		frame.TxInfo.Modulation = common.Modulation_LR_FHSS
-
 		// parse M0CW137 into CW (OCW) variable
 		match := lrFHSSDataRateRegex.FindStringSubmatch(rxpk.DatR.LRFHSS)
 		if len(match) != 2 {
-			return frame, errors.New("backend/semtechudp/packets: could not parse LR-FHSS data-rate")
+			return &frame, errors.New("backend/semtechudp/packets: could not parse LR-FHSS data-rate")
 		}
 
 		// cast variable to int
 		ocw, err := strconv.Atoi(match[1])
 		if err != nil {
-			return frame, errors.Wrap(err, "backend/semtechudp/packets: could not convert cw to int")
+			return &frame, errors.Wrap(err, "backend/semtechudp/packets: could not convert cw to int")
 		}
 
-		frame.TxInfo.ModulationInfo = &gw.UplinkTXInfo_LrFhssModulationInfo{
-			LrFhssModulationInfo: &gw.LRFHSSModulationInfo{
-				OperatingChannelWidth: uint32(ocw) * 1000, // kHz -> Hz
-				CodeRate:              rxpk.CodR,
-				GridSteps:             uint32(rxpk.HPW),
+		cr := gw.CodeRate_CR_UNDEFINED
+		switch rxpk.CodR {
+		case "4/5":
+			cr = gw.CodeRate_CR_4_5
+		case "4/6":
+			cr = gw.CodeRate_CR_4_6
+		case "4/7":
+			cr = gw.CodeRate_CR_4_7
+		case "4/8":
+			cr = gw.CodeRate_CR_4_8
+		case "3/8":
+			cr = gw.CodeRate_CR_3_8
+		case "2/6":
+			cr = gw.CodeRate_CR_2_6
+		case "1/4":
+			cr = gw.CodeRate_CR_1_4
+		case "1/6":
+			cr = gw.CodeRate_CR_1_6
+		case "5/6":
+			cr = gw.CodeRate_CR_5_6
+		case "4/5LI":
+			cr = gw.CodeRate_CR_LI_4_5
+		case "4/6LI":
+			cr = gw.CodeRate_CR_LI_4_6
+		case "4/8LI":
+			cr = gw.CodeRate_CR_LI_4_8
+		default:
+			return &frame, errors.New(fmt.Sprintf("backend/semtechudp:packets: invalid CodR: %s", rxpk.CodR))
+		}
+
+		frame.TxInfo.Modulation = &gw.Modulation{
+			Parameters: &gw.Modulation_LrFhss{
+				LrFhss: &gw.LrFhssModulationInfo{
+					OperatingChannelWidth: uint32(ocw) * 1000, // kHz -> Hz
+					CodeRate:              cr,
+					GridSteps:             uint32(rxpk.HPW),
+				},
 			},
 		}
 	}
 
 	// FSK data-rate
 	if rxpk.DatR.FSK != 0 {
-		frame.TxInfo.Modulation = common.Modulation_FSK
-
-		frame.TxInfo.ModulationInfo = &gw.UplinkTXInfo_FskModulationInfo{
-			FskModulationInfo: &gw.FSKModulationInfo{
-				Datarate: uint32(rxpk.DatR.FSK),
+		frame.TxInfo.Modulation = &gw.Modulation{
+			Parameters: &gw.Modulation_Fsk{
+				Fsk: &gw.FskModulationInfo{
+					Datarate: uint32(rxpk.DatR.FSK),
+				},
 			},
 		}
 	}
 
-	return frame, nil
+	return &frame, nil
 }
 
 // UnmarshalBinary decodes the packet from Semtech UDP binary form.
@@ -365,6 +367,6 @@ type RSig struct {
 	Ant   uint8   `json:"ant"`   // Antenna number on which signal has been received
 	Chan  uint8   `json:"chan"`  // Concentrator "IF" channel used for RX (unsigned integer)
 	RSSIC int16   `json:"rssic"` // RSSI in dBm of the channel (signed integer, 1 dB precision)
-	LSNR  float64 `json:"lsnr"`  // Lora SNR ratio in dB (signed float, 0.1 dB precision)
+	LSNR  float32 `json:"lsnr"`  // Lora SNR ratio in dB (signed float, 0.1 dB precision)
 	ETime []byte  `json:"etime"` // Encrypted 'main' fine timestamp, ns precision [0..999999999] (Optional)
 }

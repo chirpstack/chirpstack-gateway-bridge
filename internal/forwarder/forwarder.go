@@ -1,17 +1,16 @@
 package forwarder
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/metadata"
 	"github.com/brocaar/lorawan"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // Setup configures the forwarder.
@@ -50,29 +49,31 @@ func gatewaySubscribeFunc(pl events.Subscribe) {
 	}(pl)
 }
 
-func uplinkFrameFunc(pl gw.UplinkFrame) {
-	go func(pl gw.UplinkFrame) {
+func uplinkFrameFunc(pl *gw.UplinkFrame) {
+	go func(pl *gw.UplinkFrame) {
 		var gatewayID lorawan.EUI64
-		var uplinkID uuid.UUID
-		copy(gatewayID[:], pl.GetRxInfo().GatewayId)
-		copy(uplinkID[:], pl.GetRxInfo().UplinkId)
+		if err := gatewayID.UnmarshalText([]byte(pl.GetRxInfo().GetGatewayId())); err != nil {
+			log.WithError(err).Error("decode gateway id error")
+			return
+		}
 
-		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventUp, uplinkID, &pl); err != nil {
+		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventUp, pl.GetRxInfo().GetUplinkId(), pl); err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"gateway_id": gatewayID,
 				"event_type": integration.EventUp,
-				"uplink_id":  uplinkID,
+				"uplink_id":  pl.GetRxInfo().GetUplinkId(),
 			}).Error("publish event error")
 		}
 	}(pl)
 }
 
-func gatewayStatsFunc(pl gw.GatewayStats) {
-	go func(pl gw.GatewayStats) {
+func gatewayStatsFunc(pl *gw.GatewayStats) {
+	go func(pl *gw.GatewayStats) {
 		var gatewayID lorawan.EUI64
-		var statsID uuid.UUID
-		copy(gatewayID[:], pl.GatewayId)
-		copy(statsID[:], pl.StatsId)
+		if err := gatewayID.UnmarshalText([]byte(pl.GetGatewayId())); err != nil {
+			log.WithError(err).Error("decode gateway id error")
+			return
+		}
 
 		// add meta-data to stats
 		if pl.MetaData == nil {
@@ -82,78 +83,68 @@ func gatewayStatsFunc(pl gw.GatewayStats) {
 			pl.MetaData[k] = v
 		}
 
-		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventStats, statsID, &pl); err != nil {
+		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventStats, 0, pl); err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"gateway_id": gatewayID,
 				"event_type": integration.EventStats,
-				"stats_id":   statsID,
 			}).Error("publish event error")
 		}
 	}(pl)
 }
 
-func downlinkTxAckFunc(pl gw.DownlinkTXAck) {
-	go func(pl gw.DownlinkTXAck) {
+func downlinkTxAckFunc(pl *gw.DownlinkTxAck) {
+	go func(pl *gw.DownlinkTxAck) {
 		var gatewayID lorawan.EUI64
-		var downID uuid.UUID
-		copy(gatewayID[:], pl.GatewayId)
-		copy(downID[:], pl.DownlinkId)
-
-		// for backwards compatibility
-		for _, err := range pl.Items {
-			if err.Status == gw.TxAckStatus_OK {
-				pl.Error = ""
-				break
-			}
-
-			pl.Error = err.String()
+		if err := gatewayID.UnmarshalText([]byte(pl.GetGatewayId())); err != nil {
+			log.WithError(err).Error("decode gateway id error")
+			return
 		}
 
-		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventAck, downID, &pl); err != nil {
+		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventAck, pl.GetDownlinkId(), pl); err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"gateway_id":  gatewayID,
 				"event_type":  integration.EventAck,
-				"downlink_id": downID,
+				"downlink_id": pl.GetDownlinkId(),
 			}).Error("publish event error")
 		}
 	}(pl)
 }
 
-func rawPacketForwarderEventFunc(pl gw.RawPacketForwarderEvent) {
-	go func(pl gw.RawPacketForwarderEvent) {
+func rawPacketForwarderEventFunc(pl *gw.RawPacketForwarderEvent) {
+	go func(pl *gw.RawPacketForwarderEvent) {
 		var gatewayID lorawan.EUI64
-		var rawID uuid.UUID
-		copy(gatewayID[:], pl.GatewayId)
-		copy(rawID[:], pl.RawId)
+		if err := gatewayID.UnmarshalText([]byte(pl.GetGatewayId())); err != nil {
+			log.WithError(err).Error("decode gateway id error")
+			return
+		}
 
-		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventRaw, rawID, &pl); err != nil {
+		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventRaw, 0, pl); err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"gateway_id": gatewayID,
 				"event_type": integration.EventRaw,
-				"raw_id":     rawID,
 			}).Error("publish event error")
 		}
 	}(pl)
 }
 
-func downlinkFrameFunc(pl gw.DownlinkFrame) {
-	go func(pl gw.DownlinkFrame) {
+func downlinkFrameFunc(pl *gw.DownlinkFrame) {
+	go func(pl *gw.DownlinkFrame) {
 		if err := backend.GetBackend().SendDownlinkFrame(pl); err != nil {
 			log.WithError(err).Error("send downlink frame error")
 		}
 	}(pl)
 }
 
-func gatewayConfigurationFunc(pl gw.GatewayConfiguration) {
-	go func(pl gw.GatewayConfiguration) {
+func gatewayConfigurationFunc(pl *gw.GatewayConfiguration) {
+	go func(pl *gw.GatewayConfiguration) {
 		if err := backend.GetBackend().ApplyConfiguration(pl); err != nil {
 			log.WithError(err).Error("apply gateway-configuration error")
 		}
 	}(pl)
 }
 
-func rawPacketForwarderCommandFunc(pl gw.RawPacketForwarderCommand) {
-	go func(pl gw.RawPacketForwarderCommand) {
+func rawPacketForwarderCommandFunc(pl *gw.RawPacketForwarderCommand) {
+	go func(pl *gw.RawPacketForwarderCommand) {
 		if err := backend.GetBackend().RawPacketForwarderCommand(pl); err != nil {
 			log.WithError(err).Error("raw packet-forwarder command error")
 		}

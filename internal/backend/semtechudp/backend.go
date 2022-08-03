@@ -1,9 +1,7 @@
 package semtechudp
 
 import (
-	"crypto/rand"
 	"encoding/base64"
-	"encoding/binary"
 	"fmt"
 	"net"
 	"sync"
@@ -13,12 +11,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/semtechudp/packets"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/filters"
 	"github.com/brocaar/lorawan"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // udpPacket represents a raw UDP packet.
@@ -37,19 +35,18 @@ type Backend struct {
 	cache *cache.Cache
 
 	// Callback functions for handling events.
-	downlinkTxAckFunc           func(gw.DownlinkTXAck)
-	gatewayStatsFunc            func(gw.GatewayStats)
-	uplinkFrameFunc             func(gw.UplinkFrame)
-	rawPacketForwarderEventFunc func(gw.RawPacketForwarderEvent)
+	downlinkTxAckFunc           func(*gw.DownlinkTxAck)
+	gatewayStatsFunc            func(*gw.GatewayStats)
+	uplinkFrameFunc             func(*gw.UplinkFrame)
+	rawPacketForwarderEventFunc func(*gw.RawPacketForwarderEvent)
 
 	udpSendChan chan udpPacket
 
-	wg           sync.WaitGroup
-	conn         *net.UDPConn
-	closed       bool
-	gateways     gateways
-	fakeRxTime   bool
-	skipCRCCheck bool
+	wg         sync.WaitGroup
+	conn       *net.UDPConn
+	closed     bool
+	gateways   gateways
+	fakeRxTime bool
 }
 
 // NewBackend creates a new backend.
@@ -71,9 +68,8 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		gateways: gateways{
 			gateways: make(map[lorawan.EUI64]gateway),
 		},
-		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
-		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,
-		cache:        cache.New(15*time.Second, 15*time.Second),
+		fakeRxTime: conf.Backend.SemtechUDP.FakeRxTime,
+		cache:      cache.New(15*time.Second, 15*time.Second),
 	}
 
 	go func() {
@@ -131,17 +127,17 @@ func (b *Backend) Stop() error {
 }
 
 // SetDownlinkTxAckFunc sets the DownlinkTXAck handler func.
-func (b *Backend) SetDownlinkTxAckFunc(f func(gw.DownlinkTXAck)) {
+func (b *Backend) SetDownlinkTxAckFunc(f func(*gw.DownlinkTxAck)) {
 	b.downlinkTxAckFunc = f
 }
 
 // SetGatewayStatsFunc sets the GatewayStats handler func.
-func (b *Backend) SetGatewayStatsFunc(f func(gw.GatewayStats)) {
+func (b *Backend) SetGatewayStatsFunc(f func(*gw.GatewayStats)) {
 	b.gatewayStatsFunc = f
 }
 
 // SetUplinkFrameFunc sets the UplinkFrame handler func.
-func (b *Backend) SetUplinkFrameFunc(f func(gw.UplinkFrame)) {
+func (b *Backend) SetUplinkFrameFunc(f func(*gw.UplinkFrame)) {
 	b.uplinkFrameFunc = f
 }
 
@@ -151,24 +147,15 @@ func (b *Backend) SetSubscribeEventFunc(f func(events.Subscribe)) {
 }
 
 // SetRawPacketForwarderEventFunc sets the RawPacketForwarderEvent handler func.
-func (b *Backend) SetRawPacketForwarderEventFunc(func(gw.RawPacketForwarderEvent)) {
+func (b *Backend) SetRawPacketForwarderEventFunc(func(*gw.RawPacketForwarderEvent)) {
 	// not provided by the Semtech packet-forwarder.
 }
 
 // SendDownlinkFrame sends the given downlink frame to the gateway.
-func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
-	// if Token == 0, generate it in order to be backwards compatible.
-	if frame.Token == 0 {
-		tokenB := make([]byte, 2)
-		if _, err := rand.Read(tokenB); err != nil {
-			return errors.Wrap(err, "read random bytes error")
-		}
-		frame.Token = uint32(binary.BigEndian.Uint16(tokenB))
-	}
-
-	acks := make([]*gw.DownlinkTXAckItem, len(frame.Items))
+func (b *Backend) SendDownlinkFrame(frame *gw.DownlinkFrame) error {
+	acks := make([]*gw.DownlinkTxAckItem, len(frame.Items))
 	for i := range acks {
-		acks[i] = &gw.DownlinkTXAckItem{
+		acks[i] = &gw.DownlinkTxAckItem{
 			Status: gw.TxAckStatus_IGNORED,
 		}
 	}
@@ -176,13 +163,13 @@ func (b *Backend) SendDownlinkFrame(frame gw.DownlinkFrame) error {
 	return b.sendDownlinkFrame(frame, 0, acks)
 }
 
-func (b *Backend) sendDownlinkFrame(frame gw.DownlinkFrame, i int, txAckItems []*gw.DownlinkTXAckItem) error {
+func (b *Backend) sendDownlinkFrame(frame *gw.DownlinkFrame, i int, txAckItems []*gw.DownlinkTxAckItem) error {
 	if i > len(frame.Items)-1 {
 		return errors.New("invalid downlink frame item index")
 	}
 
 	// Make sure the token is truncated to an uint16.
-	token := uint16(frame.Token)
+	token := uint16(frame.DownlinkId)
 
 	// create cache items
 	b.cache.Set(fmt.Sprintf("%d:ack", token), txAckItems, cache.DefaultExpiration)
@@ -190,14 +177,16 @@ func (b *Backend) sendDownlinkFrame(frame gw.DownlinkFrame, i int, txAckItems []
 	b.cache.Set(fmt.Sprintf("%d:index", token), i, cache.DefaultExpiration)
 
 	var gatewayID lorawan.EUI64
-	copy(gatewayID[:], frame.GetGatewayId())
+	if err := gatewayID.UnmarshalText([]byte(frame.GetGatewayId())); err != nil {
+		return errors.Wrap(err, "decode gateway id error")
+	}
 
 	gw, err := b.gateways.get(gatewayID)
 	if err != nil {
 		return errors.Wrap(err, "get gateway error")
 	}
 
-	pullResp, err := packets.GetPullRespPacket(gw.protocolVersion, uint16(frame.Token), frame, i)
+	pullResp, err := packets.GetPullRespPacket(gw.protocolVersion, token, frame, i)
 	if err != nil {
 		return errors.Wrap(err, "get PullRespPacket error")
 	}
@@ -215,12 +204,12 @@ func (b *Backend) sendDownlinkFrame(frame gw.DownlinkFrame, i int, txAckItems []
 }
 
 // ApplyConfiguration is not implemented.
-func (b *Backend) ApplyConfiguration(config gw.GatewayConfiguration) error {
+func (b *Backend) ApplyConfiguration(config *gw.GatewayConfiguration) error {
 	return nil
 }
 
 // RawPacketForwarderCommand sends the given raw command to the packet-forwarder.
-func (b *Backend) RawPacketForwarderCommand(gw.RawPacketForwarderCommand) error {
+func (b *Backend) RawPacketForwarderCommand(*gw.RawPacketForwarderCommand) error {
 	return errors.New("raw packet-forwarder command not implemented by Semtech packet-forwarder")
 }
 
@@ -358,15 +347,15 @@ func (b *Backend) handleTXACK(up udpPacket) error {
 	}
 
 	// get downlink frame from cache
-	var frame gw.DownlinkFrame
+	var frame *gw.DownlinkFrame
 	v, ok := b.cache.Get(fmt.Sprintf("%d:frame", p.RandomToken))
 	if !ok {
 		return fmt.Errorf("no internal frame cache for token %d", p.RandomToken)
 	}
-	if df, ok := v.(gw.DownlinkFrame); ok {
+	if df, ok := v.(*gw.DownlinkFrame); ok {
 		frame = df
 	} else {
-		return fmt.Errorf("expected gw.DownlinkFrame, got: %T", v)
+		return fmt.Errorf("expected *gw.DownlinkFrame, got: %T", v)
 	}
 
 	// get current downlink frame item from cache
@@ -382,15 +371,15 @@ func (b *Backend) handleTXACK(up udpPacket) error {
 	}
 
 	// get downlink tx acknowledgement items from cache
-	var txAckItems []*gw.DownlinkTXAckItem
+	var txAckItems []*gw.DownlinkTxAckItem
 	v, ok = b.cache.Get(fmt.Sprintf("%d:ack", p.RandomToken))
 	if !ok {
 		return fmt.Errorf("no internal tx ack cache for token %d", p.RandomToken)
 	}
-	if items, ok := v.([]*gw.DownlinkTXAckItem); ok {
+	if items, ok := v.([]*gw.DownlinkTxAckItem); ok {
 		txAckItems = items
 	} else {
-		return fmt.Errorf("expected []gw.DownlinkTXAckItem, got: %T", items)
+		return fmt.Errorf("expected []*gw.DownlinkTXAckItem, got: %T", items)
 	}
 
 	// validate that the data is sane
@@ -402,7 +391,7 @@ func (b *Backend) handleTXACK(up udpPacket) error {
 	if p.Payload != nil && p.Payload.TXPKACK.Error != "" && p.Payload.TXPKACK.Error != "NONE" {
 		// set tx ack error
 		if v, ok := gw.TxAckStatus_value[p.Payload.TXPKACK.Error]; ok {
-			txAckItems[itemIndex] = &gw.DownlinkTXAckItem{
+			txAckItems[itemIndex] = &gw.DownlinkTxAckItem{
 				Status: gw.TxAckStatus(v),
 			}
 		} else {
@@ -417,32 +406,30 @@ func (b *Backend) handleTXACK(up udpPacket) error {
 
 		// report acks
 		if b.downlinkTxAckFunc != nil {
-			b.downlinkTxAckFunc(gw.DownlinkTXAck{
-				GatewayId:  p.GatewayMAC[:],
-				Token:      frame.Token,
+			b.downlinkTxAckFunc(&gw.DownlinkTxAck{
+				GatewayId:  p.GatewayMAC.String(),
 				DownlinkId: frame.DownlinkId,
 				Items:      txAckItems,
 			})
 		}
 	} else {
 		// no error
-		txAckItems[itemIndex] = &gw.DownlinkTXAckItem{
+		txAckItems[itemIndex] = &gw.DownlinkTxAckItem{
 			Status: gw.TxAckStatus_OK,
 		}
 
-		txAck := gw.DownlinkTXAck{
-			GatewayId:  p.GatewayMAC[:],
-			Token:      frame.Token,
+		txAck := gw.DownlinkTxAck{
+			GatewayId:  p.GatewayMAC.String(),
 			DownlinkId: frame.DownlinkId,
 			Items:      txAckItems,
 		}
 
 		if conn, err := b.gateways.get(p.GatewayMAC); err == nil {
-			conn.stats.CountDownlink(&frame, &txAck)
+			conn.stats.CountDownlink(frame, &txAck)
 		}
 
 		if b.downlinkTxAckFunc != nil {
-			b.downlinkTxAckFunc(txAck)
+			b.downlinkTxAckFunc(&txAck)
 		}
 	}
 
@@ -475,23 +462,11 @@ func (b *Backend) handlePushData(up udpPacket) error {
 		return errors.Wrap(err, "get stats error")
 	}
 	if stats != nil {
-		// set gateway ip
-		if up.addr.IP.IsLoopback() {
-			ip, err := getOutboundIP()
-			if err != nil {
-				log.WithError(err).Error("backend/semtechudp: get outbound ip error")
-			} else {
-				stats.Ip = ip.String()
-			}
-		} else {
-			stats.Ip = up.addr.IP.String()
-		}
-
-		b.handleStats(p.GatewayMAC, *stats)
+		b.handleStats(p.GatewayMAC, stats)
 	}
 
 	// uplink frames
-	uplinkFrames, err := p.GetUplinkFrames(b.skipCRCCheck, b.fakeRxTime)
+	uplinkFrames, err := p.GetUplinkFrames(b.fakeRxTime)
 	if err != nil {
 		return errors.Wrap(err, "get uplink frames error")
 	}
@@ -500,7 +475,7 @@ func (b *Backend) handlePushData(up udpPacket) error {
 	return nil
 }
 
-func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats gw.GatewayStats) {
+func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats *gw.GatewayStats) {
 	if conn, err := b.gateways.get(gatewayID); err == nil {
 		s := conn.stats.ExportStats()
 
@@ -518,13 +493,13 @@ func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats gw.GatewayStats) {
 	}
 }
 
-func (b *Backend) handleUplinkFrames(uplinkFrames []gw.UplinkFrame) error {
+func (b *Backend) handleUplinkFrames(uplinkFrames []*gw.UplinkFrame) error {
 	for i := range uplinkFrames {
 		var gatewayID lorawan.EUI64
 		copy(gatewayID[:], uplinkFrames[i].GetRxInfo().GatewayId)
 
 		if conn, err := b.gateways.get(gatewayID); err == nil {
-			conn.stats.CountUplink(&uplinkFrames[i])
+			conn.stats.CountUplink(uplinkFrames[i])
 		}
 
 		if filters.MatchFilters(uplinkFrames[i].PhyPayload) {
@@ -539,17 +514,4 @@ func (b *Backend) handleUplinkFrames(uplinkFrames []gw.UplinkFrame) error {
 	}
 
 	return nil
-}
-
-func getOutboundIP() (net.IP, error) {
-	// this does not actually connect to 8.8.8.8, unless the connection is
-	// used to send UDP frames
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP, nil
 }

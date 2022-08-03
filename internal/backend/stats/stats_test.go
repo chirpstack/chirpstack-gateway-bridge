@@ -3,10 +3,10 @@ package stats
 import (
 	"testing"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 func TestStats(t *testing.T) {
@@ -15,7 +15,7 @@ func TestStats(t *testing.T) {
 
 		c := NewCollector()
 		stats := c.ExportStats()
-		assert.True(proto.Equal(&stats, &gw.GatewayStats{}))
+		assert.True(proto.Equal(stats, &gw.GatewayStats{}))
 	})
 
 	t.Run("Uplink", func(t *testing.T) {
@@ -23,14 +23,16 @@ func TestStats(t *testing.T) {
 			assert := require.New(t)
 
 			uf := gw.UplinkFrame{
-				TxInfo: &gw.UplinkTXInfo{
+				TxInfo: &gw.UplinkTxInfo{
 					Frequency: 868100000,
-					ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							Bandwidth:             125,
-							SpreadingFactor:       7,
-							CodeRate:              "3/4",
-							PolarizationInversion: false,
+					Modulation: &gw.Modulation{
+						Parameters: &gw.Modulation_Lora{
+							Lora: &gw.LoraModulationInfo{
+								Bandwidth:             125000,
+								SpreadingFactor:       7,
+								CodeRate:              gw.CodeRate_CR_4_5,
+								PolarizationInversion: false,
+							},
 						},
 					},
 				},
@@ -51,28 +53,30 @@ func TestStats(t *testing.T) {
 						Count: 1,
 						Modulation: &gw.Modulation{
 							Parameters: &gw.Modulation_Lora{
-								Lora: &gw.LoRaModulationInfo{
-									Bandwidth:             125,
+								Lora: &gw.LoraModulationInfo{
+									Bandwidth:             125000,
 									SpreadingFactor:       7,
-									CodeRate:              "3/4",
+									CodeRate:              gw.CodeRate_CR_4_5,
 									PolarizationInversion: false,
 								},
 							},
 						},
 					},
 				},
-			}, &stats))
+			}, stats))
 		})
 
 		t.Run("FSK", func(t *testing.T) {
 			assert := require.New(t)
 
 			uf := gw.UplinkFrame{
-				TxInfo: &gw.UplinkTXInfo{
+				TxInfo: &gw.UplinkTxInfo{
 					Frequency: 868100000,
-					ModulationInfo: &gw.UplinkTXInfo_FskModulationInfo{
-						FskModulationInfo: &gw.FSKModulationInfo{
-							Datarate: 50000,
+					Modulation: &gw.Modulation{
+						Parameters: &gw.Modulation_Fsk{
+							Fsk: &gw.FskModulationInfo{
+								Datarate: 50000,
+							},
 						},
 					},
 				},
@@ -93,27 +97,29 @@ func TestStats(t *testing.T) {
 						Count: 1,
 						Modulation: &gw.Modulation{
 							Parameters: &gw.Modulation_Fsk{
-								Fsk: &gw.FSKModulationInfo{
+								Fsk: &gw.FskModulationInfo{
 									Datarate: 50000,
 								},
 							},
 						},
 					},
 				},
-			}, &stats))
+			}, stats))
 		})
 
 		t.Run("LR-FHSS", func(t *testing.T) {
 			assert := require.New(t)
 
 			uf := gw.UplinkFrame{
-				TxInfo: &gw.UplinkTXInfo{
+				TxInfo: &gw.UplinkTxInfo{
 					Frequency: 868100000,
-					ModulationInfo: &gw.UplinkTXInfo_LrFhssModulationInfo{
-						LrFhssModulationInfo: &gw.LRFHSSModulationInfo{
-							OperatingChannelWidth: 137000,
-							CodeRate:              "4/6",
-							GridSteps:             8,
+					Modulation: &gw.Modulation{
+						Parameters: &gw.Modulation_LrFhss{
+							LrFhss: &gw.LrFhssModulationInfo{
+								OperatingChannelWidth: 137000,
+								CodeRate:              gw.CodeRate_CR_4_6,
+								GridSteps:             8,
+							},
 						},
 					},
 				},
@@ -134,22 +140,22 @@ func TestStats(t *testing.T) {
 						Count: 1,
 						Modulation: &gw.Modulation{
 							Parameters: &gw.Modulation_LrFhss{
-								LrFhss: &gw.LRFHSSModulationInfo{
+								LrFhss: &gw.LrFhssModulationInfo{
 									OperatingChannelWidth: 137000,
-									CodeRate:              "4/6",
+									CodeRate:              gw.CodeRate_CR_4_6,
 									GridSteps:             8,
 								},
 							},
 						},
 					},
 				},
-			}, &stats))
+			}, stats))
 		})
 	})
 
 	t.Run("Downlink", func(t *testing.T) {
-		ack := gw.DownlinkTXAck{
-			Items: []*gw.DownlinkTXAckItem{
+		ack := gw.DownlinkTxAck{
+			Items: []*gw.DownlinkTxAckItem{
 				{
 					Status: gw.TxAckStatus_COLLISION_BEACON,
 				},
@@ -165,27 +171,31 @@ func TestStats(t *testing.T) {
 			df := gw.DownlinkFrame{
 				Items: []*gw.DownlinkFrameItem{
 					{
-						TxInfo: &gw.DownlinkTXInfo{
+						TxInfo: &gw.DownlinkTxInfo{
 							Frequency: 868200000,
-							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-								LoraModulationInfo: &gw.LoRaModulationInfo{
-									Bandwidth:             125,
-									SpreadingFactor:       7,
-									CodeRate:              "3/4",
-									PolarizationInversion: false,
+							Modulation: &gw.Modulation{
+								Parameters: &gw.Modulation_Lora{
+									Lora: &gw.LoraModulationInfo{
+										Bandwidth:             125000,
+										SpreadingFactor:       7,
+										CodeRate:              gw.CodeRate_CR_4_5,
+										PolarizationInversion: false,
+									},
 								},
 							},
 						},
 					},
 					{
-						TxInfo: &gw.DownlinkTXInfo{
+						TxInfo: &gw.DownlinkTxInfo{
 							Frequency: 868100000,
-							ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-								LoraModulationInfo: &gw.LoRaModulationInfo{
-									Bandwidth:             125,
-									SpreadingFactor:       7,
-									CodeRate:              "3/4",
-									PolarizationInversion: false,
+							Modulation: &gw.Modulation{
+								Parameters: &gw.Modulation_Lora{
+									Lora: &gw.LoraModulationInfo{
+										Bandwidth:             125000,
+										SpreadingFactor:       7,
+										CodeRate:              gw.CodeRate_CR_4_5,
+										PolarizationInversion: false,
+									},
 								},
 							},
 						},
@@ -208,10 +218,10 @@ func TestStats(t *testing.T) {
 						Count: 1,
 						Modulation: &gw.Modulation{
 							Parameters: &gw.Modulation_Lora{
-								Lora: &gw.LoRaModulationInfo{
-									Bandwidth:             125,
+								Lora: &gw.LoraModulationInfo{
+									Bandwidth:             125000,
 									SpreadingFactor:       7,
-									CodeRate:              "3/4",
+									CodeRate:              gw.CodeRate_CR_4_5,
 									PolarizationInversion: false,
 								},
 							},
@@ -222,7 +232,7 @@ func TestStats(t *testing.T) {
 					"OK":               1,
 					"COLLISION_BEACON": 1,
 				},
-			}, &stats))
+			}, stats))
 		})
 
 		t.Run("FSK", func(t *testing.T) {
@@ -231,21 +241,25 @@ func TestStats(t *testing.T) {
 			df := gw.DownlinkFrame{
 				Items: []*gw.DownlinkFrameItem{
 					{
-						TxInfo: &gw.DownlinkTXInfo{
+						TxInfo: &gw.DownlinkTxInfo{
 							Frequency: 868200000,
-							ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
-								FskModulationInfo: &gw.FSKModulationInfo{
-									Datarate: 50000,
+							Modulation: &gw.Modulation{
+								Parameters: &gw.Modulation_Fsk{
+									Fsk: &gw.FskModulationInfo{
+										Datarate: 50000,
+									},
 								},
 							},
 						},
 					},
 					{
-						TxInfo: &gw.DownlinkTXInfo{
+						TxInfo: &gw.DownlinkTxInfo{
 							Frequency: 868100000,
-							ModulationInfo: &gw.DownlinkTXInfo_FskModulationInfo{
-								FskModulationInfo: &gw.FSKModulationInfo{
-									Datarate: 50000,
+							Modulation: &gw.Modulation{
+								Parameters: &gw.Modulation_Fsk{
+									Fsk: &gw.FskModulationInfo{
+										Datarate: 50000,
+									},
 								},
 							},
 						},
@@ -268,7 +282,7 @@ func TestStats(t *testing.T) {
 						Count: 1,
 						Modulation: &gw.Modulation{
 							Parameters: &gw.Modulation_Fsk{
-								Fsk: &gw.FSKModulationInfo{
+								Fsk: &gw.FskModulationInfo{
 									Datarate: 50000,
 								},
 							},
@@ -279,7 +293,7 @@ func TestStats(t *testing.T) {
 					"OK":               1,
 					"COLLISION_BEACON": 1,
 				},
-			}, &stats))
+			}, stats))
 		})
 	})
 }

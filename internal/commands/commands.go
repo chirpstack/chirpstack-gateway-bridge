@@ -9,14 +9,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration"
 	"github.com/brocaar/lorawan"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 type command struct {
@@ -60,18 +59,18 @@ func Setup(conf config.Config) error {
 	return nil
 }
 
-func gatewayCommandExecRequestFunc(pl gw.GatewayCommandExecRequest) {
+func gatewayCommandExecRequestFunc(pl *gw.GatewayCommandExecRequest) {
 	go executeCommand(pl)
 }
 
-func executeCommand(cmd gw.GatewayCommandExecRequest) {
+func executeCommand(cmd *gw.GatewayCommandExecRequest) {
 	var gatewayID lorawan.EUI64
 	copy(gatewayID[:], cmd.GatewayId)
 
 	stdout, stderr, err := execute(cmd.Command, cmd.Stdin, cmd.Environment)
 	resp := gw.GatewayCommandExecResponse{
-		GatewayId: cmd.GatewayId,
-		ExecId:    cmd.ExecId,
+		GatewayId: cmd.GetGatewayId(),
+		ExecId:    cmd.GetExecId(),
 		Stdout:    stdout,
 		Stderr:    stderr,
 	}
@@ -79,9 +78,7 @@ func executeCommand(cmd gw.GatewayCommandExecRequest) {
 		resp.Error = err.Error()
 	}
 
-	var id uuid.UUID
-
-	if err := integration.GetIntegration().PublishEvent(gatewayID, "exec", id, &resp); err != nil {
+	if err := integration.GetIntegration().PublishEvent(gatewayID, "exec", cmd.GetExecId(), &resp); err != nil {
 		log.WithError(err).Error("commands: publish command execution event error")
 	}
 }

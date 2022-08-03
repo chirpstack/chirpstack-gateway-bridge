@@ -79,12 +79,6 @@ type="{{ .Backend.Type }}"
   # packet-forwarder matches this port.
   udp_bind = "{{ .Backend.SemtechUDP.UDPBind }}"
 
-  # Skip the CRC status-check of received packets
-  #
-  # This is only has effect when the packet-forwarder is configured to forward
-  # LoRa frames with CRC errors.
-  skip_crc_check = {{ .Backend.SemtechUDP.SkipCRCCheck }}
-
   # Fake RX timestamp.
   #
   # Fake the RX time when the gateway does not have GPS, in which case
@@ -94,9 +88,6 @@ type="{{ .Backend.Type }}"
 
   # ChirpStack Concentratord backend.
   [backend.concentratord]
-
-  # Check for CRC OK.
-  crc_check={{ .Backend.Concentratord.CRCCheck }}
 
   # Event API URL.
   event_url="{{ .Backend.Concentratord.EventURL }}"
@@ -220,7 +211,7 @@ type="{{ .Backend.Type }}"
 #
 # This defines how the MQTT payloads are encoded. Valid options are:
 # * protobuf:  Protobuf encoding
-# * json:      JSON encoding (easier for debugging, but less compact than 'protobuf')
+# * json:      JSON encoding (for debugging)
 marshaler="{{ .Integration.Marshaler }}"
 
   # MQTT integration configuration.

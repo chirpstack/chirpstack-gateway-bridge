@@ -5,13 +5,13 @@ import (
 	"math"
 	"time"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/band"
 	"github.com/brocaar/lorawan/gps"
-	"github.com/golang/protobuf/ptypes"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // RadioMetaData contains the radio meta-data.
@@ -41,26 +41,28 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 		return errors.Wrap(err, "get data-rate error")
 	}
 
-	pb.TxInfo = &gw.UplinkTXInfo{
+	pb.TxInfo = &gw.UplinkTxInfo{
 		Frequency: rmd.Frequency,
 	}
 
 	switch dr.Modulation {
 	case band.LoRaModulation:
-		pb.TxInfo.Modulation = common.Modulation_LORA
-		pb.TxInfo.ModulationInfo = &gw.UplinkTXInfo_LoraModulationInfo{
-			LoraModulationInfo: &gw.LoRaModulationInfo{
-				Bandwidth:             uint32(dr.Bandwidth),
-				SpreadingFactor:       uint32(dr.SpreadFactor),
-				CodeRate:              "4/5",
-				PolarizationInversion: false,
+		pb.TxInfo.Modulation = &gw.Modulation{
+			Parameters: &gw.Modulation_Lora{
+				Lora: &gw.LoraModulationInfo{
+					Bandwidth:             uint32(dr.Bandwidth) * 1000,
+					SpreadingFactor:       uint32(dr.SpreadFactor),
+					CodeRate:              gw.CodeRate_CR_4_5,
+					PolarizationInversion: false,
+				},
 			},
 		}
 	case band.FSKModulation:
-		pb.TxInfo.Modulation = common.Modulation_FSK
-		pb.TxInfo.ModulationInfo = &gw.UplinkTXInfo_FskModulationInfo{
-			FskModulationInfo: &gw.FSKModulationInfo{
-				Datarate: uint32(dr.BitRate),
+		pb.TxInfo.Modulation = &gw.Modulation{
+			Parameters: &gw.Modulation_Fsk{
+				Fsk: &gw.FskModulationInfo{
+					Datarate: uint32(dr.BitRate),
+				},
 			},
 		}
 	}
@@ -68,21 +70,17 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 	//
 	// RxInfo
 	//
-	pb.RxInfo = &gw.UplinkRXInfo{
-		GatewayId: gatewayID[:],
+	pb.RxInfo = &gw.UplinkRxInfo{
+		GatewayId: gatewayID.String(),
 		Rssi:      int32(rmd.UpInfo.RSSI),
-		LoraSnr:   float64(rmd.UpInfo.SNR),
-		CrcStatus: gw.CRCStatus_CRC_OK,
+		Snr:       float32(rmd.UpInfo.SNR),
 	}
 
 	if rxTime := rmd.UpInfo.RxTime; rxTime != 0 {
 		sec, nsec := math.Modf(rmd.UpInfo.RxTime)
 		if sec != 0 {
 			val := time.Unix(int64(sec), int64(nsec))
-			pb.RxInfo.Time, err = ptypes.TimestampProto(val)
-			if err != nil {
-				return errors.Wrap(err, "rxtime/timestamp proto error")
-			}
+			pb.RxInfo.Time = timestamppb.New(val)
 		}
 	}
 
@@ -90,12 +88,8 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 		gpsTimeDur := time.Duration(gpsTime) * time.Microsecond
 		gpsTimeTime := time.Time(gps.NewTimeFromTimeSinceGPSEpoch(gpsTimeDur))
 
-		pb.RxInfo.TimeSinceGpsEpoch = ptypes.DurationProto(gpsTimeDur)
-		pb.RxInfo.Time, err = ptypes.TimestampProto(gpsTimeTime)
-		if err != nil {
-			return errors.Wrap(err, "GPSTime/timestamp proto error")
-		}
-
+		pb.RxInfo.TimeSinceGpsEpoch = durationpb.New(gpsTimeDur)
+		pb.RxInfo.Time = timestamppb.New(gpsTimeTime)
 	}
 
 	// Context

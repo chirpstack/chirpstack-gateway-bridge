@@ -1,14 +1,13 @@
 package integration
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/proto"
 
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/integration/mqtt"
 	"github.com/brocaar/lorawan"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 // Event types.
@@ -45,22 +44,22 @@ type Integration interface {
 	SetGatewaySubscription(subscribe bool, gatewayID lorawan.EUI64) error
 
 	// PublishEvent publishes the given event.
-	PublishEvent(lorawan.EUI64, string, uuid.UUID, proto.Message) error
+	PublishEvent(lorawan.EUI64, string, uint32, proto.Message) error
 
 	// PublishState publishes the given state as retained message.
 	PublishState(lorawan.EUI64, string, proto.Message) error
 
 	// SetDownlinkFrameFunc sets the DownlinkFrame handler func.
-	SetDownlinkFrameFunc(func(gw.DownlinkFrame))
+	SetDownlinkFrameFunc(func(*gw.DownlinkFrame))
 
 	// SetRawPacketForwarderCommandFunc sets the RawPacketForwarderCommand handler func.
-	SetRawPacketForwarderCommandFunc(func(gw.RawPacketForwarderCommand))
+	SetRawPacketForwarderCommandFunc(func(*gw.RawPacketForwarderCommand))
 
 	// SetGatewayConfigurationFunc sets the GatewayConfiguration handler func.
-	SetGatewayConfigurationFunc(func(gw.GatewayConfiguration))
+	SetGatewayConfigurationFunc(func(*gw.GatewayConfiguration))
 
 	// SetGatewayCommandExecRequestFunc sets the GatewayCommandExecRequest handler func.
-	SetGatewayCommandExecRequestFunc(func(gw.GatewayCommandExecRequest))
+	SetGatewayCommandExecRequestFunc(func(*gw.GatewayCommandExecRequest))
 
 	// Start starts the integration.
 	Start() error

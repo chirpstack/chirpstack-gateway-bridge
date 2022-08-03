@@ -5,21 +5,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/brocaar/chirpstack-api/go/v3/common"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation/structs"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
 	"github.com/brocaar/lorawan"
 	"github.com/brocaar/lorawan/gps"
+	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
 
 type BackendTestSuite struct {
@@ -133,8 +131,8 @@ func (ts *BackendTestSuite) TestVersion() {
 func (ts *BackendTestSuite) TestUplinkDataFrame() {
 	assert := require.New(ts.T())
 
-	uplinkFrameChan := make(chan gw.UplinkFrame, 1)
-	ts.backend.uplinkFrameFunc = func(pl gw.UplinkFrame) {
+	uplinkFrameChan := make(chan *gw.UplinkFrame, 1)
+	ts.backend.uplinkFrameFunc = func(pl *gw.UplinkFrame) {
 		uplinkFrameChan <- pl
 	}
 
@@ -163,30 +161,30 @@ func (ts *BackendTestSuite) TestUplinkDataFrame() {
 
 	uplinkFrame := <-uplinkFrameChan
 
-	assert.Len(uplinkFrame.RxInfo.UplinkId, 16)
-	uplinkFrame.RxInfo.UplinkId = nil
+	assert.NotEqual(uplinkFrame.RxInfo.UplinkId, 0)
+	uplinkFrame.RxInfo.UplinkId = 0
 
 	assert.True(proto.Equal(&gw.UplinkFrame{
 		PhyPayload: []byte{0x40, 0xf6, 0xff, 0xff, 0x0ff, 0x80, 0x90, 0x01, 0x01, 0x02, 0xec, 0xff, 0xff, 0xff},
-		TxInfo: &gw.UplinkTXInfo{
-			Frequency:  868100000,
-			Modulation: common.Modulation_LORA,
-			ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-				LoraModulationInfo: &gw.LoRaModulationInfo{
-					Bandwidth:       125,
-					SpreadingFactor: 7,
-					CodeRate:        "4/5",
+		TxInfo: &gw.UplinkTxInfo{
+			Frequency: 868100000,
+			Modulation: &gw.Modulation{
+				Parameters: &gw.Modulation_Lora{
+					Lora: &gw.LoraModulationInfo{
+						Bandwidth:       125000,
+						SpreadingFactor: 7,
+						CodeRate:        gw.CodeRate_CR_4_5,
+					},
 				},
 			},
 		},
-		RxInfo: &gw.UplinkRXInfo{
-			GatewayId: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+		RxInfo: &gw.UplinkRxInfo{
+			GatewayId: "0102030405060708",
 			Rssi:      120,
-			LoraSnr:   5.5,
+			Snr:       5.5,
 			Context:   []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
-			CrcStatus: gw.CRCStatus_CRC_OK,
 		},
-	}, &uplinkFrame))
+	}, uplinkFrame))
 
 	conn, err := ts.backend.gateways.get(lorawan.EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08})
 	assert.NoError(err)
@@ -203,23 +201,23 @@ func (ts *BackendTestSuite) TestUplinkDataFrame() {
 				Count: 1,
 				Modulation: &gw.Modulation{
 					Parameters: &gw.Modulation_Lora{
-						Lora: &gw.LoRaModulationInfo{
-							Bandwidth:       125,
+						Lora: &gw.LoraModulationInfo{
+							Bandwidth:       125000,
 							SpreadingFactor: 7,
-							CodeRate:        "4/5",
+							CodeRate:        gw.CodeRate_CR_4_5,
 						},
 					},
 				},
 			},
 		},
-	}, &stats))
+	}, stats))
 }
 
 func (ts *BackendTestSuite) TestJoinRequest() {
 	assert := require.New(ts.T())
 
-	uplinkFrameChan := make(chan gw.UplinkFrame, 1)
-	ts.backend.uplinkFrameFunc = func(pl gw.UplinkFrame) {
+	uplinkFrameChan := make(chan *gw.UplinkFrame, 1)
+	ts.backend.uplinkFrameFunc = func(pl *gw.UplinkFrame) {
 		uplinkFrameChan <- pl
 	}
 
@@ -247,30 +245,30 @@ func (ts *BackendTestSuite) TestJoinRequest() {
 
 	uplinkFrame := <-uplinkFrameChan
 
-	assert.Len(uplinkFrame.RxInfo.UplinkId, 16)
-	uplinkFrame.RxInfo.UplinkId = nil
+	assert.NotEqual(uplinkFrame.RxInfo.UplinkId, 0)
+	uplinkFrame.RxInfo.UplinkId = 0
 
 	assert.True(proto.Equal(&gw.UplinkFrame{
 		PhyPayload: []byte{0x00, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x02, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x03, 0x14, 0x00, 0xf6, 0xff, 0xff, 0xff},
-		TxInfo: &gw.UplinkTXInfo{
-			Frequency:  868100000,
-			Modulation: common.Modulation_LORA,
-			ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-				LoraModulationInfo: &gw.LoRaModulationInfo{
-					Bandwidth:       125,
-					SpreadingFactor: 7,
-					CodeRate:        "4/5",
+		TxInfo: &gw.UplinkTxInfo{
+			Frequency: 868100000,
+			Modulation: &gw.Modulation{
+				Parameters: &gw.Modulation_Lora{
+					Lora: &gw.LoraModulationInfo{
+						Bandwidth:       125000,
+						SpreadingFactor: 7,
+						CodeRate:        gw.CodeRate_CR_4_5,
+					},
 				},
 			},
 		},
-		RxInfo: &gw.UplinkRXInfo{
-			GatewayId: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+		RxInfo: &gw.UplinkRxInfo{
+			GatewayId: "0102030405060708",
 			Rssi:      120,
-			LoraSnr:   5.5,
+			Snr:       5.5,
 			Context:   []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
-			CrcStatus: gw.CRCStatus_CRC_OK,
 		},
-	}, &uplinkFrame))
+	}, uplinkFrame))
 
 	conn, err := ts.backend.gateways.get(lorawan.EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08})
 	assert.NoError(err)
@@ -287,23 +285,23 @@ func (ts *BackendTestSuite) TestJoinRequest() {
 				Count: 1,
 				Modulation: &gw.Modulation{
 					Parameters: &gw.Modulation_Lora{
-						Lora: &gw.LoRaModulationInfo{
-							Bandwidth:       125,
+						Lora: &gw.LoraModulationInfo{
+							Bandwidth:       125000,
 							SpreadingFactor: 7,
-							CodeRate:        "4/5",
+							CodeRate:        gw.CodeRate_CR_4_5,
 						},
 					},
 				},
 			},
 		},
-	}, &stats))
+	}, stats))
 }
 
 func (ts *BackendTestSuite) TestProprietaryDataFrame() {
 	assert := require.New(ts.T())
 
-	uplinkFrameChan := make(chan gw.UplinkFrame)
-	ts.backend.uplinkFrameFunc = func(pl gw.UplinkFrame) {
+	uplinkFrameChan := make(chan *gw.UplinkFrame)
+	ts.backend.uplinkFrameFunc = func(pl *gw.UplinkFrame) {
 		uplinkFrameChan <- pl
 	}
 
@@ -326,30 +324,30 @@ func (ts *BackendTestSuite) TestProprietaryDataFrame() {
 
 	uplinkFrame := <-uplinkFrameChan
 
-	assert.Len(uplinkFrame.RxInfo.UplinkId, 16)
-	uplinkFrame.RxInfo.UplinkId = nil
+	assert.NotEqual(uplinkFrame.RxInfo.UplinkId, 0)
+	uplinkFrame.RxInfo.UplinkId = 0
 
 	assert.True(proto.Equal(&gw.UplinkFrame{
 		PhyPayload: []byte{0x01, 0x02, 0x03, 0x04},
-		TxInfo: &gw.UplinkTXInfo{
-			Frequency:  868100000,
-			Modulation: common.Modulation_LORA,
-			ModulationInfo: &gw.UplinkTXInfo_LoraModulationInfo{
-				LoraModulationInfo: &gw.LoRaModulationInfo{
-					Bandwidth:       125,
-					SpreadingFactor: 7,
-					CodeRate:        "4/5",
+		TxInfo: &gw.UplinkTxInfo{
+			Frequency: 868100000,
+			Modulation: &gw.Modulation{
+				Parameters: &gw.Modulation_Lora{
+					Lora: &gw.LoraModulationInfo{
+						Bandwidth:       125000,
+						SpreadingFactor: 7,
+						CodeRate:        gw.CodeRate_CR_4_5,
+					},
 				},
 			},
 		},
-		RxInfo: &gw.UplinkRXInfo{
-			GatewayId: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
+		RxInfo: &gw.UplinkRxInfo{
+			GatewayId: "0102030405060708",
 			Rssi:      120,
-			LoraSnr:   5.5,
+			Snr:       5.5,
 			Context:   []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
-			CrcStatus: gw.CRCStatus_CRC_OK,
 		},
-	}, &uplinkFrame))
+	}, uplinkFrame))
 
 	conn, err := ts.backend.gateways.get(lorawan.EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08})
 	assert.NoError(err)
@@ -366,16 +364,16 @@ func (ts *BackendTestSuite) TestProprietaryDataFrame() {
 				Count: 1,
 				Modulation: &gw.Modulation{
 					Parameters: &gw.Modulation_Lora{
-						Lora: &gw.LoRaModulationInfo{
-							Bandwidth:       125,
+						Lora: &gw.LoraModulationInfo{
+							Bandwidth:       125000,
 							SpreadingFactor: 7,
-							CodeRate:        "4/5",
+							CodeRate:        gw.CodeRate_CR_4_5,
 						},
 					},
 				},
 			},
 		},
-	}, &stats))
+	}, stats))
 }
 
 func (ts *BackendTestSuite) TestRequestTimesync() {
@@ -422,37 +420,36 @@ func (ts *BackendTestSuite) TestRequestTimesync() {
 
 func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 	assert := require.New(ts.T())
-	id, err := uuid.NewV4()
-	assert.NoError(err)
 
-	txAckChan := make(chan gw.DownlinkTXAck, 1)
-	ts.backend.downlinkTxAckFunc = func(pl gw.DownlinkTXAck) {
+	txAckChan := make(chan *gw.DownlinkTxAck, 1)
+	ts.backend.downlinkTxAckFunc = func(pl *gw.DownlinkTxAck) {
 		txAckChan <- pl
 	}
 
 	df := gw.DownlinkFrame{
-		Token:      12345,
-		DownlinkId: id[:],
-		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		DownlinkId: 12345,
+		GatewayId:  "0102030405060708",
 		Items: []*gw.DownlinkFrameItem{
 			{
 				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							Bandwidth:             125,
-							SpreadingFactor:       10,
-							CodeRate:              "4/5",
-							PolarizationInversion: true,
+				TxInfo: &gw.DownlinkTxInfo{
+					Frequency: 868100000,
+					Power:     14,
+					Modulation: &gw.Modulation{
+						Parameters: &gw.Modulation_Lora{
+							Lora: &gw.LoraModulationInfo{
+								Bandwidth:             125000,
+								SpreadingFactor:       10,
+								CodeRate:              gw.CodeRate_CR_4_5,
+								PolarizationInversion: true,
+							},
 						},
 					},
-					Timing: gw.DownlinkTiming_DELAY,
-					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-						DelayTimingInfo: &gw.DelayTimingInfo{
-							Delay: ptypes.DurationProto(time.Second),
+					Timing: &gw.Timing{
+						Parameters: &gw.Timing_Delay{
+							Delay: &gw.DelayTimingInfo{
+								Delay: durationpb.New(time.Second),
+							},
 						},
 					},
 					Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
@@ -461,7 +458,7 @@ func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 		},
 	}
 
-	ts.backend.diidCache.SetDefault("12345", df)
+	ts.backend.diidCache.SetDefault("12345", &df)
 
 	dtx := structs.DownlinkTransmitted{
 		MessageType: structs.DownlinkTransmittedMessage,
@@ -472,11 +469,10 @@ func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 
 	txAck := <-txAckChan
 
-	assert.Equal(gw.DownlinkTXAck{
-		GatewayId:  []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
-		Token:      12345,
-		DownlinkId: id[:],
-		Items: []*gw.DownlinkTXAckItem{
+	assert.Equal(&gw.DownlinkTxAck{
+		GatewayId:  "0102030405060708",
+		DownlinkId: 12345,
+		Items: []*gw.DownlinkTxAckItem{
 			{
 				Status: gw.TxAckStatus_OK,
 			},
@@ -498,10 +494,10 @@ func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 				Count: 1,
 				Modulation: &gw.Modulation{
 					Parameters: &gw.Modulation_Lora{
-						Lora: &gw.LoRaModulationInfo{
-							Bandwidth:             125,
+						Lora: &gw.LoraModulationInfo{
+							Bandwidth:             125000,
 							SpreadingFactor:       10,
-							CodeRate:              "4/5",
+							CodeRate:              gw.CodeRate_CR_4_5,
 							PolarizationInversion: true,
 						},
 					},
@@ -511,37 +507,36 @@ func (ts *BackendTestSuite) TestDownlinkTransmitted() {
 		TxPacketsPerStatus: map[string]uint32{
 			"OK": 1,
 		},
-	}, &stats))
+	}, stats))
 }
 
 func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	assert := require.New(ts.T())
-	id, err := uuid.NewV4()
-	assert.NoError(err)
 
 	pl := gw.DownlinkFrame{
-		Token:      1234,
-		DownlinkId: id[:],
-		GatewayId:  []byte{1, 2, 3, 4, 5, 6, 7, 8},
+		DownlinkId: 1234,
+		GatewayId:  "0102030405060708",
 		Items: []*gw.DownlinkFrameItem{
 			{
 				PhyPayload: []byte{1, 2, 3, 4},
-				TxInfo: &gw.DownlinkTXInfo{
-					Frequency:  868100000,
-					Power:      14,
-					Modulation: common.Modulation_LORA,
-					ModulationInfo: &gw.DownlinkTXInfo_LoraModulationInfo{
-						LoraModulationInfo: &gw.LoRaModulationInfo{
-							Bandwidth:             125,
-							SpreadingFactor:       10,
-							CodeRate:              "4/5",
-							PolarizationInversion: true,
+				TxInfo: &gw.DownlinkTxInfo{
+					Frequency: 868100000,
+					Power:     14,
+					Modulation: &gw.Modulation{
+						Parameters: &gw.Modulation_Lora{
+							Lora: &gw.LoraModulationInfo{
+								Bandwidth:             125000,
+								SpreadingFactor:       10,
+								CodeRate:              gw.CodeRate_CR_4_5,
+								PolarizationInversion: true,
+							},
 						},
 					},
-					Timing: gw.DownlinkTiming_DELAY,
-					TimingInfo: &gw.DownlinkTXInfo_DelayTimingInfo{
-						DelayTimingInfo: &gw.DelayTimingInfo{
-							Delay: ptypes.DurationProto(time.Second),
+					Timing: &gw.Timing{
+						Parameters: &gw.Timing_Delay{
+							Delay: &gw.DelayTimingInfo{
+								Delay: durationpb.New(time.Second),
+							},
 						},
 					},
 					Context: []byte{0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4},
@@ -550,12 +545,12 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 		},
 	}
 
-	err = ts.backend.SendDownlinkFrame(pl)
+	err := ts.backend.SendDownlinkFrame(&pl)
 	assert.NoError(err)
 
 	idResp, ok := ts.backend.diidCache.Get("1234")
 	assert.True(ok)
-	assert.Equal(pl, idResp)
+	assert.Equal(&pl, idResp)
 
 	var df structs.DownlinkFrame
 	assert.NoError(ts.wsClient.ReadJSON(&df))
@@ -592,18 +587,13 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 }
 
 func (ts *BackendTestSuite) TestRawPacketForwarderCommand() {
-	assert := require.New(ts.T())
-	id, err := uuid.NewV4()
-	assert.NoError(err)
-
 	ts.T().Run("JSON", func(t *testing.T) {
 		assert := require.New(t)
 		pl := gw.RawPacketForwarderCommand{
-			GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
-			RawId:     id[:],
+			GatewayId: "0102030405060708",
 			Payload:   []byte(`{"foo": "bar"}`),
 		}
-		assert.NoError(ts.backend.RawPacketForwarderCommand(pl))
+		assert.NoError(ts.backend.RawPacketForwarderCommand(&pl))
 
 		mt, msg, err := ts.wsClient.ReadMessage()
 		assert.NoError(err)
@@ -614,11 +604,10 @@ func (ts *BackendTestSuite) TestRawPacketForwarderCommand() {
 	ts.T().Run("Binary", func(t *testing.T) {
 		assert := require.New(t)
 		pl := gw.RawPacketForwarderCommand{
-			GatewayId: []byte{1, 2, 3, 4, 5, 6, 7, 8},
-			RawId:     id[:],
+			GatewayId: "0102030405060708",
 			Payload:   []byte{0x01, 0x02, 0x03, 0x04},
 		}
-		assert.NoError(ts.backend.RawPacketForwarderCommand(pl))
+		assert.NoError(ts.backend.RawPacketForwarderCommand(&pl))
 
 		mt, msg, err := ts.wsClient.ReadMessage()
 		assert.NoError(err)
@@ -628,8 +617,8 @@ func (ts *BackendTestSuite) TestRawPacketForwarderCommand() {
 }
 
 func (ts *BackendTestSuite) TestRawPacketForwarderEvent() {
-	rawPacketForwarderEventChan := make(chan gw.RawPacketForwarderEvent, 1)
-	ts.backend.rawPacketForwarderEventFunc = func(pl gw.RawPacketForwarderEvent) {
+	rawPacketForwarderEventChan := make(chan *gw.RawPacketForwarderEvent, 1)
+	ts.backend.rawPacketForwarderEventFunc = func(pl *gw.RawPacketForwarderEvent) {
 		rawPacketForwarderEventChan <- pl
 	}
 
@@ -639,8 +628,7 @@ func (ts *BackendTestSuite) TestRawPacketForwarderEvent() {
 		assert.NoError(ts.wsClient.WriteMessage(websocket.BinaryMessage, []byte{0x01, 0x02, 0x03, 0x04}))
 
 		pl := <-rawPacketForwarderEventChan
-		assert.Equal([]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, pl.GatewayId)
-		assert.NotNil(pl.RawId)
+		assert.Equal("0102030405060708", pl.GatewayId)
 		assert.Equal([]byte{0x01, 0x02, 0x03, 0x04}, pl.Payload)
 	})
 
@@ -662,8 +650,7 @@ func (ts *BackendTestSuite) TestRawPacketForwarderEvent() {
 		assert.NoError(ts.wsClient.WriteMessage(websocket.TextMessage, []byte(jsonMsg)))
 
 		pl := <-rawPacketForwarderEventChan
-		assert.Equal([]byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08}, pl.GatewayId)
-		assert.NotNil(pl.RawId)
+		assert.Equal("0102030405060708", pl.GatewayId)
 		assert.Equal([]byte(jsonMsg), pl.Payload)
 	})
 }
