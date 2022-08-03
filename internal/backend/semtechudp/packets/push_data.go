@@ -67,7 +67,7 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 	stats.Time = timestamppb.New(time.Time(p.Payload.Stat.Time))
 
 	// location
-	if p.Payload.Stat.Lati != 0 && p.Payload.Stat.Long != 0 && p.Payload.Stat.Alti != 0 {
+	if p.Payload.Stat.Lati != 0 || p.Payload.Stat.Long != 0 || p.Payload.Stat.Alti != 0 {
 		stats.Location = &common.Location{
 			Latitude:  p.Payload.Stat.Lati,
 			Longitude: p.Payload.Stat.Long,
