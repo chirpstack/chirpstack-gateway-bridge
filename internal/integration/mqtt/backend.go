@@ -97,7 +97,7 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	case "json":
 		b.marshal = func(msg proto.Message) ([]byte, error) {
 			return protojson.MarshalOptions{
-				EmitUnpopulated: true,
+				EmitUnpopulated: false,
 			}.Marshal(msg)
 		}
 

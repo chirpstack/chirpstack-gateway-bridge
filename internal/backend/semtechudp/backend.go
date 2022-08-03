@@ -496,7 +496,9 @@ func (b *Backend) handleStats(gatewayID lorawan.EUI64, stats *gw.GatewayStats) {
 func (b *Backend) handleUplinkFrames(uplinkFrames []*gw.UplinkFrame) error {
 	for i := range uplinkFrames {
 		var gatewayID lorawan.EUI64
-		copy(gatewayID[:], uplinkFrames[i].GetRxInfo().GatewayId)
+		if err := gatewayID.UnmarshalText([]byte(uplinkFrames[i].GetRxInfo().GetGatewayId())); err != nil {
+			return errors.Wrap(err, "decode gateway id error")
+		}
 
 		if conn, err := b.gateways.get(gatewayID); err == nil {
 			conn.stats.CountUplink(uplinkFrames[i])
