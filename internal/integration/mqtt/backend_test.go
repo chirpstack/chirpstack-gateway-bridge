@@ -87,7 +87,7 @@ func (ts *MQTTBackendTestSuite) TestLastWill() {
 
 	assert.True(ts.backend.clientOpts.WillEnabled)
 	assert.Equal("gateway/0807060504030201/state/conn", ts.backend.clientOpts.WillTopic)
-	assert.Equal(`{"gatewayIdLegacy":"","gatewayId":"0807060504030201","state":"OFFLINE"}`, strings.ReplaceAll(string(ts.backend.clientOpts.WillPayload), " ", ""))
+	assert.Equal(`{"gatewayId":"0807060504030201"}`, strings.ReplaceAll(string(ts.backend.clientOpts.WillPayload), " ", ""))
 	assert.True(ts.backend.clientOpts.WillRetained)
 }
 
