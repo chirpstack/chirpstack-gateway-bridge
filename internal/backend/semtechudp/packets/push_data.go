@@ -115,6 +115,7 @@ func (p PushDataPacket) GetUplinkFrames(FakeRxInfoTime bool) ([]*gw.UplinkFrame,
 
 func setUplinkFrameRSig(frame *gw.UplinkFrame, rxPK RXPK, rSig RSig) *gw.UplinkFrame {
 	frame.RxInfo.Antenna = uint32(rSig.Ant)
+	frame.RxInfo.Channel = uint32(rSig.Chan)
 	frame.RxInfo.Rssi = int32(rSig.RSSIC)
 	frame.RxInfo.Snr = rSig.LSNR
 
@@ -135,6 +136,8 @@ func getUplinkFrame(gatewayID lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) (*g
 			GatewayId: gatewayID.String(),
 			Rssi:      int32(rxpk.RSSI),
 			Snr:       float32(rxpk.LSNR),
+			RfChain:   uint32(rxpk.RFCh),
+			Channel:   uint32(rxpk.Chan),
 			Board:     uint32(rxpk.Brd),
 			Context:   make([]byte, 4),
 		},

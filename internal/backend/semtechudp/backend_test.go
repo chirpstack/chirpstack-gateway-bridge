@@ -769,6 +769,8 @@ func (ts *BackendTestSuite) TestPushData() {
 						TimeSinceGpsEpoch: durationpb.New(time.Second),
 						Rssi:              -51,
 						Snr:               7,
+						Channel:           2,
+						RfChain:           1,
 						Context:           []byte{0x2a, 0x33, 0x7a, 0xb3},
 					},
 				},
