@@ -8,7 +8,6 @@ import (
 	"text/template"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -675,7 +674,7 @@ func (b *Backend) isClosed() bool {
 	return b.connClosed
 }
 
-func tokenWrapper(token mqtt.Token, timeout time.Duration) error {
+func tokenWrapper(token paho.Token, timeout time.Duration) error {
 	if !token.WaitTimeout(timeout) {
 		return errors.New("token wait timeout error")
 	}
