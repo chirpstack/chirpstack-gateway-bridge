@@ -487,6 +487,9 @@ func (b *Backend) handlePushData(up udpPacket) error {
 			stats.Ip = up.addr.IP.String()
 		}
 
+		ackRateCounter(p.GatewayMAC).Inc()
+		ackRate(p.GatewayMAC).Set(p.Payload.Stat.ACKR)
+
 		b.handleStats(p.GatewayMAC, *stats)
 	}
 

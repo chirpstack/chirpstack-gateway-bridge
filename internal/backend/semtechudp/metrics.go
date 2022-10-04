@@ -1,6 +1,7 @@
 package semtechudp
 
 import (
+	"github.com/brocaar/lorawan"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -25,6 +26,16 @@ var (
 		Name: "backend_semtechudp_gateway_diconnect_count",
 		Help: "The number of gateways that disconnected from the backend.",
 	})
+
+	ackr = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "backend_semtechdup_gateway_ack_rate",
+		Help: "The percentage of upstream datagrams that were acknowledged.",
+	}, []string{"gateway_id"})
+
+	ackrc = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "backend_semtechudp_gateway_ack_rate_count",
+		Help: "The number of ack-rates reported.",
+	}, []string{"gateway_id"})
 )
 
 func udpWriteCounter(pt string) prometheus.Counter {
@@ -41,4 +52,12 @@ func connectCounter() prometheus.Counter {
 
 func disconnectCounter() prometheus.Counter {
 	return gwd
+}
+
+func ackRate(gatewayID lorawan.EUI64) prometheus.Gauge {
+	return ackr.With(prometheus.Labels{"gateway_id": gatewayID.String()})
+}
+
+func ackRateCounter(gatewayID lorawan.EUI64) prometheus.Counter {
+	return ackrc.With(prometheus.Labels{"gateway_id": gatewayID.String()})
 }
