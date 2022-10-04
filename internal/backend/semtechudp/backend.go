@@ -462,6 +462,8 @@ func (b *Backend) handlePushData(up udpPacket) error {
 		return errors.Wrap(err, "get stats error")
 	}
 	if stats != nil {
+		ackRateCounter(p.GatewayMAC).Inc()
+		ackRate(p.GatewayMAC).Set(p.Payload.Stat.ACKR)
 		b.handleStats(p.GatewayMAC, stats)
 	}
 
