@@ -26,7 +26,11 @@ Description: ChirpStack Gateway Bridge
 EOF
 
 cat > $PACKAGE_DIR/CONTROL/postinst << EOF
+sed -i "s/ENABLED=.*/ENABLED=\"yes\"/" /etc/default/monit
+update-rc.d monit defaults
+/etc/init.d/monit start
 update-rc.d chirpstack-gateway-bridge defaults
+/usr/bin/monit reload
 EOF
 chmod 755 $PACKAGE_DIR/CONTROL/postinst
 
@@ -37,9 +41,11 @@ EOF
 # Files
 mkdir -p $PACKAGE_DIR/opt/$PACKAGE_NAME
 mkdir -p $PACKAGE_DIR/var/config/$PACKAGE_NAME
+mkdir -p $PACKAGE_DIR/etc/monit.d
 mkdir -p $PACKAGE_DIR/etc/init.d
 
 cp files/$PACKAGE_NAME.toml $PACKAGE_DIR/var/config/$PACKAGE_NAME/$PACKAGE_NAME.toml
+cp files/$PACKAGE_NAME.monit $PACKAGE_DIR/etc/monit.d/$PACKAGE_NAME
 cp files/$PACKAGE_NAME.init $PACKAGE_DIR/etc/init.d/$PACKAGE_NAME
 wget -P $PACKAGE_DIR/opt/$PACKAGE_NAME $PACKAGE_URL
 tar zxf $PACKAGE_DIR/opt/$PACKAGE_NAME/*.tar.gz -C $PACKAGE_DIR/opt/$PACKAGE_NAME
