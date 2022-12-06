@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/brocaar/lorawan v0.0.0-20220207095711-d675789e16ab
-	github.com/chirpstack/chirpstack/api/go/v4 v4.0.0
+	github.com/chirpstack/chirpstack/api/go/v4 v4.1.0
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/go-zeromq/zmq4 v0.7.0
 	github.com/golang-jwt/jwt/v4 v4.4.2

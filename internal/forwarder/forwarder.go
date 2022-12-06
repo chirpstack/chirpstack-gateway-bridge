@@ -76,11 +76,11 @@ func gatewayStatsFunc(pl *gw.GatewayStats) {
 		}
 
 		// add meta-data to stats
-		if pl.MetaData == nil {
-			pl.MetaData = make(map[string]string)
+		if pl.Metadata == nil {
+			pl.Metadata = make(map[string]string)
 		}
 		for k, v := range metadata.Get() {
-			pl.MetaData[k] = v
+			pl.Metadata[k] = v
 		}
 
 		if err := integration.GetIntegration().PublishEvent(gatewayID, integration.EventStats, 0, pl); err != nil {
