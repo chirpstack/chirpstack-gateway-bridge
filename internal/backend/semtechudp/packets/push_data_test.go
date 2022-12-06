@@ -127,6 +127,37 @@ func TestGetGatewayStats(t *testing.T) {
 				TxPacketsEmitted:    6,
 			},
 		},
+		{
+			PushDataPacket: PushDataPacket{
+				ProtocolVersion: ProtocolVersion2,
+				GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+				Payload: PushDataPayload{
+					Stat: &Stat{
+						Time: ecNow,
+						RXNb: 1,
+						RXOK: 2,
+						RXFW: 3,
+						ACKR: 4,
+						DWNb: 5,
+						TXNb: 6,
+						Meta: map[string]string{
+							"gateway_name": "test-gateway",
+						},
+					},
+				},
+			},
+			GatewayStats: &gw.GatewayStats{
+				GatewayId:           "0102030405060708",
+				Time:                pbTime,
+				RxPacketsReceived:   1,
+				RxPacketsReceivedOk: 2,
+				TxPacketsReceived:   5,
+				TxPacketsEmitted:    6,
+				Metadata: map[string]string{
+					"gateway_name": "test-gateway",
+				},
+			},
+		},
 	}
 
 	for _, test := range testTable {
