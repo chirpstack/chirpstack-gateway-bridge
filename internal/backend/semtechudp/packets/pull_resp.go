@@ -117,6 +117,12 @@ func GetPullRespPacket(protoVersion uint8, randomToken uint16, frame *gw.Downlin
 			packet.Payload.TXPK.CodR = "4/7"
 		case gw.CodeRate_CR_4_8:
 			packet.Payload.TXPK.CodR = "4/8"
+		case gw.CodeRate_CR_LI_4_5:
+			packet.Payload.TXPK.CodR = "4/5LI"
+		case gw.CodeRate_CR_LI_4_6:
+			packet.Payload.TXPK.CodR = "4/6LI"
+		case gw.CodeRate_CR_LI_4_8:
+			packet.Payload.TXPK.CodR = "4/8LI"
 		default:
 			return PullRespPacket{}, fmt.Errorf("invalid CodeRate: %s", lora.GetCodeRate())
 		}
