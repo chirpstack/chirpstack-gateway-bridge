@@ -2,6 +2,7 @@ package concentratord
 
 import (
 	"context"
+	"encoding/base64"
 	"sync"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/filters"
 	"github.com/brocaar/lorawan"
 	"github.com/chirpstack/chirpstack/api/go/v4/gw"
 )
@@ -323,12 +325,18 @@ func (b *Backend) handleUplinkFrame(bb []byte) error {
 		return errors.Wrap(err, "protobuf unmarshal error")
 	}
 
-	log.WithFields(log.Fields{
-		"uplink_id": pl.GetRxInfo().GetUplinkId(),
-	}).Info("backend/concentratord: uplink event received")
+	if filters.MatchFilters(pl.PhyPayload) {
+		log.WithFields(log.Fields{
+			"uplink_id": pl.GetRxInfo().GetUplinkId(),
+		}).Info("backend/concentratord: uplink event received")
 
-	if b.uplinkFrameFunc != nil {
-		b.uplinkFrameFunc(&pl)
+		if b.uplinkFrameFunc != nil {
+			b.uplinkFrameFunc(&pl)
+		}
+	} else {
+		log.WithFields(log.Fields{
+			"data_base64": base64.StdEncoding.EncodeToString(pl.PhyPayload),
+		}).Debug("backend/concentratord: uplink event dropped because of configured filters")
 	}
 
 	return nil
