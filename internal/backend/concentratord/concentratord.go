@@ -2,6 +2,8 @@ package concentratord
 
 import (
 	"context"
+	"encoding/base64"
+	"github.com/brocaar/chirpstack-gateway-bridge/internal/filters"
 	"sync"
 	"time"
 
@@ -368,12 +370,18 @@ func (b *Backend) handleUplinkFrame(bb []byte) error {
 		loRaModInfo.Bandwidth = loRaModInfo.Bandwidth / 1000
 	}
 
-	log.WithFields(log.Fields{
-		"uplink_id": uplinkID,
-	}).Info("backend/concentratord: uplink event received")
+	if filters.MatchFilters(pl.PhyPayload) {
+		log.WithFields(log.Fields{
+			"uplink_id": uplinkID,
+		}).Info("backend/concentratord: uplink event received")
 
-	if b.uplinkFrameFunc != nil {
-		b.uplinkFrameFunc(pl)
+		if b.uplinkFrameFunc != nil {
+			b.uplinkFrameFunc(pl)
+		}
+	} else {
+		log.WithFields(log.Fields{
+			"data_base64": base64.StdEncoding.EncodeToString(pl.PhyPayload),
+		}).Debug("backend/concentratord: uplink event dropped because of configured filters")
 	}
 
 	return nil
