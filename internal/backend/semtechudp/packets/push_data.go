@@ -81,12 +81,12 @@ func (p PushDataPacket) GetGatewayStats() (*gw.GatewayStats, error) {
 }
 
 // GetUplinkFrames returns a slice of gw.UplinkFrame.
-func (p PushDataPacket) GetUplinkFrames(FakeRxInfoTime bool) ([]*gw.UplinkFrame, error) {
+func (p PushDataPacket) GetUplinkFrames(skipCRCCheck bool, FakeRxInfoTime bool) ([]*gw.UplinkFrame, error) {
 	var frames []*gw.UplinkFrame
 
 	for i := range p.Payload.RXPK {
 		// validate CRC
-		if p.Payload.RXPK[i].Stat != 1 {
+		if p.Payload.RXPK[i].Stat != 1 && !skipCRCCheck {
 			continue
 		}
 
@@ -143,6 +143,15 @@ func getUplinkFrame(gatewayID lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) (*g
 			Context:   make([]byte, 4),
 			Metadata:  rxpk.Meta,
 		},
+	}
+
+	switch rxpk.Stat {
+	case 1:
+		frame.RxInfo.CrcStatus = gw.CRCStatus_CRC_OK
+	case -1:
+		frame.RxInfo.CrcStatus = gw.CRCStatus_BAD_CRC
+	default:
+		frame.RxInfo.CrcStatus = gw.CRCStatus_NO_CRC
 	}
 
 	// Context

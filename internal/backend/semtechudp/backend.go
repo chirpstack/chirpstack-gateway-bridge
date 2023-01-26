@@ -42,11 +42,12 @@ type Backend struct {
 
 	udpSendChan chan udpPacket
 
-	wg         sync.WaitGroup
-	conn       *net.UDPConn
-	closed     bool
-	gateways   gateways
-	fakeRxTime bool
+	wg           sync.WaitGroup
+	conn         *net.UDPConn
+	closed       bool
+	gateways     gateways
+	fakeRxTime   bool
+	skipCRCCheck bool
 }
 
 // NewBackend creates a new backend.
@@ -68,8 +69,9 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		gateways: gateways{
 			gateways: make(map[lorawan.EUI64]gateway),
 		},
-		fakeRxTime: conf.Backend.SemtechUDP.FakeRxTime,
-		cache:      cache.New(15*time.Second, 15*time.Second),
+		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
+		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,
+		cache:        cache.New(15*time.Second, 15*time.Second),
 	}
 
 	go func() {
@@ -468,7 +470,7 @@ func (b *Backend) handlePushData(up udpPacket) error {
 	}
 
 	// uplink frames
-	uplinkFrames, err := p.GetUplinkFrames(b.fakeRxTime)
+	uplinkFrames, err := p.GetUplinkFrames(b.skipCRCCheck, b.fakeRxTime)
 	if err != nil {
 		return errors.Wrap(err, "get uplink frames error")
 	}

@@ -772,6 +772,7 @@ func (ts *BackendTestSuite) TestPushData() {
 						Channel:           2,
 						RfChain:           1,
 						Context:           []byte{0x2a, 0x33, 0x7a, 0xb3},
+						CrcStatus:         gw.CRCStatus_CRC_OK,
 					},
 				},
 			},

@@ -271,6 +271,7 @@ func TestGetUplinkFrame(t *testing.T) {
 						Board:             2,
 						Antenna:           0,
 						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
+						CrcStatus:         gw.CRCStatus_CRC_OK,
 					},
 				},
 			},
@@ -345,6 +346,7 @@ func TestGetUplinkFrame(t *testing.T) {
 						Board:             2,
 						Antenna:           8,
 						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
+						CrcStatus:         gw.CRCStatus_CRC_OK,
 					},
 				},
 				{
@@ -373,6 +375,7 @@ func TestGetUplinkFrame(t *testing.T) {
 						Board:             2,
 						Antenna:           9,
 						Context:           []byte{0x00, 0x0f, 0x42, 0x40},
+						CrcStatus:         gw.CRCStatus_CRC_OK,
 					},
 				},
 			},
@@ -422,6 +425,7 @@ func TestGetUplinkFrame(t *testing.T) {
 						GatewayId: "0102030405060708",
 						Rssi:      -74,
 						Context:   []byte{0x00, 0x0f, 0x42, 0x40},
+						CrcStatus: gw.CRCStatus_CRC_OK,
 					},
 				},
 			},
@@ -482,6 +486,7 @@ func TestGetUplinkFrame(t *testing.T) {
 						Board:                 2,
 						Antenna:               0,
 						Context:               []byte{0x00, 0x0f, 0x42, 0x40},
+						CrcStatus:             gw.CRCStatus_CRC_OK,
 					},
 				},
 			},
@@ -544,6 +549,7 @@ func TestGetUplinkFrame(t *testing.T) {
 						Metadata: map[string]string{
 							"gateway_name": "test-gateway",
 						},
+						CrcStatus: gw.CRCStatus_CRC_OK,
 					},
 				},
 			},
@@ -553,7 +559,7 @@ func TestGetUplinkFrame(t *testing.T) {
 	for _, test := range testTable {
 		t.Run(test.Name, func(t *testing.T) {
 			assert := require.New(t)
-			f, err := test.PushDataPacket.GetUplinkFrames(false)
+			f, err := test.PushDataPacket.GetUplinkFrames(false, false)
 			assert.Nil(err)
 
 			for _, ff := range f {
