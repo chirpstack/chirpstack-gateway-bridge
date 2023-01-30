@@ -90,7 +90,7 @@ func Execute(v string) {
 }
 
 func initConfig() {
-	if cfgFiles != nil {
+	if cfgFiles != nil && len(*cfgFiles) != 0 {
 		var filesMerged []byte
 		for _, cfgFile := range *cfgFiles {
 			cfgFileContent, err := ioutil.ReadFile(cfgFile)
