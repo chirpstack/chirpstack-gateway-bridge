@@ -554,6 +554,74 @@ func TestGetUplinkFrame(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "uplink with stat (with location)",
+			PushDataPacket: PushDataPacket{
+				GatewayMAC:      lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
+				ProtocolVersion: ProtocolVersion2,
+				Payload: PushDataPayload{
+					RXPK: []RXPK{
+						{
+							Time: &ctNow,
+							Tmst: 1000000,
+							Freq: 868.3,
+							Brd:  2,
+							Chan: 1,
+							RFCh: 3,
+							Stat: 1,
+							Modu: "LORA",
+							DatR: DatR{LoRa: "SF12BW500"},
+							CodR: "4/5",
+							RSSI: -60,
+							LSNR: 5.5,
+							Size: 5,
+							Data: []byte{1, 2, 3, 4, 5},
+						},
+					},
+					Stat: &Stat{
+						Lati: 1.1,
+						Long: 1.2,
+						Alti: 10,
+					},
+				},
+			},
+			UplinkFrames: []*gw.UplinkFrame{
+				{
+					PhyPayload: []byte{1, 2, 3, 4, 5},
+					TxInfo: &gw.UplinkTxInfo{
+						Frequency: 868300000,
+						Modulation: &gw.Modulation{
+							Parameters: &gw.Modulation_Lora{
+								Lora: &gw.LoraModulationInfo{
+									Bandwidth:             500000,
+									SpreadingFactor:       12,
+									CodeRate:              gw.CodeRate_CR_4_5,
+									PolarizationInversion: false,
+								},
+							},
+						},
+					},
+					RxInfo: &gw.UplinkRxInfo{
+						GatewayId: "0102030405060708",
+						Time:      pbTime,
+						Rssi:      -60,
+						Snr:       5.5,
+						Channel:   1,
+						RfChain:   3,
+						Board:     2,
+						Antenna:   0,
+						Context:   []byte{0x00, 0x0f, 0x42, 0x40},
+						CrcStatus: gw.CRCStatus_CRC_OK,
+						Location: &common.Location{
+							Latitude:  1.1,
+							Longitude: 1.2,
+							Altitude:  10,
+							Source:    common.LocationSource_GPS,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testTable {

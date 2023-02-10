@@ -91,7 +91,7 @@ func (p PushDataPacket) GetUplinkFrames(skipCRCCheck bool, FakeRxInfoTime bool) 
 		}
 
 		if len(p.Payload.RXPK[i].RSig) == 0 {
-			frame, err := getUplinkFrame(p.GatewayMAC, p.Payload.RXPK[i], FakeRxInfoTime)
+			frame, err := getUplinkFrame(p.GatewayMAC, p.Payload.Stat, p.Payload.RXPK[i], FakeRxInfoTime)
 			if err != nil {
 				return nil, errors.Wrap(err, "backend/semtechudp/packets: get uplink frame error")
 			}
@@ -99,7 +99,7 @@ func (p PushDataPacket) GetUplinkFrames(skipCRCCheck bool, FakeRxInfoTime bool) 
 			frames = append(frames, frame)
 		} else {
 			for j := range p.Payload.RXPK[i].RSig {
-				frame, err := getUplinkFrame(p.GatewayMAC, p.Payload.RXPK[i], FakeRxInfoTime)
+				frame, err := getUplinkFrame(p.GatewayMAC, p.Payload.Stat, p.Payload.RXPK[i], FakeRxInfoTime)
 				if err != nil {
 					return nil, errors.Wrap(err, "backend/semtechudp/packets: get uplink frame error")
 				}
@@ -127,7 +127,7 @@ func setUplinkFrameRSig(frame *gw.UplinkFrame, rxPK RXPK, rSig RSig) *gw.UplinkF
 	return frame
 }
 
-func getUplinkFrame(gatewayID lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) (*gw.UplinkFrame, error) {
+func getUplinkFrame(gatewayID lorawan.EUI64, stat *Stat, rxpk RXPK, FakeRxInfoTime bool) (*gw.UplinkFrame, error) {
 	frame := gw.UplinkFrame{
 		PhyPayload: rxpk.Data,
 		TxInfo: &gw.UplinkTxInfo{
@@ -143,6 +143,18 @@ func getUplinkFrame(gatewayID lorawan.EUI64, rxpk RXPK, FakeRxInfoTime bool) (*g
 			Context:   make([]byte, 4),
 			Metadata:  rxpk.Meta,
 		},
+	}
+
+	// If a Stat is present and it contains a location, immediately set the location for this uplink.
+	// This is for example the case of Helium, where the UDP frame contains both a rxpk and stat
+	// payload to provide additional gateway context.
+	if stat != nil && (stat.Lati != 0 || stat.Long != 0 || stat.Alti != 0) {
+		frame.RxInfo.Location = &common.Location{
+			Latitude:  stat.Lati,
+			Longitude: stat.Long,
+			Altitude:  float64(stat.Alti),
+			Source:    common.LocationSource_GPS,
+		}
 	}
 
 	switch rxpk.Stat {
