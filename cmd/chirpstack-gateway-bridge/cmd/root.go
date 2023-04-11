@@ -47,7 +47,6 @@ func init() {
 	viper.SetDefault("backend.basic_station.bind", ":3001")
 	viper.SetDefault("backend.basic_station.stats_interval", time.Second*30)
 	viper.SetDefault("backend.basic_station.ping_interval", time.Minute)
-	viper.SetDefault("backend.basic_station.timesync_interval", time.Hour)
 	viper.SetDefault("backend.basic_station.read_timeout", time.Minute+(5*time.Second))
 	viper.SetDefault("backend.basic_station.write_timeout", time.Second)
 	viper.SetDefault("backend.basic_station.region", "EU868")
