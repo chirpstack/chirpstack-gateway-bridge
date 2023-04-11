@@ -263,7 +263,8 @@ func (b *Backend) commandRequest(command string, v proto.Message) ([]byte, error
 		return nil, errors.Wrap(err, "receive command request reply error")
 	}
 
-	return reply.Bytes(), nil
+	// Return last frame.
+	return reply.Frames[len(reply.Frames)-1], nil
 }
 
 func (b *Backend) eventLoop() {

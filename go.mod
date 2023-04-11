@@ -6,7 +6,7 @@ require (
 	github.com/brocaar/lorawan v0.0.0-20230210103351-84b137ed1908
 	github.com/chirpstack/chirpstack/api/go/v4 v4.3.1
 	github.com/eclipse/paho.mqtt.golang v1.4.2
-	github.com/go-zeromq/zmq4 v0.7.0
+	github.com/go-zeromq/zmq4 v0.15.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/goreleaser/goreleaser v0.106.0
 	github.com/goreleaser/nfpm v0.11.0
@@ -71,7 +71,6 @@ require (
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
-	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

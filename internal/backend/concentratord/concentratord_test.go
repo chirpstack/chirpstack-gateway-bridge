@@ -70,7 +70,6 @@ func (ts *BackendTestSuite) SetupTest() {
 	wg.Wait()
 
 	assert.Equal(events.Subscribe{
-
 		Subscribe: true,
 		GatewayID: lorawan.EUI64{1, 2, 3, 4, 5, 6, 7, 8},
 	}, <-subscribeEventChan)
