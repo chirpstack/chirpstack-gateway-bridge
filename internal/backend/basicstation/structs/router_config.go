@@ -3,6 +3,7 @@ package structs
 import (
 	"encoding/binary"
 	"fmt"
+	"time"
 
 	"github.com/brocaar/chirpstack-api/go/v3/common"
 	"github.com/brocaar/chirpstack-api/go/v3/gw"
@@ -36,6 +37,7 @@ type RouterConfig struct {
 	FreqRange   []uint32     `json:"freq_range"`
 	DRs         [][]int      `json:"DRs"`
 	SX1301Conf  []SX1301Conf `json:"sx1301_conf"`
+	MuxTime     *float64     `json:"MuxTime,omitempty"`
 }
 
 // SX1301Conf implements a single SX1301 configuration.
@@ -85,12 +87,16 @@ type SX1301ConfChanMultiSF struct {
 func GetRouterConfig(region band.Name, netIDs []lorawan.NetID, joinEUIs [][2]lorawan.EUI64, freqMin, freqMax uint32, concentrators []config.BasicStationConcentrator) (RouterConfig, error) {
 	concentratorCount := len(concentrators)
 
+	// MuxTime
+	muxTime := float64(time.Now().UnixMicro()) / 1000000
+
 	c := RouterConfig{
 		MessageType: RouterConfigMessage,
 		Region:      regionNameMapping[region],
 		HWSpec:      fmt.Sprintf("sx1301/%d", concentratorCount),
 		FreqRange:   []uint32{freqMin, freqMax},
 		SX1301Conf:  make([]SX1301Conf, concentratorCount),
+		MuxTime:     &muxTime,
 	}
 
 	// set NetID filter

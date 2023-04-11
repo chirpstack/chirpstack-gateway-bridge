@@ -239,6 +239,8 @@ func TestDownlinkFrameFromProto(t *testing.T) {
 			if err != nil {
 				return
 			}
+			assert.NotNil(out.MuxTime)
+			out.MuxTime = nil
 			assert.Equal(tst.Out, out)
 		})
 	}
