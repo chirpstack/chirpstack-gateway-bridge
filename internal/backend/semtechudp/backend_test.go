@@ -442,6 +442,12 @@ func (ts *BackendTestSuite) TestTXAckRetryFailFail() {
 		{Status: gw.TxAckStatus_IGNORED},
 	}, cache.DefaultExpiration)
 
+	// Create ack channel
+	ackChan := make(chan *gw.DownlinkTxAck, 1)
+	ts.backend.SetDownlinkTxAckFunc(func(pl *gw.DownlinkTxAck) {
+		ackChan <- pl
+	})
+
 	// send a nack on the first downlink attempt
 	ack1 := packets.TXACKPacket{
 		ProtocolVersion: packets.ProtocolVersion2,
@@ -502,10 +508,6 @@ func (ts *BackendTestSuite) TestTXAckRetryFailFail() {
 	assert.NoError(err)
 
 	// validate final ack
-	ackChan := make(chan *gw.DownlinkTxAck, 1)
-	ts.backend.SetDownlinkTxAckFunc(func(pl *gw.DownlinkTxAck) {
-		ackChan <- pl
-	})
 	txAck := <-ackChan
 	assert.Equal(&gw.DownlinkTxAck{
 		GatewayId:  "0102030405060708",
