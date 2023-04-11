@@ -564,6 +564,9 @@ func (ts *BackendTestSuite) TestSendDownlinkFrame() {
 	rCtx := uint64(3)
 	xTime := uint64(4)
 
+	assert.NotNil(df.MuxTime)
+	df.MuxTime = nil
+
 	assert.Equal(structs.DownlinkFrame{
 		MessageType: structs.DownlinkMessage,
 		DevEui:      "01-01-01-01-01-01-01-01",

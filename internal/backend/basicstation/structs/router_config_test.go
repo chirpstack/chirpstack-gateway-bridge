@@ -321,6 +321,8 @@ func TestRouterConfig(t *testing.T) {
 			if err != nil {
 				return
 			}
+			assert.NotNil(rc.MuxTime)
+			rc.MuxTime = nil
 			assert.Equal(tst.ExpectedRouterConfig, rc)
 		})
 	}

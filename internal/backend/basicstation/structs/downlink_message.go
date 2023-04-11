@@ -15,21 +15,22 @@ import (
 type DownlinkFrame struct {
 	MessageType MessageType `json:"msgtype"`
 
-	DevEui   string  `json:"DevEui"`
-	DC       int     `json:"dC"`
-	DIID     uint32  `json:"diid"`
-	PDU      string  `json:"pdu"`
-	Priority int     `json:"priority"`
-	RxDelay  *int    `json:"RxDelay,omitempty"`
-	RX1DR    *int    `json:"RX1DR,omitempty"`
-	RX1Freq  *uint32 `json:"RX1Freq,omitempty"`
-	RX2DR    *int    `json:"RX2DR,omitempty"`
-	RX2Freq  *uint32 `json:"RX2Freq,omitempty"`
-	DR       *int    `json:"DR,omitempty"`
-	Freq     *uint32 `json:"Freq,omitempty"`
-	GPSTime  *uint64 `json:"gpstime,omitempty"`
-	XTime    *uint64 `json:"xtime,omitempty"`
-	RCtx     *uint64 `json:"rctx,omitempty"`
+	DevEui   string   `json:"DevEui"`
+	DC       int      `json:"dC"`
+	DIID     uint32   `json:"diid"`
+	PDU      string   `json:"pdu"`
+	Priority int      `json:"priority"`
+	RxDelay  *int     `json:"RxDelay,omitempty"`
+	RX1DR    *int     `json:"RX1DR,omitempty"`
+	RX1Freq  *uint32  `json:"RX1Freq,omitempty"`
+	RX2DR    *int     `json:"RX2DR,omitempty"`
+	RX2Freq  *uint32  `json:"RX2Freq,omitempty"`
+	DR       *int     `json:"DR,omitempty"`
+	Freq     *uint32  `json:"Freq,omitempty"`
+	GPSTime  *uint64  `json:"gpstime,omitempty"`
+	XTime    *uint64  `json:"xtime,omitempty"`
+	RCtx     *uint64  `json:"rctx,omitempty"`
+	MuxTime  *float64 `json:"MuxTime,omitempty"`
 }
 
 // DownlinkFrameFromProto convers the given protobuf message to a DownlinkFrame.
@@ -37,6 +38,9 @@ func DownlinkFrameFromProto(loraBand band.Band, pb *gw.DownlinkFrame) (DownlinkF
 	if len(pb.Items) == 0 {
 		return DownlinkFrame{}, errors.New("items must contain at least one item")
 	}
+
+	// MuxTime
+	muxTime := float64(time.Now().UnixMicro()) / 1000000
 
 	// We assume this is for RX1
 	item := pb.Items[0]
@@ -47,6 +51,7 @@ func DownlinkFrameFromProto(loraBand band.Band, pb *gw.DownlinkFrame) (DownlinkF
 		DevEui:      "01-01-01-01-01-01-01-01", // set to fake DevEUI (setting it to 0 causes the BasicStation to not send acks, see https://github.com/lorabasics/basicstation/issues/71).
 		DIID:        pb.DownlinkId,
 		PDU:         hex.EncodeToString(item.PhyPayload),
+		MuxTime:     &muxTime,
 	}
 
 	// context
