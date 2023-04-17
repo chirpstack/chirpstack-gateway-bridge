@@ -63,13 +63,13 @@ type Backend struct {
 	gatewayStatsFunc            func(*gw.GatewayStats)
 	rawPacketForwarderEventFunc func(*gw.RawPacketForwarderEvent)
 
-	band         band.Band
-	region       band.Name
-	netIDs       []lorawan.NetID
-	joinEUIs     [][2]lorawan.EUI64
-	frequencyMin uint32
-	frequencyMax uint32
-	routerConfig structs.RouterConfig
+	band          band.Band
+	region        band.Name
+	netIDs        []lorawan.NetID
+	joinEUIs      [][2]lorawan.EUI64
+	frequencyMin  uint32
+	frequencyMax  uint32
+	concentrators []config.BasicStationConcentrator
 
 	// Cache to store diid to UUIDs.
 	diidCache *cache.Cache
@@ -94,9 +94,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		readTimeout:      conf.Backend.BasicStation.ReadTimeout,
 		writeTimeout:     conf.Backend.BasicStation.WriteTimeout,
 
-		region:       band.Name(conf.Backend.BasicStation.Region),
-		frequencyMin: conf.Backend.BasicStation.FrequencyMin,
-		frequencyMax: conf.Backend.BasicStation.FrequencyMax,
+		region:        band.Name(conf.Backend.BasicStation.Region),
+		frequencyMin:  conf.Backend.BasicStation.FrequencyMin,
+		frequencyMax:  conf.Backend.BasicStation.FrequencyMax,
+		concentrators: config.C.Backend.BasicStation.Concentrators,
 
 		diidCache: cache.New(time.Minute, time.Minute),
 	}
@@ -125,11 +126,6 @@ func NewBackend(conf config.Config) (*Backend, error) {
 	b.band, err = band.GetConfig(b.region, false, lorawan.DwellTimeNoLimit)
 	if err != nil {
 		return nil, errors.Wrap(err, "get band config error")
-	}
-
-	b.routerConfig, err = structs.GetRouterConfig(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, conf.Backend.BasicStation.Concentrators)
-	if err != nil {
-		return nil, errors.Wrap(err, "get router config error")
 	}
 
 	mux := http.NewServeMux()
@@ -293,6 +289,10 @@ func (b *Backend) Start() error {
 func (b *Backend) Stop() error {
 	b.isClosed = true
 	return b.ln.Close()
+}
+
+func (b *Backend) getRouterConfig() (structs.RouterConfig, error) {
+	return structs.GetRouterConfig(b.region, b.netIDs, b.joinEUIs, b.frequencyMin, b.frequencyMax, b.concentrators)
 }
 
 func (b *Backend) handleRouterInfo(r *http.Request, conn *connection) {
@@ -553,8 +553,14 @@ func (b *Backend) handleVersion(gatewayID lorawan.EUI64, pl structs.Version) {
 		// "features":   pl.Features,
 	}).Info("backend/basicstation: gateway version received")
 
+	routerConfig, err := b.getRouterConfig()
+	if err != nil {
+		log.WithError(err).Error("backend/basicstation: get router config error")
+		return
+	}
+
 	websocketSendCounter("router_config").Inc()
-	if err := b.sendToGateway(gatewayID, b.routerConfig); err != nil {
+	if err := b.sendToGateway(gatewayID, routerConfig); err != nil {
 		log.WithError(err).Error("backend/basicstation: send to gateway error")
 		return
 	}
