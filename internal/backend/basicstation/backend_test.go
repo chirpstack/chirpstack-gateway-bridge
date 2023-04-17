@@ -113,9 +113,6 @@ func (ts *BackendTestSuite) TestRouterInfo() {
 
 func (ts *BackendTestSuite) TestVersion() {
 	assert := require.New(ts.T())
-	ts.backend.routerConfig = structs.RouterConfig{
-		MessageType: structs.RouterConfigMessage,
-	}
 
 	ver := structs.Version{
 		MessageType: structs.VersionMessage,
@@ -127,7 +124,10 @@ func (ts *BackendTestSuite) TestVersion() {
 	var routerConfig structs.RouterConfig
 	assert.NoError(ts.wsClient.ReadJSON(&routerConfig))
 
-	assert.Equal(ts.backend.routerConfig, routerConfig)
+	routerConfig, err := ts.backend.getRouterConfig()
+	assert.NoError(err)
+
+	assert.Equal(routerConfig, routerConfig)
 }
 
 func (ts *BackendTestSuite) TestUplinkDataFrame() {
