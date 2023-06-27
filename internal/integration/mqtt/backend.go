@@ -383,6 +383,9 @@ func (b *Backend) connect() error {
 		return errors.Wrap(err, "integration/mqtt: update authentication error")
 	}
 
+	if b.conn != nil {
+		b.conn.Disconnect(250)
+	}
 	b.conn = paho.NewClient(b.clientOpts)
 	if err := tokenWrapper(b.conn.Connect(), b.maxTokenWait); err != nil {
 		return err
