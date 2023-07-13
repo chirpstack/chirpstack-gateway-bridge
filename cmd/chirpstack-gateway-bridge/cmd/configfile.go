@@ -14,6 +14,9 @@ const configTemplate = `[general]
 # debug=5, info=4, warning=3, error=2, fatal=1, panic=0
 log_level={{ .General.LogLevel }}
 
+# Log in JSON format.
+log_json={{ .General.LogJSON }}
+
 # Log to syslog.
 #
 # When set to true, log messages are being written to syslog.

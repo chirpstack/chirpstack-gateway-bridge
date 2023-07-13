@@ -22,6 +22,7 @@ import (
 func run(cmd *cobra.Command, args []string) error {
 
 	tasks := []func() error{
+		setLogJSON,
 		setLogLevel,
 		setSyslog,
 		printStartMessage,
@@ -49,6 +50,13 @@ func run(cmd *cobra.Command, args []string) error {
 
 	integration.GetIntegration().Stop()
 
+	return nil
+}
+
+func setLogJSON() error {
+	if config.C.General.LogJSON {
+		log.SetFormatter(&log.JSONFormatter{})
+	}
 	return nil
 }
 
