@@ -225,6 +225,8 @@ func getUplinkFrame(gatewayID lorawan.EUI64, stat *Stat, rxpk RXPK, FakeRxInfoTi
 			cr = gw.CodeRate_CR_4_8
 		case "3/8":
 			cr = gw.CodeRate_CR_3_8
+		case "1/3":
+			cr = gw.CodeRate_CR_2_6
 		case "2/6":
 			cr = gw.CodeRate_CR_2_6
 		case "1/4":
