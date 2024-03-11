@@ -10,7 +10,7 @@ function iptables_accept {
     [ -n "${1}" ] || exit 1
     local RULE="OUTPUT -t filter -p tcp --dport ${1} -j ACCEPT"
     iptables -C ${RULE} 2> /dev/null || iptables -I ${RULE}
-    local RULE="INPUT -t filter -p tcp --sport ${1} -j ACCEPT"
+    local RULE="INPUT -t filter -p tcp --sport ${1} -m conntrack --ctstate ESTABLISHED -j ACCEPT"
     iptables -C ${RULE} 2> /dev/null || iptables -I ${RULE}
 }
 
