@@ -61,7 +61,7 @@ func TestJoinRequestToProto(t *testing.T) {
 		},
 		RxInfo: &gw.UplinkRxInfo{
 			GatewayId:         "0102030405060708",
-			Time:              pTime,
+			GwTime:            pTime,
 			TimeSinceGpsEpoch: durationpb.New(5 * time.Second),
 			Rssi:              120,
 			Snr:               5.5,

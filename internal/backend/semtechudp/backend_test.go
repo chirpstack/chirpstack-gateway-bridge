@@ -767,7 +767,7 @@ func (ts *BackendTestSuite) TestPushData() {
 					},
 					RxInfo: &gw.UplinkRxInfo{
 						GatewayId:         "0102030405060708",
-						Time:              nowPB,
+						GwTime:            nowPB,
 						TimeSinceGpsEpoch: durationpb.New(time.Second),
 						Rssi:              -51,
 						Snr:               7,

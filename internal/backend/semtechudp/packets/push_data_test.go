@@ -262,7 +262,7 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 					RxInfo: &gw.UplinkRxInfo{
 						GatewayId:         "0102030405060708",
-						Time:              pbTime,
+						GwTime:            pbTime,
 						TimeSinceGpsEpoch: durationpb.New(10 * time.Minute),
 						Rssi:              -60,
 						Snr:               5.5,
@@ -337,7 +337,7 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 					RxInfo: &gw.UplinkRxInfo{
 						GatewayId:         "0102030405060708",
-						Time:              pbTime,
+						GwTime:            pbTime,
 						TimeSinceGpsEpoch: durationpb.New(10 * time.Minute),
 						Rssi:              -70,
 						Snr:               6.6,
@@ -366,7 +366,7 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 					RxInfo: &gw.UplinkRxInfo{
 						GatewayId:         "0102030405060708",
-						Time:              pbTime,
+						GwTime:            pbTime,
 						TimeSinceGpsEpoch: durationpb.New(10 * time.Minute),
 						Rssi:              -80,
 						Snr:               7.7,
@@ -476,7 +476,7 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 					RxInfo: &gw.UplinkRxInfo{
 						GatewayId:             "0102030405060708",
-						Time:                  pbTime,
+						GwTime:                pbTime,
 						TimeSinceGpsEpoch:     durationpb.New(10 * time.Minute),
 						FineTimeSinceGpsEpoch: ft,
 						Rssi:                  -60,
@@ -538,7 +538,7 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 					RxInfo: &gw.UplinkRxInfo{
 						GatewayId: "0102030405060708",
-						Time:      pbTime,
+						GwTime:    pbTime,
 						Rssi:      -60,
 						Snr:       5.5,
 						Channel:   1,
@@ -603,7 +603,7 @@ func TestGetUplinkFrame(t *testing.T) {
 					},
 					RxInfo: &gw.UplinkRxInfo{
 						GatewayId: "0102030405060708",
-						Time:      pbTime,
+						GwTime:    pbTime,
 						Rssi:      -60,
 						Snr:       5.5,
 						Channel:   1,

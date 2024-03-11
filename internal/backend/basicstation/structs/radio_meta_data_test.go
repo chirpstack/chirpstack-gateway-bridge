@@ -121,7 +121,7 @@ func TestSetRadioMetaDataToProto(t *testing.T) {
 					Snr:               5.5,
 					Context:           []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
 					TimeSinceGpsEpoch: durationpb.New(5 * time.Second),
-					Time:              timeP,
+					GwTime:            timeP,
 					CrcStatus:         gw.CRCStatus_CRC_OK,
 				},
 			},
