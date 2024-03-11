@@ -81,7 +81,7 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 		sec, nsec := math.Modf(rmd.UpInfo.RxTime)
 		if sec != 0 {
 			val := time.Unix(int64(sec), int64(nsec))
-			pb.RxInfo.Time = timestamppb.New(val)
+			pb.RxInfo.GwTime = timestamppb.New(val)
 		}
 	}
 
@@ -90,7 +90,7 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 		gpsTimeTime := time.Time(gps.NewTimeFromTimeSinceGPSEpoch(gpsTimeDur))
 
 		pb.RxInfo.TimeSinceGpsEpoch = durationpb.New(gpsTimeDur)
-		pb.RxInfo.Time = timestamppb.New(gpsTimeTime)
+		pb.RxInfo.GwTime = timestamppb.New(gpsTimeTime)
 	}
 
 	// Context

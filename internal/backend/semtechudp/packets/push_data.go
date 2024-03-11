@@ -171,9 +171,9 @@ func getUplinkFrame(gatewayID lorawan.EUI64, stat *Stat, rxpk RXPK, FakeRxInfoTi
 
 	// Time.
 	if rxpk.Time != nil && !time.Time(*rxpk.Time).IsZero() {
-		frame.RxInfo.Time = timestamppb.New(time.Time(*rxpk.Time))
+		frame.RxInfo.GwTime = timestamppb.New(time.Time(*rxpk.Time))
 	} else if FakeRxInfoTime {
-		frame.RxInfo.Time = timestamppb.Now()
+		frame.RxInfo.GwTime = timestamppb.Now()
 	}
 
 	// Time since GPS epoch
