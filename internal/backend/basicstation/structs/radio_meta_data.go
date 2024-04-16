@@ -80,7 +80,7 @@ func SetRadioMetaDataToProto(loraBand band.Band, gatewayID lorawan.EUI64, rmd Ra
 	if rxTime := rmd.UpInfo.RxTime; rxTime != 0 {
 		sec, nsec := math.Modf(rmd.UpInfo.RxTime)
 		if sec != 0 {
-			val := time.Unix(int64(sec), int64(nsec))
+			val := time.Unix(int64(sec), int64(nsec*1e9))
 			pb.RxInfo.GwTime = timestamppb.New(val)
 		}
 	}
