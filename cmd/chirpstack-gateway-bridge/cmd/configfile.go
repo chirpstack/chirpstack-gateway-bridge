@@ -88,6 +88,9 @@ type="{{ .Backend.Type }}"
   # the time would otherwise be unset.
   fake_rx_time={{ .Backend.SemtechUDP.FakeRxTime }}
 
+  # Cleanup duration 
+  # Cleaup duration for class C devices 
+  cleanup_duration={{ .Backend.SemtechUDP.CleanupDuration }}
 
   # ChirpStack Concentratord backend.
   [backend.concentratord]
