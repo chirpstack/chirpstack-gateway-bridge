@@ -16,11 +16,6 @@ var (
 	errGatewayDoesNotExist = errors.New("gateway does not exist")
 )
 
-// gatewayCleanupDuration contains the duration after which the gateway is
-// cleaned up from the registry after no activity
-// This value can be set in config [backend.SemtechUDP.cleanup_duration]
-// var gatewayCleanupDuration = time.Duration(config.C.Backend.SemtechUDP.CleanupDuration) + (-1 * time.Minute)
-
 // gateway contains a connection and meta-data for a gateway connection.
 type gateway struct {
 	stats           *stats.Collector

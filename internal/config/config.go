@@ -24,7 +24,7 @@ type Config struct {
 			UDPBind         string `mapstructure:"udp_bind"`
 			SkipCRCCheck    bool   `mapstructure:"skip_crc_check"`
 			FakeRxTime      bool   `mapstructure:"fake_rx_time"`
-			CleanupDuration int    `mapstructure:"cleanup_duration"`
+			CleanupDuration int    `mapstructure:"connection_timeout_duration"`
 		} `mapstructure:"semtech_udp"`
 
 		BasicStation struct {

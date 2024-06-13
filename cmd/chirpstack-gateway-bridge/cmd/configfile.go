@@ -88,9 +88,12 @@ type="{{ .Backend.Type }}"
   # the time would otherwise be unset.
   fake_rx_time={{ .Backend.SemtechUDP.FakeRxTime }}
 
-  # Cleanup duration 
-  # Cleaup duration for class C devices 
-  cleanup_duration={{ .Backend.SemtechUDP.CleanupDuration }}
+  # Connection timeout duration
+  #
+  # ChirpStack Gateway Bridge keeps a list of connected gateways. If a gateway does not send any
+  # UDP data within the configured timeout, then ChirpStack Gateway Bridge will consider the gateway
+  # disconnected and it will unsubscribe from the gateway MQTT topic and cleanup the UDP docket. 
+  connection_timeout_duration={{ .Backend.SemtechUDP.CleanupDuration }}
 
   # ChirpStack Concentratord backend.
   [backend.concentratord]
