@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
       -
         name: Run tests
-        run: docker-compose run --rm chirpstack-gateway-bridge make test
+        run: docker compose run --rm chirpstack-gateway-bridge make test
 
   dist:
     needs: test
@@ -37,7 +37,7 @@ jobs:
           aws-region: eu-west-1
       -
         name: Build distributable binaries
-        run: docker-compose run --rm chirpstack-gateway-bridge make dist
+        run: docker compose run --rm chirpstack-gateway-bridge make dist
       -
         name: Upload binaries to S3
         if: startsWith(github.ref, 'refs/tags/v')
