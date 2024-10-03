@@ -111,6 +111,12 @@ type="{{ .Backend.Type }}"
   # ip:port to bind the Websocket listener to.
   bind="{{ .Backend.BasicStation.Bind }}"
 
+  # TLS support.
+  #
+  # When set to true, the websocket listener will use TLS to secure the connections
+  # between the gateways and ChirpStack Gateway Bridge.
+  tls_support={{ .Backend.BasicStation.TLSSupport }}
+
   # TLS certificate and key files.
   #
   # When set, the websocket listener will use TLS to secure the connections

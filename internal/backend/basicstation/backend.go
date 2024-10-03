@@ -41,9 +41,10 @@ var upgrader = websocket.Upgrader{
 type Backend struct {
 	sync.RWMutex
 
-	caCert  string
-	tlsCert string
-	tlsKey  string
+	tlsSupport bool
+	caCert     string
+	tlsCert    string
+	tlsKey     string
 
 	server   *http.Server
 	ln       net.Listener
@@ -84,9 +85,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 			gateways: make(map[lorawan.EUI64]*connection),
 		},
 
-		caCert:  conf.Backend.BasicStation.CACert,
-		tlsCert: conf.Backend.BasicStation.TLSCert,
-		tlsKey:  conf.Backend.BasicStation.TLSKey,
+		tlsSupport: conf.Backend.BasicStation.TLSSupport,
+		caCert:     conf.Backend.BasicStation.CACert,
+		tlsCert:    conf.Backend.BasicStation.TLSCert,
+		tlsKey:     conf.Backend.BasicStation.TLSKey,
 
 		statsInterval:    conf.Backend.BasicStation.StatsInterval,
 		pingInterval:     conf.Backend.BasicStation.PingInterval,
@@ -263,12 +265,13 @@ func (b *Backend) Start() error {
 	go func() {
 		log.WithFields(log.Fields{
 			"bind":     b.ln.Addr(),
+			"tls":      b.tlsSupport,
 			"ca_cert":  b.caCert,
 			"tls_cert": b.tlsCert,
 			"tls_key":  b.tlsKey,
 		}).Info("backend/basicstation: starting websocket listener")
 
-		if b.tlsCert == "" && b.tlsKey == "" && b.caCert == "" {
+		if !b.tlsSupport { // b.tlsCert == "" && b.tlsKey == "" && b.caCert == ""
 			// no tls
 			if err := b.server.Serve(b.ln); err != nil && !b.isClosed {
 				log.WithError(err).Fatal("backend/basicstation: server error")
@@ -276,8 +279,12 @@ func (b *Backend) Start() error {
 		} else {
 			// tls
 			b.scheme = "wss"
-			if err := b.server.ServeTLS(b.ln, b.tlsCert, b.tlsKey); err != nil && !b.isClosed {
-				log.WithError(err).Fatal("backend/basicstation: server error")
+			if b.tlsCert == "" && b.tlsKey == "" && b.caCert == "" {
+				log.Warn("backend/basicstation: TLS is enabled, but no certificate or CA certificate configured.")
+			} else {
+				if err := b.server.ServeTLS(b.ln, b.tlsCert, b.tlsKey); err != nil && !b.isClosed {
+					log.WithError(err).Fatal("backend/basicstation: server error")
+				}
 			}
 		}
 	}()
