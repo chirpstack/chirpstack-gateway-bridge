@@ -41,9 +41,10 @@ var upgrader = websocket.Upgrader{
 type Backend struct {
 	sync.RWMutex
 
-	caCert  string
-	tlsCert string
-	tlsKey  string
+	tlsSupportProxy bool
+	caCert          string
+	tlsCert         string
+	tlsKey          string
 
 	server   *http.Server
 	ln       net.Listener
@@ -84,9 +85,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 			gateways: make(map[lorawan.EUI64]*connection),
 		},
 
-		caCert:  conf.Backend.BasicStation.CACert,
-		tlsCert: conf.Backend.BasicStation.TLSCert,
-		tlsKey:  conf.Backend.BasicStation.TLSKey,
+		tlsSupportProxy: conf.Backend.BasicStation.TLSSupportProxy,
+		caCert:          conf.Backend.BasicStation.CACert,
+		tlsCert:         conf.Backend.BasicStation.TLSCert,
+		tlsKey:          conf.Backend.BasicStation.TLSKey,
 
 		statsInterval:    conf.Backend.BasicStation.StatsInterval,
 		pingInterval:     conf.Backend.BasicStation.PingInterval,
@@ -262,14 +264,19 @@ func (b *Backend) RawPacketForwarderCommand(pl *gw.RawPacketForwarderCommand) er
 func (b *Backend) Start() error {
 	go func() {
 		log.WithFields(log.Fields{
-			"bind":     b.ln.Addr(),
-			"ca_cert":  b.caCert,
-			"tls_cert": b.tlsCert,
-			"tls_key":  b.tlsKey,
+			"bind":              b.ln.Addr(),
+			"tls_support_proxy": b.tlsSupportProxy,
+			"ca_cert":           b.caCert,
+			"tls_cert":          b.tlsCert,
+			"tls_key":           b.tlsKey,
 		}).Info("backend/basicstation: starting websocket listener")
 
 		if b.tlsCert == "" && b.tlsKey == "" && b.caCert == "" {
 			// no tls
+			if b.tlsSupportProxy {
+				log.Info("backend/basicstation: TLS support handled by reverse-proxy")
+				b.scheme = "wss"
+			}
 			if err := b.server.Serve(b.ln); err != nil && !b.isClosed {
 				log.WithError(err).Fatal("backend/basicstation: server error")
 			}
