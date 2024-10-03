@@ -271,7 +271,7 @@ func (b *Backend) Start() error {
 			"tls_key":  b.tlsKey,
 		}).Info("backend/basicstation: starting websocket listener")
 
-		if !b.tlsSupport { // b.tlsCert == "" && b.tlsKey == "" && b.caCert == ""
+		if !b.tlsSupport {
 			// no tls
 			if err := b.server.Serve(b.ln); err != nil && !b.isClosed {
 				log.WithError(err).Fatal("backend/basicstation: server error")
@@ -279,8 +279,11 @@ func (b *Backend) Start() error {
 		} else {
 			// tls
 			b.scheme = "wss"
-			if b.tlsCert == "" && b.tlsKey == "" && b.caCert == "" {
-				log.Warn("backend/basicstation: TLS is enabled, but no certificate or CA certificate configured.")
+			if b.tlsCert == "" && b.tlsKey == "" {
+				log.Warn("backend/basicstation: TLS is enabled, but no certificate and key configured. TLS will not be used.")
+				if err := b.server.Serve(b.ln); err != nil && !b.isClosed {
+					log.WithError(err).Fatal("backend/basicstation: server error")
+				}
 			} else {
 				if err := b.server.ServeTLS(b.ln, b.tlsCert, b.tlsKey); err != nil && !b.isClosed {
 					log.WithError(err).Fatal("backend/basicstation: server error")
