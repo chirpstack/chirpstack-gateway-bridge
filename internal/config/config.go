@@ -29,7 +29,7 @@ type Config struct {
 
 		BasicStation struct {
 			Bind             string                     `mapstructure:"bind"`
-			TLSSupport       bool                       `mapstructure:"tls_support"`
+			TLSSupportProxy  bool                       `mapstructure:"tls_support_proxy"`
 			TLSCert          string                     `mapstructure:"tls_cert"`
 			TLSKey           string                     `mapstructure:"tls_key"`
 			CACert           string                     `mapstructure:"ca_cert"`

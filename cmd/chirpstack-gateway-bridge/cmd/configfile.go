@@ -111,11 +111,11 @@ type="{{ .Backend.Type }}"
   # ip:port to bind the Websocket listener to.
   bind="{{ .Backend.BasicStation.Bind }}"
 
-  # TLS support.
+  # TLS support by a Reverse-Proxy
   #
   # When set to true, the websocket listener will use TLS to secure the connections
-  # between the gateways and ChirpStack Gateway Bridge.
-  tls_support={{ .Backend.BasicStation.TLSSupport }}
+  # between the gateways and a reverse-proxy (optional).
+  tls_support_proxy={{ .Backend.BasicStation.TLSSupportProxy }}
 
   # TLS certificate and key files.
   #

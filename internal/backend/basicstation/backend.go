@@ -41,10 +41,10 @@ var upgrader = websocket.Upgrader{
 type Backend struct {
 	sync.RWMutex
 
-	tlsSupport bool
-	caCert     string
-	tlsCert    string
-	tlsKey     string
+	tlsSupportProxy bool
+	caCert          string
+	tlsCert         string
+	tlsKey          string
 
 	server   *http.Server
 	ln       net.Listener
@@ -85,10 +85,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 			gateways: make(map[lorawan.EUI64]*connection),
 		},
 
-		tlsSupport: conf.Backend.BasicStation.TLSSupport,
-		caCert:     conf.Backend.BasicStation.CACert,
-		tlsCert:    conf.Backend.BasicStation.TLSCert,
-		tlsKey:     conf.Backend.BasicStation.TLSKey,
+		tlsSupportProxy: conf.Backend.BasicStation.TLSSupportProxy,
+		caCert:          conf.Backend.BasicStation.CACert,
+		tlsCert:         conf.Backend.BasicStation.TLSCert,
+		tlsKey:          conf.Backend.BasicStation.TLSKey,
 
 		statsInterval:    conf.Backend.BasicStation.StatsInterval,
 		pingInterval:     conf.Backend.BasicStation.PingInterval,
@@ -264,30 +264,27 @@ func (b *Backend) RawPacketForwarderCommand(pl *gw.RawPacketForwarderCommand) er
 func (b *Backend) Start() error {
 	go func() {
 		log.WithFields(log.Fields{
-			"bind":     b.ln.Addr(),
-			"tls":      b.tlsSupport,
-			"ca_cert":  b.caCert,
-			"tls_cert": b.tlsCert,
-			"tls_key":  b.tlsKey,
+			"bind":              b.ln.Addr(),
+			"tls_support_proxy": b.tlsSupportProxy,
+			"ca_cert":           b.caCert,
+			"tls_cert":          b.tlsCert,
+			"tls_key":           b.tlsKey,
 		}).Info("backend/basicstation: starting websocket listener")
 
-		if !b.tlsSupport {
+		if b.tlsCert == "" && b.tlsKey == "" && b.caCert == "" {
 			// no tls
+			if b.tlsSupportProxy {
+				log.Info("backend/basicstation: TLS support handled by reverse-proxy")
+				b.scheme = "wss"
+			}
 			if err := b.server.Serve(b.ln); err != nil && !b.isClosed {
 				log.WithError(err).Fatal("backend/basicstation: server error")
 			}
 		} else {
 			// tls
 			b.scheme = "wss"
-			if b.tlsCert == "" && b.tlsKey == "" {
-				log.Warn("backend/basicstation: TLS is enabled, but no certificate and key configured. TLS will not be used.")
-				if err := b.server.Serve(b.ln); err != nil && !b.isClosed {
-					log.WithError(err).Fatal("backend/basicstation: server error")
-				}
-			} else {
-				if err := b.server.ServeTLS(b.ln, b.tlsCert, b.tlsKey); err != nil && !b.isClosed {
-					log.WithError(err).Fatal("backend/basicstation: server error")
-				}
+			if err := b.server.ServeTLS(b.ln, b.tlsCert, b.tlsKey); err != nil && !b.isClosed {
+				log.WithError(err).Fatal("backend/basicstation: server error")
 			}
 		}
 	}()
