@@ -23,7 +23,7 @@ var (
 	})
 
 	gwd = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "backend_semtechudp_gateway_diconnect_count",
+		Name: "backend_semtechudp_gateway_disconnect_count",
 		Help: "The number of gateways that disconnected from the backend.",
 	})
 
