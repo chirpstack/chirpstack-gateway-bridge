@@ -41,6 +41,9 @@ func init() {
 	viper.SetDefault("backend.semtech_udp.udp_bind", "0.0.0.0:1700")
 	viper.SetDefault("backend.semtech_udp.cleanup_duration", time.Minute)
 
+	viper.SetDefault("backend.semtech_udp.cache_default_expiration", 15*time.Second)
+	viper.SetDefault("backend.semtech_udp.cache_cleanup_interval", 15*time.Second)
+
 	viper.SetDefault("backend.concentratord.crc_check", true)
 	viper.SetDefault("backend.concentratord.event_url", "ipc:///tmp/concentratord_event")
 	viper.SetDefault("backend.concentratord.command_url", "ipc:///tmp/concentratord_command")
