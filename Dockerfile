@@ -14,7 +14,7 @@ WORKDIR $PROJECT_PATH
 RUN make dev-requirements
 RUN make
 
-FROM alpine:3.19.7 AS production
+FROM alpine:3.22.0 AS production
 
 RUN apk --no-cache add ca-certificates
 COPY --from=development /chirpstack-gateway-bridge/build/chirpstack-gateway-bridge /usr/bin/chirpstack-gateway-bridge
