@@ -94,6 +94,18 @@ type="{{ .Backend.Type }}"
   # disconnected and it will unsubscribe from the gateway MQTT topic and cleanup the UDP docket. 
   connection_timeout_duration={{ .Backend.SemtechUDP.CleanupDuration }}
 
+  # Cache expiration
+  #
+  # ChirpStack Gateway Bridge temporarily store downlinks. If a gateway does not send any
+  # UDP data within the configured timeout the downlink is discarded.
+  cache_default_expiration="{{ .Backend.SemtechUDP.CacheDefaultExpiration }}"
+
+  # Cache cleanup interval
+  #
+  # ChirpStack Gateway Bridge temporarily store downlinks in a cache. The cache is cleaned in 
+  # the configured interval.
+  cache_cleanup_interval="{{ .Backend.SemtechUDP.CacheCleanupInterval }}"
+
 
   # Basic Station backend.
   [backend.basic_station]

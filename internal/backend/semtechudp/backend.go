@@ -72,7 +72,10 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		},
 		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
 		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,
-		cache:        cache.New(15*time.Second, 15*time.Second),
+		cache: cache.New(
+			conf.Backend.SemtechUDP.CacheDefaultExpiration,
+			conf.Backend.SemtechUDP.CacheCleanupInterval,
+		),
 	}
 
 	go func() {
