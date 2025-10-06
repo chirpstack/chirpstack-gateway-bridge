@@ -31,6 +31,7 @@ type Config struct {
 
 		BasicStation struct {
 			Bind             string                     `mapstructure:"bind"`
+			TLSSupportProxy  bool                       `mapstructure:"tls_support_proxy"`
 			TLSCert          string                     `mapstructure:"tls_cert"`
 			TLSKey           string                     `mapstructure:"tls_key"`
 			CACert           string                     `mapstructure:"ca_cert"`
@@ -44,11 +45,6 @@ type Config struct {
 			FrequencyMax     uint32                     `mapstructure:"frequency_max"`
 			Concentrators    []BasicStationConcentrator `mapstructure:"concentrators"`
 		} `mapstructure:"basic_station"`
-
-		Concentratord struct {
-			EventURL   string `mapstructure:"event_url"`
-			CommandURL string `mapstructure:"command_url"`
-		} `mapstructure:"concentratord"`
 	} `mapstructure:"backend"`
 
 	Integration struct {

@@ -66,7 +66,6 @@ join_euis=[{{ range $index, $elm := .Filters.JoinEUIs }}
 #
 # Valid options are:
 #   * semtech_udp
-#   * concentratord
 #   * basic_station
 type="{{ .Backend.Type }}"
 
@@ -107,21 +106,18 @@ type="{{ .Backend.Type }}"
   # the configured interval.
   cache_cleanup_interval={{ .Backend.SemtechUDP.CacheCleanupInterval }}
 
-  # ChirpStack Concentratord backend.
-  [backend.concentratord]
-
-  # Event API URL.
-  event_url="{{ .Backend.Concentratord.EventURL }}"
-
-  # Command API URL.
-  command_url="{{ .Backend.Concentratord.CommandURL }}"
-
 
   # Basic Station backend.
   [backend.basic_station]
 
   # ip:port to bind the Websocket listener to.
   bind="{{ .Backend.BasicStation.Bind }}"
+
+  # TLS support by a Reverse-Proxy
+  #
+  # When set to true, the websocket listener will use TLS to secure the connections
+  # between the gateways and a reverse-proxy (optional).
+  tls_support_proxy={{ .Backend.BasicStation.TLSSupportProxy }}
 
   # TLS certificate and key files.
   #

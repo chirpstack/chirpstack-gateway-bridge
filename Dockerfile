@@ -1,4 +1,4 @@
-FROM golang:1.22.1-alpine AS development
+FROM golang:1.24.6-alpine AS development
 
 ENV PROJECT_PATH=/chirpstack-gateway-bridge
 ENV PATH=$PATH:$PROJECT_PATH/build
@@ -14,7 +14,7 @@ WORKDIR $PROJECT_PATH
 RUN make dev-requirements
 RUN make
 
-FROM alpine:3.17.0 AS production
+FROM alpine:3.22.1 AS production
 
 RUN apk --no-cache add ca-certificates
 COPY --from=development /chirpstack-gateway-bridge/build/chirpstack-gateway-bridge /usr/bin/chirpstack-gateway-bridge
