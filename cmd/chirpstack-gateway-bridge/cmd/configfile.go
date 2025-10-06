@@ -98,13 +98,13 @@ type="{{ .Backend.Type }}"
   #
   # ChirpStack Gateway Bridge temporarily store downlinks. If a gateway does not send any
   # UDP data within the configured timeout the downlink is discarded.
-  cache_default_expiration={{ .Backend.SemtechUDP.CacheDefaultExpiration }}
+  cache_default_expiration="{{ .Backend.SemtechUDP.CacheDefaultExpiration }}"
 
   # Cache cleanup interval
   #
   # ChirpStack Gateway Bridge temporarily store downlinks in a cache. The cache is cleaned in 
   # the configured interval.
-  cache_cleanup_interval={{ .Backend.SemtechUDP.CacheCleanupInterval }}
+  cache_cleanup_interval="{{ .Backend.SemtechUDP.CacheCleanupInterval }}"
 
 
   # Basic Station backend.

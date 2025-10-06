@@ -21,12 +21,12 @@ type Config struct {
 		Type string `mapstructure:"type"`
 
 		SemtechUDP struct {
-			UDPBind                string `mapstructure:"udp_bind"`
-			SkipCRCCheck           bool   `mapstructure:"skip_crc_check"`
-			FakeRxTime             bool   `mapstructure:"fake_rx_time"`
-			CleanupDuration        int    `mapstructure:"connection_timeout_duration"`
-			CacheDefaultExpiration int    `mapstructure:"cache_default_expiration"`
-			CacheCleanupInterval   int    `mapstructure:"cache_cleanup_interval"`
+			UDPBind                string        `mapstructure:"udp_bind"`
+			SkipCRCCheck           bool          `mapstructure:"skip_crc_check"`
+			FakeRxTime             bool          `mapstructure:"fake_rx_time"`
+			CleanupDuration        int           `mapstructure:"connection_timeout_duration"`
+			CacheDefaultExpiration time.Duration `mapstructure:"cache_default_expiration"`
+			CacheCleanupInterval   time.Duration `mapstructure:"cache_cleanup_interval"`
 		} `mapstructure:"semtech_udp"`
 
 		BasicStation struct {
