@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/basicstation"
-	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/concentratord"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/events"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/backend/semtechudp"
 	"github.com/brocaar/chirpstack-gateway-bridge/internal/config"
@@ -24,8 +23,6 @@ func Setup(conf config.Config) error {
 		backend, err = semtechudp.NewBackend(conf)
 	case "basic_station":
 		backend, err = basicstation.NewBackend(conf)
-	case "concentratord":
-		backend, err = concentratord.NewBackend(conf)
 	default:
 		return fmt.Errorf("unknown backend type: %s", conf.Backend.Type)
 	}

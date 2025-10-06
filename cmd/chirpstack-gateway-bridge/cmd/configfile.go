@@ -66,7 +66,6 @@ join_euis=[{{ range $index, $elm := .Filters.JoinEUIs }}
 #
 # Valid options are:
 #   * semtech_udp
-#   * concentratord
 #   * basic_station
 type="{{ .Backend.Type }}"
 
@@ -94,15 +93,6 @@ type="{{ .Backend.Type }}"
   # UDP data within the configured timeout, then ChirpStack Gateway Bridge will consider the gateway
   # disconnected and it will unsubscribe from the gateway MQTT topic and cleanup the UDP docket. 
   connection_timeout_duration={{ .Backend.SemtechUDP.CleanupDuration }}
-
-  # ChirpStack Concentratord backend.
-  [backend.concentratord]
-
-  # Event API URL.
-  event_url="{{ .Backend.Concentratord.EventURL }}"
-
-  # Command API URL.
-  command_url="{{ .Backend.Concentratord.CommandURL }}"
 
 
   # Basic Station backend.
