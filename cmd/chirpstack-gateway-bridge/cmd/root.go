@@ -39,7 +39,7 @@ func init() {
 	viper.SetDefault("general.log_level", 4)
 	viper.SetDefault("backend.type", "semtech_udp")
 	viper.SetDefault("backend.semtech_udp.udp_bind", "0.0.0.0:1700")
-	viper.SetDefault("backend.semtech_udp.cleanup_duration", time.Minute)
+	viper.SetDefault("backend.semtech_udp.connection_timeout_duration", time.Minute)
 
 	viper.SetDefault("backend.semtech_udp.cache_default_expiration", 15*time.Second)
 	viper.SetDefault("backend.semtech_udp.cache_cleanup_interval", 15*time.Second)

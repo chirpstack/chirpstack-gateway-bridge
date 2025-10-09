@@ -67,8 +67,8 @@ func NewBackend(conf config.Config) (*Backend, error) {
 		conn:        conn,
 		udpSendChan: make(chan udpPacket),
 		gateways: gateways{
-			gateways:        make(map[lorawan.EUI64]gateway),
-			cleanupDuration: time.Duration(conf.Backend.SemtechUDP.CleanupDuration),
+			gateways:                  make(map[lorawan.EUI64]gateway),
+			connectionTimeoutDuration: conf.Backend.SemtechUDP.ConnectionTimeoutDuration,
 		},
 		fakeRxTime:   conf.Backend.SemtechUDP.FakeRxTime,
 		skipCRCCheck: conf.Backend.SemtechUDP.SkipCRCCheck,

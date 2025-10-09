@@ -27,8 +27,8 @@ type gateway struct {
 // gateways contains the gateways registry.
 type gateways struct {
 	sync.RWMutex
-	gateways        map[lorawan.EUI64]gateway
-	cleanupDuration time.Duration
+	gateways                  map[lorawan.EUI64]gateway
+	connectionTimeoutDuration time.Duration
 
 	subscribeEventFunc func(events.Subscribe)
 }
@@ -79,7 +79,7 @@ func (c *gateways) cleanup() error {
 	defer c.Unlock()
 
 	for gatewayID := range c.gateways {
-		if c.gateways[gatewayID].lastSeen.Before(time.Now().Add(c.cleanupDuration)) {
+		if c.gateways[gatewayID].lastSeen.Before(time.Now().Add(-1 * c.connectionTimeoutDuration)) {
 			disconnectCounter().Inc()
 
 			if c.subscribeEventFunc != nil {

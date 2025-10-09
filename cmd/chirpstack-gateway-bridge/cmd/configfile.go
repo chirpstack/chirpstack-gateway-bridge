@@ -92,7 +92,7 @@ type="{{ .Backend.Type }}"
   # ChirpStack Gateway Bridge keeps a list of connected gateways. If a gateway does not send any
   # UDP data within the configured timeout, then ChirpStack Gateway Bridge will consider the gateway
   # disconnected and it will unsubscribe from the gateway MQTT topic and cleanup the UDP docket. 
-  connection_timeout_duration={{ .Backend.SemtechUDP.CleanupDuration }}
+  connection_timeout_duration="{{ .Backend.SemtechUDP.ConnectionTimeoutDuration }}"
 
   # Cache expiration
   #
