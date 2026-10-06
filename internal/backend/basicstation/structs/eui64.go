@@ -40,6 +40,9 @@ func (e *EUI64) UnmarshalText(text []byte) error {
 				i = len(blocks) - remaining
 				blockI = 4 - remaining
 			} else {
+				if len(blocks[i]) > 4 {
+					return errors.Errorf("invalid eui: %s", string(text))
+				}
 				v := "0000"[len(blocks[i]):] + blocks[i]
 				b, err := hex.DecodeString(v)
 				if err != nil {

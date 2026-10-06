@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/pkg/errors"
 )
 
 func TestStringToEUI64(t *testing.T) {
@@ -38,11 +39,20 @@ func TestStringToEUI64(t *testing.T) {
 			Value:    "01-02-03-04-05-06-07-08",
 			Expected: EUI64{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08},
 		},
+		{
+			Value: "0102030405060708",
+			Error: errors.New("invalid eui: 0102030405060708"),
+		},
 	}
 
 	for _, tst := range tests {
 		var eui EUI64
-		assert.Equal(tst.Error, eui.UnmarshalText([]byte(tst.Value)))
-		assert.Equal(tst.Expected, eui)
+		err := eui.UnmarshalText([]byte(tst.Value))
+
+		if err != nil {
+			assert.Equal(tst.Error.Error(), err.Error())
+		} else {
+			assert.Equal(tst.Expected, eui)
+		}
 	}
 }
